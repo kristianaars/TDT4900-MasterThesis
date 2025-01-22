@@ -21,4 +21,9 @@ public class Node(int id)
     {
         return Id;
     }
+
+    public override string ToString()
+    {
+        return $"{nameof(Id)}: {Id}";
+    }
 }

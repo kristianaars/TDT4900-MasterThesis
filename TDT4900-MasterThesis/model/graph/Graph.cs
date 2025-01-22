@@ -1,20 +1,23 @@
+using TDT4900_MasterThesis.helpers;
+
 namespace TDT4900_MasterThesis.model.graph;
 
 public class Graph(Node[] nodes, Edge[] edges)
 {
     /// <summary>
-    /// Index by [source][target] to get the weight of the edge between source and target.
+    /// Index by [source, target] to get the weight of the edge between source and target.
     /// A weight of -1 means there is no edge between the nodes.
     /// </summary>
-    private readonly int[][] _adjacencyMatrix = BuildAdjacencyMatrix(nodes, edges);
+    private readonly int[,] _adjacencyMatrix = BuildAdjacencyMatrix(nodes, edges);
     private readonly Node[] _nodes = nodes;
     
-    private static int[][] BuildAdjacencyMatrix(Node[] nodes, Edge[] edges)
+    private static int[,] BuildAdjacencyMatrix(Node[] nodes, Edge[] edges)
     {
-        var adjacencyMatrix = new int[nodes.Length][];
+        int[,] adjacencyMatrix = new int[nodes.Length, nodes.Length];
+        ArrayHelper.FillArray(adjacencyMatrix, -1);
         
         foreach(var e in edges)
-            adjacencyMatrix[e.Source.Id][e.Target.Id] = 1;
+            adjacencyMatrix[e.Source.Id, e.Target.Id] = e.Weight;
 
         return adjacencyMatrix;
     }
@@ -28,9 +31,9 @@ public class Graph(Node[] nodes, Edge[] edges)
     {
         var outEdges = new List<Edge>();
         
-        for (int i = 0; i < _adjacencyMatrix[node.Id].Length; i++)
+        for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
         {
-            var w = _adjacencyMatrix[node.Id][i];
+            var w = _adjacencyMatrix[node.Id, i];
             if (w > 0)
                 outEdges.Add(new Edge(node, _nodes[i], w));
         }
@@ -47,9 +50,9 @@ public class Graph(Node[] nodes, Edge[] edges)
     {
         var inEdges = new List<Edge>();
         
-        for (int i = 0; i < _adjacencyMatrix.Length; i++)
+        for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
         {
-            var w = _adjacencyMatrix[i][node.Id];
+            var w = _adjacencyMatrix[i, node.Id];
             if (w > 0)
                 inEdges.Add(new Edge(_nodes[i], node, w));
         }
@@ -66,7 +69,7 @@ public class Graph(Node[] nodes, Edge[] edges)
     /// <returns><see cref="Edge"/> with updated weight.</returns>
     public Edge SetEdgeWeight(Edge edge, int weight)
     {
-        _adjacencyMatrix[edge.Source.Id][edge.Target.Id] = weight;
+        _adjacencyMatrix[edge.Source.Id, edge.Target.Id] = weight;
         
         return new Edge(
             edge.Source,
