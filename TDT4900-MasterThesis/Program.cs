@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using TDT4900_MasterThesis.model.graph;
+using TDT4900_MasterThesis.simulation;
 
 
 var n = new Node[]
@@ -25,5 +26,8 @@ var edges = new Edge[]
 var g = new Graph(n, edges);
 
 var o = g.GetOutEdges(n[1]);
+
+var simLoop = new SimulationLoop();
+simLoop.RunSimulation();
 
 Console.WriteLine("Hello, World!");
