@@ -16,7 +16,7 @@ public class GraphView : IDrawable, IUpdatable
         _activeNodes = new int[graph.Nodes.Count];
 
         // Nodes will be activated for one second
-        _nodeActivationDuration = appSettings.TargetTPS;
+        _nodeActivationDuration = appSettings.TargetTPS / 4;
 
         _graph = graph;
     }

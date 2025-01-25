@@ -14,6 +14,7 @@
 
     <ItemGroup>
       <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+      <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
       <PackageReference Include="Serilog.Enrichers.CallerInfo" Version="1.0.5" />
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />

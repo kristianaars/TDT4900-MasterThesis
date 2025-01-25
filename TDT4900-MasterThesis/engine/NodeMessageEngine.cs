@@ -35,7 +35,7 @@ public class NodeMessageEngine : IUpdatable
     {
         var receiver = message.Receiver;
 
-        Log.Information("Received message {msg}", message);
+        //Log.Information("Received message {msg}", message);
 
         _graphView.ActivateNode(receiver);
 

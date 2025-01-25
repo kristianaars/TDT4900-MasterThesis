@@ -10,7 +10,7 @@ public class AppSettings
     /// <summary>
     /// Target ticks per second for simulation
     /// </summary>
-    public int TargetTPS { get; } = 20;
+    public int TargetTPS { get; } = 50;
 
     public string WindowTitle = "TDT4900 Master Thesis";
     public int DefaultWindowWidth = 800;

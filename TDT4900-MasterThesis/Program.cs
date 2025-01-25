@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TDT4900_MasterThesis;
 using TDT4900_MasterThesis.engine;
+using TDT4900_MasterThesis.factory;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.simulation;
@@ -34,7 +35,11 @@ var edges = new Edge[]
     new(n[3], n[1], 25),
 };
 
-var g = new Graph(n, edges);
+RandomGraphFactory factory = new RandomGraphFactory(100, 200);
+var g = factory.GetGraph();
+
+//var g = new Graph(n, edges);
+
 Application.Init();
 ServiceCollection serviceCollection = new ServiceCollection();
 

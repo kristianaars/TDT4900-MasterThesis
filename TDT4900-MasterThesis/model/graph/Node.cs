@@ -1,6 +1,6 @@
 namespace TDT4900_MasterThesis.model.graph;
 
-public class Node(int id)
+public class Node(int id) : MIConvexHull.IVertex
 {
     public int Id { get; } = id;
 
@@ -32,4 +32,6 @@ public class Node(int id)
     {
         return $"{nameof(Id)}: {Id}";
     }
+
+    public double[] Position => [X, Y];
 }
