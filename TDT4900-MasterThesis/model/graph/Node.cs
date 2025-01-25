@@ -4,6 +4,9 @@ public class Node(int id)
 {
     public int Id { get; } = id;
 
+    public int X { get; set; }
+    public int Y { get; set; }
+
     protected bool Equals(Node other)
     {
         return Id == other.Id;

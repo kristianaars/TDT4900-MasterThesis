@@ -13,8 +13,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
       <PackageReference Include="Serilog.Enrichers.CallerInfo" Version="1.0.5" />
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+      <PackageReference Include="SkiaSharp" Version="3.116.1" />
+      <PackageReference Include="SkiaSharp.Views.Desktop.Common" Version="3.116.1" />
+      <PackageReference Include="SkiaSharp.Views.Gtk3" Version="3.116.1" />
     </ItemGroup>
 
 </Project>

@@ -1,17 +1,29 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Net.Mime;
+using Gtk;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Serilog.Enrichers.CallerInfo;
-using Serilog.Formatting.Display;
+using TDT4900_MasterThesis;
 using TDT4900_MasterThesis.engine;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.simulation;
+using TDT4900_MasterThesis.view;
+using Node = TDT4900_MasterThesis.model.graph.Node;
 
 using var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 Log.Logger = log;
 
-var n = new Node[] { new(0), new(1), new(2), new(3), new(4) };
+var m = 5;
+var n = new Node[]
+{
+    new(0) { X = 20 * m, Y = 10 * m },
+    new(1) { X = 30 * m, Y = 40 * m },
+    new(2) { X = 60 * m, Y = 20 * m },
+    new(3) { X = 60 * m, Y = 50 * m },
+    new(4) { X = 10 * m, Y = 50 * m },
+};
 
 var edges = new Edge[]
 {
@@ -23,16 +35,31 @@ var edges = new Edge[]
 };
 
 var g = new Graph(n, edges);
+Application.Init();
+ServiceCollection serviceCollection = new ServiceCollection();
 
-var nodeMessageEngine = new NodeMessageEngine(graph: g);
+serviceCollection.AddSingleton(g);
+serviceCollection.AddSingleton<NodeMessageEngine>();
+serviceCollection.AddSingleton<SimulationEngine>();
+serviceCollection.AddSingleton<AppSettings>();
+
+serviceCollection.AddSingleton<MainCanvas>();
+serviceCollection.AddSingleton<GraphView>();
+
+serviceCollection.AddSingleton<MainWindow>();
+
+var services = serviceCollection.BuildServiceProvider();
+
+var nodeMessageEngine = services.GetRequiredService<NodeMessageEngine>();
+var simEngine = services.GetRequiredService<SimulationEngine>();
+var window = services.GetRequiredService<MainWindow>();
+
 nodeMessageEngine.SendMessage(new Message(0, n[1], n[1]));
 
-var o = g.GetOutEdges(n[1]);
-
-var simLoop = new SimulationEngine()
+Task.Run(() =>
 {
-    UpdatableComponents = [nodeMessageEngine],
-    DrawableComponents = [],
-};
+    simEngine.RunSimulation();
+});
 
-simLoop.RunSimulation();
+window.ShowAll();
+Application.Run();

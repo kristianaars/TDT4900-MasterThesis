@@ -1,24 +1,56 @@
 using System.Collections;
 using System.Diagnostics;
+using Gtk;
 using Serilog;
+using SkiaSharp;
+using SkiaSharp.Views.Desktop;
+using TDT4900_MasterThesis.engine;
 using TDT4900_MasterThesis.model.simulation;
+using TDT4900_MasterThesis.view;
 
 namespace TDT4900_MasterThesis.simulation;
 
 public class SimulationEngine
 {
-    public required List<IUpdatable> UpdatableComponents;
-    public required List<IDrawable> DrawableComponents;
+    private readonly MainCanvas _mainCanvas;
+
+    private long _currentTick;
+
+    private int _frameCounter = 0;
+    private int _fps = 0;
+
+    private int _tickCounter = 0;
+    private int _tps = 0;
+
+    public readonly List<IUpdatable> UpdatableComponents;
+    public List<IDrawable> DrawableComponents;
+
+    public SimulationEngine(
+        NodeMessageEngine nodeMessageEngine,
+        MainCanvas mainCanvas,
+        AppSettings appSettings,
+        GraphView graphView
+    )
+    {
+        _mainCanvas = mainCanvas;
+        _mainCanvas.PaintSurface += OnPaintSurface;
+
+        UpdatableComponents = [nodeMessageEngine, graphView];
+        DrawableComponents = [graphView];
+
+        _targetFps = appSettings.TargetFPS;
+        _targetTps = appSettings.TargetTPS;
+    }
 
     /// <summary>
     /// Target Ticks Per Second
     /// </summary>
-    private readonly int _targetTps = AppSettings.TargetTPS;
+    private readonly int _targetTps;
 
     /// <summary>
     /// Target Frames Per Second
     /// </summary>
-    private readonly int _targetFps = AppSettings.TargetFPS;
+    private readonly int _targetFps;
 
     private bool _isRunning = false;
 
@@ -26,8 +58,6 @@ public class SimulationEngine
     {
         _isRunning = true;
         var stopwatch = Stopwatch.StartNew();
-
-        var currentTick = 0L;
 
         var updateInterval = 1000.0 / _targetTps;
         var renderInterval = 1000.0 / _targetFps;
@@ -37,36 +67,30 @@ public class SimulationEngine
         double nextRender = stopwatch.ElapsedMilliseconds;
         double nextStatUpdate = stopwatch.ElapsedMilliseconds + statUpdate;
 
-        var frameStatCounter = 0;
-        var tickStatCounter = 0;
-
         while (_isRunning)
         {
             double currentTime = stopwatch.ElapsedMilliseconds;
 
             if (currentTime >= nextUpdate)
             {
-                Update(++currentTick);
+                Update(++_currentTick);
                 nextUpdate += updateInterval;
-                tickStatCounter++;
             }
 
             if (currentTime >= nextRender)
             {
                 Render();
                 nextRender += renderInterval;
-                frameStatCounter++;
             }
 
             if (currentTime >= nextStatUpdate)
             {
-                Log.Debug(
-                    "Current Tick: {tick}, TPS: {TPS}, FPS: {FPS}",
-                    currentTick,
-                    tickStatCounter / (statUpdate / 1000.0),
-                    frameStatCounter / (statUpdate / 1000.0)
-                );
-                tickStatCounter = frameStatCounter = 0;
+                _fps = (int)(_frameCounter / (statUpdate / 1000.0));
+                _tps = (int)(_tickCounter / (statUpdate / 1000.0));
+
+                Log.Debug("Current Tick: {tick}, TPS: {TPS}, FPS: {FPS}", _currentTick, _tps, _fps);
+
+                _tickCounter = _frameCounter = 0;
                 nextStatUpdate += statUpdate;
             }
 
@@ -76,11 +100,34 @@ public class SimulationEngine
 
     private void Update(long currentTick)
     {
+        _tickCounter++;
         UpdatableComponents.ForEach(c => c.Update(currentTick));
     }
 
     private void Render()
     {
-        DrawableComponents.ForEach(c => c.Draw());
+        Application.Invoke(
+            delegate
+            {
+                _mainCanvas.QueueDraw();
+            }
+        );
+    }
+
+    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    {
+        _frameCounter++;
+
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.White);
+
+        canvas.DrawText(
+            $"Tick: {_currentTick}, TPS: {_tps}, FPS: {_fps}",
+            10,
+            20,
+            new SKPaint { Color = SKColors.Black }
+        );
+
+        DrawableComponents.ForEach(c => c.Draw(canvas));
     }
 }

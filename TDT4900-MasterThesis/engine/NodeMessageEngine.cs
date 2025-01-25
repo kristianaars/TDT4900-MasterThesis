@@ -2,17 +2,21 @@ using Serilog;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
+using TDT4900_MasterThesis.view;
 
 namespace TDT4900_MasterThesis.engine;
 
 public class NodeMessageEngine : IUpdatable
 {
-    private PriorityQueue<Message, long> _messageQueue = new();
-    private Graph graph;
+    private readonly PriorityQueue<Message, long> _messageQueue = new();
+    private readonly Graph _graph;
 
-    public NodeMessageEngine(Graph graph)
+    private readonly GraphView _graphView;
+
+    public NodeMessageEngine(Graph graph, GraphView graphView)
     {
-        this.graph = graph;
+        _graph = graph;
+        _graphView = graphView;
     }
 
     public void Update(long currentTick)
@@ -30,7 +34,11 @@ public class NodeMessageEngine : IUpdatable
     private void ExecuteMessage(Message message)
     {
         var receiver = message.Receiver;
+
         Log.Information("Received message {msg}", message);
+
+        _graphView.ActivateNode(receiver);
+
         MessageBurst(message.Receiver, message.ExecuteAt);
     }
 
@@ -41,7 +49,7 @@ public class NodeMessageEngine : IUpdatable
     /// <param name="currentTick">The tick in which the message is sent from the source node</param>
     private void MessageBurst(Node source, long currentTick)
     {
-        var outEdges = graph.GetOutEdges(source);
+        var outEdges = _graph.GetOutEdges(source);
         foreach (var edge in outEdges)
         {
             SendMessage(new Message(currentTick + edge.Weight, source, edge.Target));

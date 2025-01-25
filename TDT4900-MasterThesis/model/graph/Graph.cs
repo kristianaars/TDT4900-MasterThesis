@@ -11,6 +11,9 @@ public class Graph(Node[] nodes, Edge[] edges)
     private readonly int[,] _adjacencyMatrix = BuildAdjacencyMatrix(nodes, edges);
     private readonly Node[] _nodes = nodes;
 
+    public List<Node> Nodes => _nodes.ToList();
+    public List<Edge> Edges => GetAllEdges();
+
     private static int[,] BuildAdjacencyMatrix(Node[] nodes, Edge[] edges)
     {
         int[,] adjacencyMatrix = new int[nodes.Length, nodes.Length];
@@ -72,5 +75,21 @@ public class Graph(Node[] nodes, Edge[] edges)
         _adjacencyMatrix[edge.Source.Id, edge.Target.Id] = weight;
 
         return new Edge(edge.Source, edge.Target, weight);
+    }
+
+    public List<Edge> GetAllEdges()
+    {
+        var allEdges = new List<Edge>();
+
+        for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < _adjacencyMatrix.GetLength(1); j++)
+            {
+                if (_adjacencyMatrix[i, j] >= 0)
+                    allEdges.Add(new Edge(_nodes[i], _nodes[j], _adjacencyMatrix[i, j]));
+            }
+        }
+
+        return allEdges;
     }
 }
