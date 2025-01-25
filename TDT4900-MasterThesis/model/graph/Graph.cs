@@ -10,18 +10,18 @@ public class Graph(Node[] nodes, Edge[] edges)
     /// </summary>
     private readonly int[,] _adjacencyMatrix = BuildAdjacencyMatrix(nodes, edges);
     private readonly Node[] _nodes = nodes;
-    
+
     private static int[,] BuildAdjacencyMatrix(Node[] nodes, Edge[] edges)
     {
         int[,] adjacencyMatrix = new int[nodes.Length, nodes.Length];
         ArrayHelper.FillArray(adjacencyMatrix, -1);
-        
-        foreach(var e in edges)
+
+        foreach (var e in edges)
             adjacencyMatrix[e.Source.Id, e.Target.Id] = e.Weight;
 
         return adjacencyMatrix;
     }
-    
+
     /// <summary>
     /// Get all edges in graph where node is the source of the edge.
     /// </summary>
@@ -30,7 +30,7 @@ public class Graph(Node[] nodes, Edge[] edges)
     public Edge[] GetOutEdges(Node node)
     {
         var outEdges = new List<Edge>();
-        
+
         for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
         {
             var w = _adjacencyMatrix[node.Id, i];
@@ -40,23 +40,23 @@ public class Graph(Node[] nodes, Edge[] edges)
 
         return outEdges.ToArray();
     }
-    
+
     /// <summary>
     /// Get all edges in graph where node is the target of the edge.
     /// </summary>
     /// <param name="node">Node to receive inward edges from</param>
     /// <returns>Array of inward edges for node</returns>
-    public Edge[] GetInEdges(Node node) 
+    public Edge[] GetInEdges(Node node)
     {
         var inEdges = new List<Edge>();
-        
+
         for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
         {
             var w = _adjacencyMatrix[i, node.Id];
             if (w > 0)
                 inEdges.Add(new Edge(_nodes[i], node, w));
         }
-        
+
         return inEdges.ToArray();
     }
 
@@ -70,12 +70,7 @@ public class Graph(Node[] nodes, Edge[] edges)
     public Edge SetEdgeWeight(Edge edge, int weight)
     {
         _adjacencyMatrix[edge.Source.Id, edge.Target.Id] = weight;
-        
-        return new Edge(
-            edge.Source,
-            edge.Target,
-            weight
-        );
+
+        return new Edge(edge.Source, edge.Target, weight);
     }
-    
 }

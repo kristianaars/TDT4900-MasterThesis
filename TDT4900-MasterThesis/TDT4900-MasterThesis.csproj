@@ -12,4 +12,9 @@
       <Folder Include="exception\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Serilog.Enrichers.CallerInfo" Version="1.0.5" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    </ItemGroup>
+
 </Project>

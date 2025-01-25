@@ -6,7 +6,7 @@ public class AppSettings
     /// Target Frames per second for simulation
     /// </summary>
     public static int TargetFPS { get; } = 60;
-    
+
     /// <summary>
     /// Target ticks per second for simulation
     /// </summary>

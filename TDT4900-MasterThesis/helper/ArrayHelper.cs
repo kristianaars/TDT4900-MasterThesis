@@ -2,7 +2,6 @@ namespace TDT4900_MasterThesis.helpers;
 
 public class ArrayHelper
 {
-    
     /// <summary>
     /// Fills the array with the given value.
     /// </summary>
@@ -16,5 +15,4 @@ public class ArrayHelper
             }
         }
     }
-    
 }
