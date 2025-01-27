@@ -16,7 +16,7 @@ public class GraphView : IDrawable, IUpdatable
         _activeNodes = new int[graph.Nodes.Count];
 
         // Nodes will be activated for one second
-        _nodeActivationDuration = appSettings.TargetTPS / 4;
+        _nodeActivationDuration = appSettings.Simulation.TargetTps / 4;
 
         _graph = graph;
     }
@@ -41,6 +41,15 @@ public class GraphView : IDrawable, IUpdatable
             e.Source.Y,
             e.Target.X,
             e.Target.Y,
+            new SKPaint { Color = SKColors.Black }
+        );
+
+        canvas.DrawText(
+            $"{e.Weight}",
+            (e.Source.X + e.Target.X) / 2,
+            (e.Source.Y + e.Target.Y) / 2,
+            SKTextAlign.Center,
+            new SKFont(SKTypeface.Default, 10),
             new SKPaint { Color = SKColors.Black }
         );
     }

@@ -37,6 +37,7 @@ var edges = new Edge[]
 
 RandomGraphFactory factory = new RandomGraphFactory(100, 200);
 var g = factory.GetGraph();
+g.ConvertToBidirectional();
 
 //var g = new Graph(n, edges);
 
@@ -46,6 +47,7 @@ ServiceCollection serviceCollection = new ServiceCollection();
 serviceCollection.AddSingleton(g);
 serviceCollection.AddSingleton<NodeMessageEngine>();
 serviceCollection.AddSingleton<SimulationEngine>();
+serviceCollection.AddSingleton<MessageWaveEngine>();
 serviceCollection.AddSingleton<AppSettings>();
 
 serviceCollection.AddSingleton<MainCanvas>();
@@ -57,9 +59,12 @@ var services = serviceCollection.BuildServiceProvider();
 
 var nodeMessageEngine = services.GetRequiredService<NodeMessageEngine>();
 var simEngine = services.GetRequiredService<SimulationEngine>();
+var messageWaveEngine = services.GetRequiredService<MessageWaveEngine>();
+var graphView = services.GetRequiredService<GraphView>();
 var window = services.GetRequiredService<MainWindow>();
 
-nodeMessageEngine.SendMessage(new Message(0, n[1], n[1]));
+simEngine.UpdatableComponents.AddRange([nodeMessageEngine, messageWaveEngine, graphView]);
+simEngine.DrawableComponents.AddRange([graphView]);
 
 Task.Run(() =>
 {

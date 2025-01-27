@@ -19,13 +19,13 @@ public class RandomGraphFactory
 
     private ICollection<Node> GetVertices()
     {
-        var mapW = (int)Math.Sqrt(_vertexCount * 1000) * 4;
+        var mapW = (int)Math.Sqrt(_vertexCount * 1000) * 3;
         var mapH = mapW;
 
         var rnd = new Random();
         var vertices = new List<Node>();
 
-        var minDistance = 40;
+        var minDistance = 35;
 
         while (vertices.Count < _vertexCount)
         {

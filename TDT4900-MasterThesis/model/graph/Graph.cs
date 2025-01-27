@@ -92,4 +92,16 @@ public class Graph(Node[] nodes, Edge[] edges)
 
         return allEdges;
     }
+
+    public void ConvertToBidirectional()
+    {
+        for (int i = 0; i < _adjacencyMatrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < _adjacencyMatrix.GetLength(1); j++)
+            {
+                if (_adjacencyMatrix[i, j] >= 0)
+                    _adjacencyMatrix[j, i] = _adjacencyMatrix[i, j];
+            }
+        }
+    }
 }

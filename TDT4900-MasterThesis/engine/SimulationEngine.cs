@@ -22,24 +22,16 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
-    public readonly List<IUpdatable> UpdatableComponents;
-    public List<IDrawable> DrawableComponents;
+    public readonly List<IUpdatable> UpdatableComponents = [];
+    public readonly List<IDrawable> DrawableComponents = [];
 
-    public SimulationEngine(
-        NodeMessageEngine nodeMessageEngine,
-        MainCanvas mainCanvas,
-        AppSettings appSettings,
-        GraphView graphView
-    )
+    public SimulationEngine(MainCanvas mainCanvas, AppSettings appSettings)
     {
         _mainCanvas = mainCanvas;
         _mainCanvas.PaintSurface += OnPaintSurface;
 
-        UpdatableComponents = [nodeMessageEngine, graphView];
-        DrawableComponents = [graphView];
-
-        _targetFps = appSettings.TargetFPS;
-        _targetTps = appSettings.TargetTPS;
+        _targetFps = appSettings.Simulation.TargetFps;
+        _targetTps = appSettings.Simulation.TargetTps;
     }
 
     /// <summary>
