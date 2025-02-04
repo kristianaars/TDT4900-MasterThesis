@@ -17,33 +17,6 @@ public class RandomGraphFactory
         _edgeCount = edgeCount;
     }
 
-    private ICollection<Node> GetVertices()
-    {
-        var mapW = (int)Math.Sqrt(_vertexCount * 1000) * 3;
-        var mapH = mapW;
-
-        var rnd = new Random();
-        var vertices = new List<Node>();
-
-        var minDistance = 35;
-
-        while (vertices.Count < _vertexCount)
-        {
-            var x = rnd.Next(20, mapW + 20);
-            var y = rnd.Next(20, mapH + 20);
-
-            if (
-                vertices.Count == 0
-                || vertices.Min(u => PointHelper.DistanceBetween(x, y, u.X, u.Y) > minDistance)
-            )
-            {
-                vertices.Add(new Node(vertices.Count) { X = x, Y = y });
-            }
-        }
-
-        return vertices;
-    }
-
     public Graph GetGraph()
     {
         var rnd = new Random();
@@ -64,29 +37,100 @@ public class RandomGraphFactory
             var v2 = cell.Vertices[1];
             var v3 = cell.Vertices[2];
 
-            if (edgeConnectionMatrix[Math.Min(v1.Id, v2.Id), Math.Max(v1.Id, v2.Id)] < 1)
-            {
-                edges.Add(GenerateEdge(v1, v2));
-                edgeConnectionMatrix[Math.Min(v1.Id, v2.Id), Math.Max(v1.Id, v2.Id)] = 1;
-            }
+            AddEdgeIfNotExists(v1, v2, edges, edgeConnectionMatrix);
+            AddEdgeIfNotExists(v2, v3, edges, edgeConnectionMatrix);
+            AddEdgeIfNotExists(v3, v1, edges, edgeConnectionMatrix);
+        }
 
-            if (edgeConnectionMatrix[Math.Min(v2.Id, v3.Id), Math.Max(v2.Id, v3.Id)] < 1)
-            {
-                edges.Add(GenerateEdge(v2, v3));
-                edgeConnectionMatrix[Math.Min(v2.Id, v3.Id), Math.Max(v2.Id, v3.Id)] = 1;
-            }
+        // Step 1: Ensure Connectivity with a Minimum Spanning Tree (MST)
+        var mstEdges = GetMinimumSpanningTree(vertices, edges);
 
-            if (edgeConnectionMatrix[Math.Min(v3.Id, v1.Id), Math.Max(v3.Id, v1.Id)] < 1)
+        // Step 2: Add Random Edges to Meet Desired Edge Count
+        var remainingEdges = edges
+            .Except(mstEdges)
+            .OrderBy(_ => rnd.Next()) // Randomize order
+            .Take(_edgeCount - mstEdges.Count)
+            .ToList();
+
+        var finalEdges = mstEdges.Concat(remainingEdges).ToList();
+
+        return new Graph(vertices.ToArray(), finalEdges.ToArray());
+    }
+
+    private void AddEdgeIfNotExists(Node v1, Node v2, List<Edge> edges, int[,] edgeConnectionMatrix)
+    {
+        if (edgeConnectionMatrix[Math.Min(v1.Id, v2.Id), Math.Max(v1.Id, v2.Id)] < 1)
+        {
+            edges.Add(GenerateEdge(v1, v2));
+            edgeConnectionMatrix[Math.Min(v1.Id, v2.Id), Math.Max(v1.Id, v2.Id)] = 1;
+        }
+    }
+
+    private List<Edge> GetMinimumSpanningTree(List<Node> vertices, List<Edge> edges)
+    {
+        // Kruskal's algorithm for MST
+        var mstEdges = new List<Edge>();
+        var parent = Enumerable.Range(0, vertices.Count).ToArray();
+
+        int Find(int v)
+        {
+            if (parent[v] != v)
+                parent[v] = Find(parent[v]);
+            return parent[v];
+        }
+
+        void Union(int v1, int v2)
+        {
+            var root1 = Find(v1);
+            var root2 = Find(v2);
+            if (root1 != root2)
+                parent[root1] = root2;
+        }
+
+        // Sort edges by weight
+        var sortedEdges = edges.OrderBy(e => e.Weight).ToList();
+
+        foreach (var edge in sortedEdges)
+        {
+            if (Find(edge.Source.Id) != Find(edge.Target.Id))
             {
-                edges.Add(GenerateEdge(v3, v1));
-                edgeConnectionMatrix[Math.Min(v3.Id, v1.Id), Math.Max(v3.Id, v1.Id)] = 1;
+                mstEdges.Add(edge);
+                Union(edge.Source.Id, edge.Target.Id);
+
+                // Stop if we've added enough edges for an MST
+                if (mstEdges.Count == vertices.Count - 1)
+                    break;
             }
         }
 
-        edges.Sort((e1, e2) => e2.Weight - e1.Weight);
-        edges.RemoveRange(0, edges.Count - _edgeCount);
+        return mstEdges;
+    }
 
-        return new Graph(vertices.ToArray(), edges.ToArray());
+    private ICollection<Node> GetVertices()
+    {
+        var mapW = (int)Math.Sqrt(_vertexCount * 1000) * 3;
+        var mapH = mapW;
+
+        var rnd = new Random();
+        var vertices = new List<Node>();
+
+        var minDistance = 10;
+
+        while (vertices.Count < _vertexCount)
+        {
+            var x = rnd.Next(20, mapW + 20);
+            var y = rnd.Next(20, mapH + 20);
+
+            if (
+                vertices.Count == 0
+                || vertices.Min(u => PointHelper.DistanceBetween(x, y, u.X, u.Y) > minDistance)
+            )
+            {
+                vertices.Add(new Node(vertices.Count) { X = x, Y = y });
+            }
+        }
+
+        return vertices;
     }
 
     public Edge GenerateEdge(Node source, Node target)

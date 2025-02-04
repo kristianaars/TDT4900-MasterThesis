@@ -3,9 +3,12 @@ namespace TDT4900_MasterThesis.model.graph;
 public class Node(int id) : MIConvexHull.IVertex
 {
     public int Id { get; } = id;
+    public bool IsTagged { get; set; }
+    public bool IsInhibited { get; set; }
 
     public int X { get; set; }
     public int Y { get; set; }
+    public double[] Position => [X, Y];
 
     protected bool Equals(Node other)
     {
@@ -32,6 +35,4 @@ public class Node(int id) : MIConvexHull.IVertex
     {
         return $"{nameof(Id)}: {Id}";
     }
-
-    public double[] Position => [X, Y];
 }

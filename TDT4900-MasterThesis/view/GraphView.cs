@@ -43,28 +43,38 @@ public class GraphView : IDrawable, IUpdatable
             e.Target.Y,
             new SKPaint { Color = SKColors.Black }
         );
-
-        canvas.DrawText(
-            $"{e.Weight}",
-            (e.Source.X + e.Target.X) / 2,
-            (e.Source.Y + e.Target.Y) / 2,
-            SKTextAlign.Center,
-            new SKFont(SKTypeface.Default, 10),
-            new SKPaint { Color = SKColors.Black }
-        );
     }
 
     private void DrawNode(Node n, SKCanvas canvas)
     {
         int radius = 20;
+        bool isActive = _activeNodes[n.Id] > 0;
+        bool isTagged = n.IsTagged;
+        bool isInhibited = n.IsInhibited;
 
-        if (_activeNodes[n.Id] > 0)
+        var fill = isActive ? SKColors.Green : SKColors.Gray;
+        var stroke =
+            isTagged ? SKColors.Magenta
+            : isInhibited ? SKColors.Red
+            : SKColors.Transparent;
+
+        canvas.DrawCircle(n.X, n.Y, radius, new SKPaint { Color = fill });
+
+        // Draw stroke if applicable
+        if (stroke != SKColors.Transparent)
         {
-            canvas.DrawCircle(n.X, n.Y, radius, new SKPaint { Color = SKColors.Green });
-        }
-        else
-        {
-            canvas.DrawCircle(n.X, n.Y, radius, new SKPaint { Color = SKColors.Coral });
+            canvas.DrawCircle(
+                n.X,
+                n.Y,
+                radius,
+                new SKPaint
+                {
+                    IsAntialias = true,
+                    Color = stroke,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 4,
+                }
+            );
         }
 
         canvas.DrawText(
@@ -77,6 +87,10 @@ public class GraphView : IDrawable, IUpdatable
         );
     }
 
+    /// <summary>
+    /// Marks a node as active for <see cref="_nodeActivationDuration"/> ticks
+    /// </summary>
+    /// <param name="n"></param>
     public void ActivateNode(Node n)
     {
         _activeNodes[n.Id] = _nodeActivationDuration;

@@ -30,7 +30,12 @@ public class MessageWaveEngine : IUpdatable
 
     public void BeginNewWave(long atTick)
     {
+        _graph.Nodes.ForEach(node => node.IsInhibited = false);
+
         _lastWave = atTick;
-        _messageEngine.SendMessage(new Message(atTick, _graph.Nodes[0], _graph.Nodes[0]));
+        _messageEngine.SendMessage(
+            new Message(atTick, _graph.Nodes[0], _graph.Nodes[0], Message.MessageType.Excitatory),
+            tau: 0
+        );
     }
 }
