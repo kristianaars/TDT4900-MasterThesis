@@ -18,6 +18,8 @@ public class MessageWaveEngine : IUpdatable
         _graph = graph;
 
         _waveInterval = appSettings.Simulation.WaveInterval;
+
+        graph.Nodes[3].State = NodeState.Tagged;
     }
 
     public void Update(long currentTick)
@@ -30,7 +32,7 @@ public class MessageWaveEngine : IUpdatable
 
     public void BeginNewWave(long atTick)
     {
-        _graph.Nodes.ForEach(node => node.IsInhibited = false);
+        _graph.Nodes.ForEach(node => node.State = NodeState.Neutral);
 
         _lastWave = atTick;
         _messageEngine.SendMessage(

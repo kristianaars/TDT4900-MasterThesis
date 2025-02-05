@@ -1,0 +1,98 @@
+using ScottPlot;
+using ScottPlot.Avalonia;
+using ScottPlot.Plottables;
+using Serilog;
+using TDT4900_MasterThesis.model.graph;
+using TDT4900_MasterThesis.model.simulation;
+
+namespace TDT4900_MasterThesis.view.plot;
+
+public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
+{
+    private Graph _graph;
+    private readonly int[] _activeNodes;
+    private readonly int _nodeActivationDuration;
+
+    public GraphPlotView(Graph graph, AppSettings appSettings)
+    {
+        _graph = graph;
+        _nodeActivationDuration = appSettings.Simulation.TargetTps / 4;
+        _activeNodes = new int[graph.Nodes.Count];
+
+        Init();
+    }
+
+    private List<Arrow> _edges = new();
+    private List<Marker> _nodes = new();
+
+    public void Init()
+    {
+        var edges = _graph.Edges;
+        var nodes = _graph.Nodes;
+
+        // Draw edges
+        foreach (var e in edges)
+        {
+            int start = e.Source.Id;
+            int end = e.Target.Id;
+
+            double x1 = nodes[start].X,
+                y1 = nodes[start].Y;
+            double x2 = nodes[end].X,
+                y2 = nodes[end].Y;
+
+            var line = Plot.Add.Arrow(x1, y1, x2, y2);
+            line.ArrowFillColor = Colors.Black;
+            line.ArrowLineColor = Colors.Transparent;
+            line.ArrowWidth = 2f;
+            line.ArrowheadWidth = 15f;
+            line.ArrowheadAxisLength = 10f;
+            _edges.Add(line);
+        }
+
+        // Draw nodes
+        foreach (var n in nodes)
+        {
+            var node = Plot.Add.Marker(n.X, n.Y);
+
+            node.Color = Colors.Blue;
+            node.MarkerSize = 10;
+
+            _nodes.Add(node);
+        }
+    }
+
+    public void Draw()
+    {
+        Refresh();
+    }
+
+    public void ActivateNode(int i)
+    {
+        _nodes[i].Color = Colors.Green;
+        _activeNodes[i] = _nodeActivationDuration;
+    }
+
+    public void Update(long currentTick)
+    {
+        for (int i = 0; i < _activeNodes.Length; i++)
+        {
+            if (_activeNodes[i] > 0)
+            {
+                _activeNodes[i]--;
+            }
+            else if (_graph.Nodes[i] is { State: NodeState.Tagged })
+            {
+                _nodes[i].Color = Colors.Pink;
+            }
+            else if (_graph.Nodes[i] is { State: NodeState.Inhibited })
+            {
+                _nodes[i].Color = Colors.Red;
+            }
+            else
+            {
+                _nodes[i].Color = Colors.Blue;
+            }
+        }
+    }
+}

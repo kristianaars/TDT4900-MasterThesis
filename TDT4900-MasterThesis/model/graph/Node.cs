@@ -3,14 +3,14 @@ namespace TDT4900_MasterThesis.model.graph;
 public class Node(int id) : MIConvexHull.IVertex
 {
     public int Id { get; } = id;
-    public bool IsTagged { get; set; }
-    public bool IsInhibited { get; set; }
 
     public int X { get; set; }
     public int Y { get; set; }
     public double[] Position => [X, Y];
 
-    protected bool Equals(Node other)
+    public NodeState State { get; set; } = NodeState.Neutral;
+
+    public bool Equals(Node other)
     {
         return Id == other.Id;
     }
@@ -35,4 +35,13 @@ public class Node(int id) : MIConvexHull.IVertex
     {
         return $"{nameof(Id)}: {Id}";
     }
+}
+
+public enum NodeState
+{
+    Neutral,
+    Cooldown,
+    Processing,
+    Inhibited,
+    Tagged,
 }

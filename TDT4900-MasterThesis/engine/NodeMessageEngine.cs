@@ -3,6 +3,7 @@ using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
 using TDT4900_MasterThesis.view;
+using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.engine;
 
@@ -58,15 +59,16 @@ public class NodeMessageEngine : IUpdatable
     /// </summary>
     private readonly Graph _graph;
 
-    /// <summary>
-    /// Visualization of the message passing
-    /// </summary>
-    private readonly GraphView _graphView;
+    private readonly GraphPlotView? _graphPlotView;
 
-    public NodeMessageEngine(Graph graph, GraphView graphView, AppSettings appSettings)
+    public NodeMessageEngine(
+        Graph graph,
+        AppSettings appSettings,
+        GraphPlotView? graphPlotView = null
+    )
     {
         _graph = graph;
-        _graphView = graphView;
+        _graphPlotView = graphPlotView;
 
         _cooldownPeriods = new int[_graph.Nodes.Count];
         _iEMessagePairWindow = new int[_graph.Nodes.Count];
@@ -99,7 +101,7 @@ public class NodeMessageEngine : IUpdatable
         while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
         {
             var message = _processingQueue.Dequeue();
-            if (message.Sender.IsInhibited)
+            if (message.Sender is { State: NodeState.Inhibited })
                 continue;
             _messageQueue.Enqueue(message, message.ReceiveAt);
         }
@@ -120,13 +122,15 @@ public class NodeMessageEngine : IUpdatable
 
         var currentTick = message.ReceiveAt;
 
-        Log.Information("[{tick}] Received message {msg}", currentTick, message);
+        //Log.Debug("[{tick}] Received message {msg}", currentTick, message);
 
         switch (message.Type)
         {
             case Message.MessageType.Excitatory:
 
-                if (receiver.IsTagged)
+                _graphPlotView?.ActivateNode(receiver.Id);
+
+                if (receiver is { State: NodeState.Tagged })
                 {
                     GlobalInhibitoryMessageBurst(
                         source: receiver,
@@ -141,17 +145,15 @@ public class NodeMessageEngine : IUpdatable
                         tau: _tauPlus,
                         deltaT: _deltaTExcitatory
                     );
-
-                    _graphView.ActivateNode(receiver);
                 }
-                else if (receiver.IsInhibited)
+                else if (receiver is { State: NodeState.Inhibited })
                 {
                     if (
                         _iEMessagePairWindow[receiver.Id] > 0
                         && _iEMessagePairWindow[receiver.Id] < _tauZero
                     )
                     {
-                        receiver.IsTagged = true;
+                        receiver.State = NodeState.Tagged;
 
                         Log.Information(
                             "Excitatory message pair window is active for node {node} with expiration in {window} ticks",
@@ -174,13 +176,10 @@ public class NodeMessageEngine : IUpdatable
                         tau: _tauZero,
                         deltaT: _deltaTExcitatory
                     );
-
-                    // Visualize the activation of the node
-                    _graphView.ActivateNode(receiver);
                 }
                 break;
             case Message.MessageType.Inhibitory:
-                receiver.IsInhibited = true;
+                receiver.State = NodeState.Inhibited;
                 break;
         }
     }
@@ -194,12 +193,12 @@ public class NodeMessageEngine : IUpdatable
     /// <param name="deltaT">Time it takes for the excitatory burst being received by targets</param>
     private void ExcitatoryMessageBurst(Node source, long currentTick, int tau, int deltaT)
     {
-        if (source.IsInhibited)
+        if (source is { State: NodeState.Inhibited })
             return;
 
         // One extra _tauZero since the message pair window is defined before the message is sent
         _iEMessagePairWindow[source.Id] = (2 * _deltaTExcitatory + 2 * _tauZero) - 1;
-        Log.Information(
+        Log.Debug(
             "[{tick}] Setting message pair window for node {node} to {exitation} ticks",
             currentTick,
             source,
@@ -208,7 +207,7 @@ public class NodeMessageEngine : IUpdatable
 
         // refractory period
         _cooldownPeriods[source.Id] = _nodeCooldownPeriod;
-        Log.Information(
+        Log.Debug(
             "[{tick}] Setting cooldown period for node {node} to {cooldown} ticks",
             currentTick,
             source,
@@ -239,7 +238,7 @@ public class NodeMessageEngine : IUpdatable
     /// <param name="deltaT">Time it takes for the inhibitory burst being received by targets</param>
     private void InhibitoryMessageBurst(Node source, long currentTick, int tau, int deltaT)
     {
-        if (source.IsInhibited)
+        if (source is { State: NodeState.Inhibited })
             return;
 
         var outEdges = _graph.GetOutEdges(source);
@@ -288,7 +287,7 @@ public class NodeMessageEngine : IUpdatable
     /// <param name="tau">Processing time for message before being sent</param>
     public void SendMessage(Message message, int tau)
     {
-        Log.Information("Queuing message {msg}", message);
+        //Log.Information("Queuing message {msg}", message);
         _processingQueue.Enqueue(message, message.ReceiveAt + tau);
     }
 }
