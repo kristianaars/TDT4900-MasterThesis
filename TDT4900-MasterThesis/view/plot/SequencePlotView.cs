@@ -33,12 +33,14 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
             _bars!
                 [n.Id]
                 .Bars.Add(
-                    new Bar()
+                    new Bar
                     {
-                        FillColor = GetStateColor(n.State),
+                        Position = n.Id,
+                        FillColor = GetStateFillColor(n.State),
                         Orientation = Orientation.Horizontal,
+                        LineColor = GetStateBorderColor(n.State, n.IsTagged),
                         ValueBase = 0,
-                        Value = 0,
+                        Value = 1,
                     }
                 );
 
@@ -68,6 +70,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         foreach (var n in _graph.Nodes)
         {
             var state = n.State;
+            var isTagged = n.IsTagged;
 
             if (state != _lastState[n.Id])
             {
@@ -75,7 +78,10 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
                     .Bars.Add(
                         new Bar()
                         {
-                            FillColor = GetStateColor(state),
+                            Position = n.Id,
+                            FillColor = GetStateFillColor(state),
+                            LineColor = GetStateBorderColor(state, isTagged),
+                            LineWidth = isTagged ? 3 : 1,
                             Orientation = Orientation.Horizontal,
                             ValueBase = currentTick,
                             Value = currentTick,
@@ -87,14 +93,20 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         }
     }
 
-    private Color GetStateColor(NodeState state) =>
+    private Color GetStateFillColor(NodeState state) =>
         state switch
         {
             NodeState.Neutral => Colors.Transparent,
-            NodeState.Cooldown => Colors.Aqua,
+            NodeState.Refractory => Colors.Aqua,
             NodeState.Processing => Colors.Green,
             NodeState.Inhibited => Colors.Red,
-            NodeState.Tagged => Colors.Pink,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
+
+    private Color GetStateBorderColor(NodeState state, bool IsTagged) =>
+        state switch
+        {
+            NodeState.Neutral => Colors.Transparent,
+            _ => IsTagged ? Colors.Red : Colors.Black,
         };
 }

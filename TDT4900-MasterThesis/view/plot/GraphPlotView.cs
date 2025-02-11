@@ -55,8 +55,11 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
         {
             var node = Plot.Add.Marker(n.X, n.Y);
 
-            node.Color = Colors.Blue;
-            node.MarkerSize = 10;
+            node.Color = Colors.Cyan;
+            node.MarkerSize = 40;
+
+            var text = Plot.Add.Text($"{n.Id}", n.X, n.Y);
+            text.Alignment = Alignment.MiddleCenter;
 
             _nodes.Add(node);
         }
@@ -75,23 +78,29 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
 
     public void Update(long currentTick)
     {
-        for (int i = 0; i < _activeNodes.Length; i++)
+        foreach (var n in _graph.Nodes)
         {
-            if (_activeNodes[i] > 0)
+            switch (n.State)
             {
-                _activeNodes[i]--;
+                case NodeState.Neutral:
+                    _nodes[n.Id].Color = Colors.White;
+                    break;
+                case NodeState.Refractory:
+                    _nodes[n.Id].Color = Colors.Cyan;
+                    break;
+                case NodeState.Processing:
+                    _nodes[n.Id].Color = Colors.Green;
+                    break;
+                case NodeState.Inhibited:
+                    _nodes[n.Id].Color = Colors.Red;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-            else if (_graph.Nodes[i] is { State: NodeState.Tagged })
+
+            if (n.IsTagged)
             {
-                _nodes[i].Color = Colors.Pink;
-            }
-            else if (_graph.Nodes[i] is { State: NodeState.Inhibited })
-            {
-                _nodes[i].Color = Colors.Red;
-            }
-            else
-            {
-                _nodes[i].Color = Colors.Blue;
+                _nodes[n.Id].LineWidth = 2;
             }
         }
     }

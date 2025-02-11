@@ -18,8 +18,9 @@ public class MessageWaveEngine : IUpdatable
         _graph = graph;
 
         _waveInterval = appSettings.Simulation.WaveInterval;
+        _lastWave = -_waveInterval;
 
-        graph.Nodes[3].State = NodeState.Tagged;
+        graph.Nodes[3].IsTagged = true;
     }
 
     public void Update(long currentTick)
@@ -32,12 +33,16 @@ public class MessageWaveEngine : IUpdatable
 
     public void BeginNewWave(long atTick)
     {
+        var target = _graph.Nodes[0];
+
         _graph.Nodes.ForEach(node => node.State = NodeState.Neutral);
 
         _lastWave = atTick;
-        _messageEngine.SendMessage(
-            new Message(atTick, _graph.Nodes[0], _graph.Nodes[0], Message.MessageType.Excitatory),
-            tau: 0
+        _messageEngine.QueueProcessMessage(
+            new ProcessMessage(
+                atTick,
+                new NodeMessage(atTick, null, target, NodeMessage.MessageType.Excitatory)
+            )
         );
     }
 }

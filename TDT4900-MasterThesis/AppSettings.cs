@@ -13,22 +13,22 @@ public class AppSettings
         /// <summary>
         /// Target Frames per second for simulation
         /// </summary>
-        public readonly int TargetFps = 30;
+        public readonly int TargetFps = 40;
 
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 500;
+        public readonly int TargetTps = 150;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)
         /// </summary>
-        public readonly int NodeCooldownPeriod = 100;
+        public readonly int RefractoryPeriod = 75;
 
         /// <summary>
         /// The interval in which a new wave of messages is sent (in ticks)
         /// </summary>
-        public readonly int WaveInterval = 200;
+        public readonly int WaveInterval = 500;
 
         /// <summary>
         /// The time it takes for an excitatory message to reach a node  (in ticks)

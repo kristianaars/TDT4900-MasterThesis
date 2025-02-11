@@ -2,12 +2,13 @@ using TDT4900_MasterThesis.model.graph;
 
 namespace TDT4900_MasterThesis.model;
 
-public class Message(long receiveAt, Node sender, Node receiver, Message.MessageType type)
+public class NodeMessage(long receiveAt, Node? sender, Node receiver, NodeMessage.MessageType type)
+    : IMessage
 {
     public MessageType Type { get; } = type;
-    public long ReceiveAt { get; } = receiveAt;
-    public Node Sender { get; } = sender;
+    public Node? Sender { get; } = sender;
     public Node Receiver { get; } = receiver;
+    public long ReceiveAt { get; } = receiveAt;
 
     public override string ToString()
     {

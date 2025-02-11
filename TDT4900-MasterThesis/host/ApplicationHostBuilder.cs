@@ -17,6 +17,8 @@ public class ApplicationHostBuilder
 
     private HostApplicationBuilder _baseBuilder { get; } = Host.CreateApplicationBuilder();
 
+    private AppSettings _appSettings;
+
     public ApplicationHostBuilder()
     {
         _baseBuilder.Logging.ClearProviders();
@@ -24,7 +26,8 @@ public class ApplicationHostBuilder
         _baseBuilder.Logging.SetMinimumLevel(LogLevel.Debug);
 
         // Configure services
-        _services.AddSingleton<AppSettings>();
+        _appSettings = new AppSettings();
+        _services.AddSingleton(_appSettings);
     }
 
     public ApplicationHostBuilder AddSimulationHost()
@@ -35,6 +38,7 @@ public class ApplicationHostBuilder
 
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<MessageWaveEngine>());
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<NodeMessageEngine>());
+        _services.AddTransient<IUpdatable>(p => p.GetRequiredService<Graph>());
 
         _services.AddHostedService<SimulationHost>();
         return this;
@@ -59,7 +63,8 @@ public class ApplicationHostBuilder
     {
         RandomGraphFactory f = new RandomGraphFactory(vertexCount, edgeCount);
         Graph graph = f.GetGraph();
-        graph.ConvertToBidirectional();
+
+        graph.Nodes.ForEach(n => n.SimulationSettings = _appSettings.Simulation);
 
         _services.AddSingleton(graph);
         return this;
