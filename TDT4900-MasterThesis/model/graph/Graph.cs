@@ -1,8 +1,9 @@
 using TDT4900_MasterThesis.helpers;
+using TDT4900_MasterThesis.model.simulation;
 
 namespace TDT4900_MasterThesis.model.graph;
 
-public class Graph(Node[] nodes, Edge[] edges)
+public class Graph(Node[] nodes, Edge[] edges) : IUpdatable
 {
     /// <summary>
     /// Index by [source, target] to get the weight of the edge between source and target.
@@ -103,5 +104,11 @@ public class Graph(Node[] nodes, Edge[] edges)
                     _adjacencyMatrix[j, i] = _adjacencyMatrix[i, j];
             }
         }
+    }
+
+    public void Update(long currentTick)
+    {
+        foreach (var node in _nodes)
+            node.Update(currentTick);
     }
 }
