@@ -2,6 +2,7 @@ using Serilog;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
+using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.engine;
 
@@ -19,18 +20,23 @@ public class NodeMessageEngine : IUpdatable
     /// </summary>
     private readonly PriorityQueue<ProcessMessage, long> _processingQueue = new();
 
-    /// <summary>
-    /// Graph to be used for the simulation
-    /// </summary>
+    private readonly SequencePlotView? _sequencePlotView;
+
     private readonly Graph _graph;
 
-    public NodeMessageEngine(Graph graph)
+    public NodeMessageEngine(Graph graph, SequencePlotView? sequencePlotView)
     {
+        _sequencePlotView = sequencePlotView;
         _graph = graph;
     }
 
     public void Update(long currentTick)
     {
+        if (_messageQueue.Count + _processingQueue.Count == 0)
+        {
+            BeginNewWave(currentTick);
+        }
+
         while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
         {
             var message = _processingQueue.Dequeue().SendMessage;
@@ -48,6 +54,24 @@ public class NodeMessageEngine : IUpdatable
         }
     }
 
+    public void BeginNewWave(long atTick)
+    {
+        var target = _graph.Nodes[0];
+        _graph.Nodes.ForEach(node => node.State = NodeState.Neutral);
+
+        // Solution is found, no need to perform a new wave
+        if (target.IsTagged)
+            return;
+
+        QueueProcessMessage(
+            new ProcessMessage(
+                atTick,
+                atTick,
+                new NodeMessage(atTick, atTick, null, target, NodeMessage.MessageType.Excitatory)
+            )
+        );
+    }
+
     /// <summary>
     /// Executes the message and queues successive messages as a result of the message
     /// </summary>
@@ -62,10 +86,14 @@ public class NodeMessageEngine : IUpdatable
         switch (nodeMessage.Type)
         {
             case NodeMessage.MessageType.Excitatory:
+                if (receiver.State != NodeState.Refractory)
+                    _sequencePlotView?.PlotNodeMessage(nodeMessage);
+
                 newMessages = receiver.Excite(currentTick);
                 break;
             case NodeMessage.MessageType.Inhibitory:
-                newMessages = receiver.Excite(currentTick);
+                newMessages = receiver.Inhibit(currentTick);
+                _sequencePlotView?.PlotNodeMessage(nodeMessage);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

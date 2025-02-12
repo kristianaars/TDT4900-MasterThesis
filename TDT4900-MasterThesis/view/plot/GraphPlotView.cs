@@ -80,28 +80,24 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
     {
         foreach (var n in _graph.Nodes)
         {
-            switch (n.State)
-            {
-                case NodeState.Neutral:
-                    _nodes[n.Id].Color = Colors.White;
-                    break;
-                case NodeState.Refractory:
-                    _nodes[n.Id].Color = Colors.Cyan;
-                    break;
-                case NodeState.Processing:
-                    _nodes[n.Id].Color = Colors.Green;
-                    break;
-                case NodeState.Inhibited:
-                    _nodes[n.Id].Color = Colors.Red;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            var node = _nodes[n.Id];
+
+            node.Color = GetStateFillColor(n.State);
 
             if (n.IsTagged)
             {
-                _nodes[n.Id].LineWidth = 2;
+                _nodes[n.Id].LineWidth = 4;
             }
         }
     }
+
+    private Color GetStateFillColor(NodeState state) =>
+        state switch
+        {
+            NodeState.Neutral => Colors.Wheat,
+            NodeState.Refractory => Colors.Aqua,
+            NodeState.Processing => Colors.Green,
+            NodeState.Inhibited => Colors.Red,
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
 }

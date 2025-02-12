@@ -58,7 +58,11 @@ public class RandomGraphFactory
 
         g.ConvertToBidirectional();
 
-        g.Nodes.ForEach(n => n.Neighbours = g.GetOutEdges(n).Select(e => e.Target).ToArray());
+        g.Nodes.ForEach(n =>
+        {
+            n.Neighbours = g.GetOutEdges(n).Select(e => e.Target).ToArray();
+            n.AllNodes = g.Nodes.ToArray();
+        });
 
         return g;
     }

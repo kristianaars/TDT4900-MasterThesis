@@ -17,6 +17,8 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
 
     public Node[] Neighbours = [];
 
+    public Node[] AllNodes = [];
+
     /// <summary>
     /// Tau is the processing time, e.g. how long a message takes to process before sending it to the next node.
     /// </summary>
@@ -25,7 +27,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     /// <summary>
     /// Marks if the node is tagged or not. Tagged nodes have a shorter processing time <see cref="Tau"/>.
     /// </summary>
-    public bool IsTagged { get; set; } = false;
+    public bool IsTagged { get; set; }
 
     /// <summary>
     /// Current state of the node
@@ -36,14 +38,21 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
 
     private int _refractoryCounter;
 
+    private long _taggedExcitationWindow;
+
     public void Update(long currentTick)
     {
+        if (_taggedExcitationWindow > 0)
+        {
+            _taggedExcitationWindow--;
+        }
+
         if (_refractoryCounter > 0)
         {
             _refractoryCounter--;
             if (_refractoryCounter <= 0)
             {
-                if (State != NodeState.Refractory)
+                if (this is not { State: NodeState.Refractory })
                     throw new InvalidOperationException(
                         $"Cannot disable refractory state when node is in state {State}. Node: {this}"
                     );
@@ -66,22 +75,28 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
 
     public ProcessMessage[] Excite(long currentTick)
     {
-        if (IsTagged)
-        {
-            // Inhibit all nodes in the network
-            // How could this be done? Interneuron? Just a special message type that the MessageWaveEngine can infer?
-        }
-
         switch (State)
         {
             case NodeState.Neutral:
+                _taggedExcitationWindow =
+                    +SimulationSettings!.DeltaTExcitatory * 2 + SimulationSettings.TauZero * 2;
+
                 State = NodeState.Processing;
-                return NeighbourExcitatoryMessageBurst(currentTick);
+                return NeighbourExcitatoryMessageBurst(currentTick)
+                    // Add a global inhibitory message burst if the node is tagged
+                    .Concat(IsTagged ? GlobalInhibitoryMessageBurst(currentTick) : [])
+                    .ToArray();
+
             case NodeState.Refractory:
                 return NoAction();
             case NodeState.Processing:
                 return NoAction();
             case NodeState.Inhibited:
+                if (
+                    _taggedExcitationWindow < SimulationSettings!.TauZero
+                    && _taggedExcitationWindow > 0
+                )
+                    IsTagged = true;
                 return NoAction();
             default:
                 throw new ArgumentOutOfRangeException();
@@ -96,10 +111,14 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
                 State = NodeState.Inhibited;
                 return NoAction();
             case NodeState.Refractory:
+                // Disable the refractory period
+                _refractoryCounter = 0;
                 State = NodeState.Inhibited;
                 return NoAction();
             case NodeState.Processing:
                 State = NodeState.Inhibited;
+                return NoAction();
+            case NodeState.Inhibited:
                 return NoAction();
             default:
                 return NoAction();
@@ -117,8 +136,9 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
 
         return Neighbours
             .Select(n => new ProcessMessage(
+                currentTick,
                 sendAt,
-                new NodeMessage(receiveAt, this, n, MessageType.Excitatory)
+                new NodeMessage(sendAt, receiveAt, this, n, MessageType.Excitatory)
             ))
             .ToArray();
     }
@@ -127,15 +147,16 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    public ProcessMessage[] NeighbourInhibitoryMessageBurst(long currentTick)
+    public ProcessMessage[] GlobalInhibitoryMessageBurst(long currentTick)
     {
         var sendAt = currentTick + Tau;
         var receiveAt = sendAt + SimulationSettings!.DeltaTInhibitory;
 
-        return Neighbours
+        return AllNodes
             .Select(n => new ProcessMessage(
+                currentTick,
                 sendAt,
-                new NodeMessage(receiveAt, this, n, MessageType.Excitatory)
+                new NodeMessage(sendAt, receiveAt, this, n, MessageType.Inhibitory)
             ))
             .ToArray();
     }

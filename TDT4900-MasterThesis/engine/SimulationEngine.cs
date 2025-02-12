@@ -16,6 +16,8 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
+    private Stopwatch _stopwatch;
+
     public readonly List<IUpdatable> UpdatableComponents;
     public readonly List<IDrawable> DrawableComponents;
 
@@ -47,19 +49,19 @@ public class SimulationEngine
     public async Task RunSimulation(CancellationToken stoppingToken)
     {
         _isRunning = true;
-        var stopwatch = Stopwatch.StartNew();
+        _stopwatch = Stopwatch.StartNew();
 
         var updateInterval = 1000.0 / _targetTps;
         var renderInterval = 1000.0 / _targetFps;
         var statUpdate = 1000.0;
 
-        double nextUpdate = stopwatch.ElapsedMilliseconds;
-        double nextRender = stopwatch.ElapsedMilliseconds;
-        double nextStatUpdate = stopwatch.ElapsedMilliseconds + statUpdate;
+        double nextUpdate = _stopwatch.ElapsedMilliseconds;
+        double nextRender = _stopwatch.ElapsedMilliseconds;
+        double nextStatUpdate = _stopwatch.ElapsedMilliseconds + statUpdate;
 
         while (_isRunning && !stoppingToken.IsCancellationRequested)
         {
-            double currentTime = stopwatch.ElapsedMilliseconds;
+            double currentTime = _stopwatch.ElapsedMilliseconds;
 
             if (currentTime >= nextUpdate)
             {
@@ -105,5 +107,20 @@ public class SimulationEngine
     {
         DrawableComponents.ForEach(c => Dispatcher.UIThread.Invoke(c.Draw));
         _frameCounter++;
+    }
+
+    public void Pause()
+    {
+        _stopwatch.Stop();
+    }
+
+    public void Play()
+    {
+        _stopwatch.Start();
+    }
+
+    public void Restart()
+    {
+        throw new NotImplementedException();
     }
 }

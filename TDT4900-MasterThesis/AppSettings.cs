@@ -13,41 +13,36 @@ public class AppSettings
         /// <summary>
         /// Target Frames per second for simulation
         /// </summary>
-        public readonly int TargetFps = 40;
+        public readonly int TargetFps = 30;
 
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 150;
+        public readonly int TargetTps = 15;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)
         /// </summary>
-        public readonly int RefractoryPeriod = 75;
-
-        /// <summary>
-        /// The interval in which a new wave of messages is sent (in ticks)
-        /// </summary>
-        public readonly int WaveInterval = 500;
+        public readonly int RefractoryPeriod = 22;
 
         /// <summary>
         /// The time it takes for an excitatory message to reach a node  (in ticks)
         /// </summary>
-        public readonly int DeltaTExcitatory = 25;
+        public readonly int DeltaTExcitatory = 7;
 
         /// <summary>
         /// The time it takes for an inhibitory message to reach a node (in ticks)
         /// </summary>
-        public readonly int DeltaTInhibitory = 10;
+        public readonly int DeltaTInhibitory = 5;
 
         /// <summary>
         /// Forward latency for tagged nodes (in ticks)
         /// </summary>
-        public readonly int TauPlus = 5;
+        public readonly int TauPlus = 2;
 
         /// <summary>
         /// Forward latency for non-tagged nodes (in ticks)
         /// </summary>
-        public readonly int TauZero = 10;
+        public readonly int TauZero = 4;
     }
 }

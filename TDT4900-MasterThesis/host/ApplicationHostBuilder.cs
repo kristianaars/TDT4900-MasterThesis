@@ -32,11 +32,9 @@ public class ApplicationHostBuilder
 
     public ApplicationHostBuilder AddSimulationHost()
     {
-        _services.AddSingleton<MessageWaveEngine>();
         _services.AddSingleton<NodeMessageEngine>();
         _services.AddSingleton<SimulationEngine>();
 
-        _services.AddTransient<IUpdatable>(p => p.GetRequiredService<MessageWaveEngine>());
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<NodeMessageEngine>());
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<Graph>());
 
@@ -59,7 +57,7 @@ public class ApplicationHostBuilder
         return this;
     }
 
-    public ApplicationHostBuilder UseRandomGraph(int vertexCount, int edgeCount)
+    public ApplicationHostBuilder UseRandomGraph(int vertexCount, int edgeCount, int targetNode)
     {
         RandomGraphFactory f = new RandomGraphFactory(vertexCount, edgeCount);
         Graph graph = f.GetGraph();
@@ -67,6 +65,9 @@ public class ApplicationHostBuilder
         graph.Nodes.ForEach(n => n.SimulationSettings = _appSettings.Simulation);
 
         _services.AddSingleton(graph);
+
+        graph.Nodes[targetNode].IsTagged = true;
+
         return this;
     }
 

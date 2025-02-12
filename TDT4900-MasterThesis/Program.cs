@@ -12,7 +12,7 @@ Log.Logger = log;
 
 bool useGui = true;
 
-var hostBuilder = new ApplicationHostBuilder().AddSimulationHost().UseRandomGraph(40, 50);
+var hostBuilder = new ApplicationHostBuilder().AddSimulationHost().UseRandomGraph(20, 25, 5);
 
 if (useGui)
 {
