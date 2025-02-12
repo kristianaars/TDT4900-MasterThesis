@@ -15,7 +15,9 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" Version="11.2.3" />
       <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+      <PackageReference Include="Avalonia.FreeDesktop" Version="11.2.3" />
       <PackageReference Include="Avalonia.Skia" Version="11.2.3" />
+      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
       <PackageReference Include="GtkSharp" Version="3.24.24.95" />
       <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />

@@ -3,32 +3,39 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="TDT4900_MasterThesis.view.MainWindow"
-        Title="TDT4900 Master Thesis">
+        x:Class="TDT4900_MasterThesis.view.MainWindow">
         
         <Grid>
                 <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+
                 </Grid.RowDefinitions>
                 
                 <Grid>
                         <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="2" />
                                 <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                
-                        <Grid Grid.Column="0" Name="GraphPlotContainer">
-                                <TextBlock>Graph Plot Container</TextBlock>
+                        
+                        <Grid Grid.Column="0" Grid.RowDefinitions="Auto *" Margin="8">
+                                <Label FontSize="18" VerticalAlignment="Center">Graph Plot</Label>
+                                <Border Grid.Row="1" Name="GraphPlotContainer"/>
                         </Grid>
+                        
+                        <GridSplitter ResizeDirection="Columns" Grid.Column="1" Background="LightGray" />
                 
-                        <Grid Grid.Column="1" Name="NodeSequencePlotContainer">
-                                <TextBlock>Node Sequence Plot Container</TextBlock>
+                        <Grid Grid.Column="2" RowDefinitions="Auto *" Margin="8">
+                                <Label FontSize="18" VerticalAlignment="Center">Node Sequence Plot</Label>
+                                <Border Grid.Row="1" Name="NodeSequencePlotContainer"/>
                         </Grid>
                 </Grid>
                 
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                        <Button x:Name="Pause" Click="Pause_OnClick" Background="Beige" BorderBrush="Black">Pause</Button>
+                
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8" Spacing="4">
+                        <Button x:Name="Pause" Click="Pause_OnClick">Pause</Button>
                         <Button x:Name="Play" Click="Play_OnClick">Play</Button>
                         <Button x:Name="Restart" Click="Restart_OnClick">Restart</Button>
                 </StackPanel>

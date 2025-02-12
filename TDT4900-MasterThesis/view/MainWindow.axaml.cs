@@ -14,15 +14,20 @@ public partial class MainWindow : Window
     public MainWindow(
         GraphPlotView graphPlotView,
         SequencePlotView sequencePlotView,
-        SimulationEngine engine
+        SimulationEngine engine,
+        AppSettings appSettings
     )
     {
         InitializeComponent();
 
         _engine = engine;
 
-        GraphPlotContainer.Children.Add(graphPlotView);
-        NodeSequencePlotContainer.Children.Add(sequencePlotView);
+        Title = appSettings.WindowTitle;
+        Width = appSettings.DefaultWindowWidth;
+        Height = appSettings.DefaultWindowHeight;
+
+        GraphPlotContainer.Child = graphPlotView;
+        NodeSequencePlotContainer.Child = sequencePlotView;
     }
 
     private void Pause_OnClick(object? sender, RoutedEventArgs e)

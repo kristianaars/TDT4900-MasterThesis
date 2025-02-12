@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -38,5 +39,10 @@ public class App : Application
         Task.Run(async () => await Host.StartAsync());
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 }

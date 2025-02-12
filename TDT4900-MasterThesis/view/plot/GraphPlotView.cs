@@ -2,6 +2,7 @@ using ScottPlot;
 using ScottPlot.Avalonia;
 using ScottPlot.Plottables;
 using Serilog;
+using TDT4900_MasterThesis.constants;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
 
@@ -10,20 +11,15 @@ namespace TDT4900_MasterThesis.view.plot;
 public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
 {
     private Graph _graph;
-    private readonly int[] _activeNodes;
-    private readonly int _nodeActivationDuration;
 
     public GraphPlotView(Graph graph, AppSettings appSettings)
     {
         _graph = graph;
-        _nodeActivationDuration = appSettings.Simulation.TargetTps / 4;
-        _activeNodes = new int[graph.Nodes.Count];
-
         Init();
     }
 
     private List<Arrow> _edges = new();
-    private List<Marker> _nodes = new();
+    private List<Ellipse> _nodes = new();
 
     public void Init()
     {
@@ -53,27 +49,27 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
         // Draw nodes
         foreach (var n in nodes)
         {
-            var node = Plot.Add.Marker(n.X, n.Y);
+            var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 10);
 
-            node.Color = Colors.Cyan;
-            node.MarkerSize = 40;
+            node.FillColor = GetStateFillColor(n.State);
+            node.LineColor = GetStateBorderColor(n.State);
+            node.LineWidth = 2;
 
             var text = Plot.Add.Text($"{n.Id}", n.X, n.Y);
             text.Alignment = Alignment.MiddleCenter;
+            text.LabelFontColor = PlotColors.Black;
 
             _nodes.Add(node);
         }
+
+        Plot.Grid.IsVisible = false;
+        Plot.Axes.Left.TickLabelStyle.IsVisible = false;
+        Plot.Axes.Bottom.TickLabelStyle.IsVisible = false;
     }
 
     public void Draw()
     {
         Refresh();
-    }
-
-    public void ActivateNode(int i)
-    {
-        _nodes[i].Color = Colors.Green;
-        _activeNodes[i] = _nodeActivationDuration;
     }
 
     public void Update(long currentTick)
@@ -82,11 +78,17 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
         {
             var node = _nodes[n.Id];
 
-            node.Color = GetStateFillColor(n.State);
+            node.FillColor = GetStateFillColor(n.State);
+            node.LineColor = GetStateBorderColor(n.State);
 
             if (n.IsTagged)
             {
-                _nodes[n.Id].LineWidth = 4;
+                if (n.State == NodeState.Neutral)
+                {
+                    node.FillColor = PlotColors.LightBlue;
+                }
+                node.LineWidth = 4;
+                node.LineColor = PlotColors.BlueLightBorder;
             }
         }
     }
@@ -94,10 +96,20 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
     private Color GetStateFillColor(NodeState state) =>
         state switch
         {
-            NodeState.Neutral => Colors.Wheat,
-            NodeState.Refractory => Colors.Aqua,
-            NodeState.Processing => Colors.Green,
-            NodeState.Inhibited => Colors.Red,
+            NodeState.Neutral => PlotColors.White,
+            NodeState.Refractory => PlotColors.LightGray,
+            NodeState.Processing => PlotColors.Green,
+            NodeState.Inhibited => PlotColors.DarkRed,
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
+
+    private Color GetStateBorderColor(NodeState state) =>
+        state switch
+        {
+            NodeState.Neutral => PlotColors.DarkGray,
+            NodeState.Refractory => PlotColors.DarkGray,
+            NodeState.Processing => PlotColors.GreenBorder,
+            NodeState.Inhibited => PlotColors.DarkRedBorder,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
         };
 }

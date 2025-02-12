@@ -18,7 +18,7 @@ public class AppSettings
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 15;
+        public readonly int TargetTps = 5;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)
