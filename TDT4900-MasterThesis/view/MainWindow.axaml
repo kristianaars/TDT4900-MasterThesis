@@ -118,6 +118,19 @@
                             Text="{Binding GraphSettingsEdgeCount, Mode=TwoWay}" />
                     </StackPanel>
 
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node to find path from"
+                            Label="Source Node"
+                            Text="{Binding SourceNodeId}" />
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node to find the path to"
+                            Label="Target Node"
+                            Text="{Binding TargetNodeId}" />
+                    </StackPanel>
+
                     <Button Command="{Binding ResetSimulationCommand}">Generate New Graph</Button>
                 </StackPanel>
 
@@ -128,30 +141,19 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:LabeledTextBox
                             Width="140"
-                            Description="Node to find path from"
-                            Label="Source Node"
-                            Text="0" />
-                        <controls:LabeledTextBox
-                            Width="140"
-                            Description="Node to find the path to"
-                            Label="Target Node"
-                            Text="10" />
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:LabeledTextBox
-                            Width="140"
                             Description="Target ticks per second"
                             Label="Target TPS"
-                            Text="60" />
+                            Text="{Binding TargetTps}" />
+
                         <controls:LabeledTextBox
                             Width="140"
                             Description="Target frames per second for plots"
                             Label="Target FPS"
-                            Text="30" />
+                            Text="{Binding TargetFps}" />
+
                     </StackPanel>
 
-                    <Button>Apply Configuration</Button>
+                    <Button Command="{Binding ApplySimulationConfigurationCommand}">Apply Configuration</Button>
                 </StackPanel>
 
             </StackPanel>
@@ -208,19 +210,19 @@
 
                 <!--  Simulation Control  -->
                 <StackPanel Spacing="8">
-                    <TextBlock Classes="Header2">Simulation Configuration</TextBlock>
+                    <TextBlock Classes="Header2">Simulation Control</TextBlock>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:LabeledTextField
                             Width="140"
                             Description="Elapsed ticks in simulation"
                             Label="Current tick"
-                            Text="0" />
+                            Text="{Binding CurrentTick}" />
                         <controls:LabeledTextField
                             Width="140"
                             Description="Either running, paused or stopped"
                             Label="State"
-                            Text="10" />
+                            Text="{Binding SimulationState}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -228,17 +230,17 @@
                             Width="140"
                             Description="Current ticks per second"
                             Label="TPS"
-                            Text="60" />
+                            Text="{Binding Tps}" />
                         <controls:LabeledTextField
                             Width="140"
                             Description="Current frames per second"
                             Label="FPS"
-                            Text="30" />
+                            Text="{Binding Fps}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button IsEnabled="False">Play</Button>
-                        <Button>Pause</Button>
+                        <Button Command="{Binding PlaySimulationCommand}">Play</Button>
+                        <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
                         <Button>Restart</Button>
                     </StackPanel>
                 </StackPanel>

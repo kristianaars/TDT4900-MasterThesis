@@ -195,6 +195,9 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
             _lastState[n.Id] = n.State;
         });
+
+        Plot.Axes.AutoScale();
+        Refresh();
     }
 
     private Color GetStateFillColor(NodeState state) =>

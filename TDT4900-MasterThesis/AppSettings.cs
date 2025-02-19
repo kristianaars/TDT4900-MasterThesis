@@ -10,6 +10,9 @@ public class AppSettings
 
     public class SimulationSettings
     {
+        public readonly int GraphNodeCount = 20;
+        public readonly int GraphEdgeCount = 25;
+
         /// <summary>
         /// Target Frames per second for simulation
         /// </summary>

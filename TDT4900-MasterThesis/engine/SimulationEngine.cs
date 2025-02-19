@@ -4,6 +4,7 @@ using Serilog;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
 using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.viewmodel;
 
 namespace TDT4900_MasterThesis.engine;
 
@@ -30,8 +31,8 @@ public class SimulationEngine
         IEnumerable<IDrawable> drawableComponents
     )
     {
-        _targetFps = appSettings.Simulation.TargetFps;
-        _targetTps = appSettings.Simulation.TargetTps;
+        TargetFps = appSettings.Simulation.TargetFps;
+        TargetTps = appSettings.Simulation.TargetTps;
 
         UpdatableComponents = updatableComponents.ToList();
         DrawableComponents = drawableComponents.ToList();
@@ -40,30 +41,38 @@ public class SimulationEngine
     /// <summary>
     /// Target Ticks Per Second
     /// </summary>
-    private readonly int _targetTps;
+    public int TargetTps;
 
     /// <summary>
     /// Target Frames Per Second
     /// </summary>
-    private readonly int _targetFps;
+    public int TargetFps;
 
     private bool _isRunning = false;
+
+    public MainWindowViewModel? MainWindowViewModel { get; set; }
 
     public async Task RunSimulation(CancellationToken stoppingToken)
     {
         _isRunning = true;
         _stopwatch = Stopwatch.StartNew();
 
-        var updateInterval = 1000.0 / _targetTps;
-        var renderInterval = 1000.0 / _targetFps;
+        double updateInterval;
+        double renderInterval;
         var statUpdate = 1000.0;
 
         double nextUpdate = _stopwatch.ElapsedMilliseconds;
         double nextRender = _stopwatch.ElapsedMilliseconds;
         double nextStatUpdate = _stopwatch.ElapsedMilliseconds + statUpdate;
 
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Running";
+
         while (_isRunning && !stoppingToken.IsCancellationRequested)
         {
+            updateInterval = 1000.0 / TargetTps;
+            renderInterval = 1000.0 / TargetFps;
+
             double currentTime = _stopwatch.ElapsedMilliseconds;
 
             if (currentTime >= nextUpdate)
@@ -83,12 +92,11 @@ public class SimulationEngine
                 _fps = (int)(_frameCounter / (statUpdate / 1000.0));
                 _tps = (int)(_tickCounter / (statUpdate / 1000.0));
 
-                Log.Information(
-                    "Current Tick: {tick}, TPS: {TPS}, FPS: {FPS}",
-                    _currentTick,
-                    _tps,
-                    _fps
-                );
+                if (MainWindowViewModel != null)
+                {
+                    MainWindowViewModel.Tps = _tps;
+                    MainWindowViewModel.Fps = _fps;
+                }
 
                 _tickCounter = _frameCounter = 0;
                 nextStatUpdate += statUpdate;
@@ -97,11 +105,17 @@ public class SimulationEngine
             await Task.Delay((int)(Math.Min(updateInterval, renderInterval) / 4.0), stoppingToken);
         }
 
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Stopped";
+
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
     }
 
     private void Update(long currentTick)
     {
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.CurrentTick = currentTick;
+
         _tickCounter++;
         UpdatableComponents.ForEach(c => c.Update(currentTick));
     }
@@ -114,11 +128,17 @@ public class SimulationEngine
 
     public void Pause()
     {
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Paused";
+
         _stopwatch.Stop();
     }
 
     public void Play()
     {
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Running";
+
         _stopwatch.Start();
     }
 

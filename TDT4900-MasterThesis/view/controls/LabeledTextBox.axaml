@@ -23,8 +23,5 @@
             CornerRadius="8"
             Foreground="#1C1C1C"
             Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-        <!--  Show error message when validation fails  -->
-        <TextBlock Foreground="Red" Text="{Binding (DataValidationErrors)[0].ErrorContent}" />
     </StackPanel>
 </UserControl>
