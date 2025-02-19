@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 using Serilog;
+using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
 using TDT4900_MasterThesis.view.plot;
 
@@ -20,6 +21,8 @@ public class SimulationEngine
 
     public readonly List<IUpdatable> UpdatableComponents;
     public readonly List<IDrawable> DrawableComponents;
+
+    private List<NodeState>[] _stateHistory;
 
     public SimulationEngine(
         AppSettings appSettings,
@@ -91,7 +94,7 @@ public class SimulationEngine
                 nextStatUpdate += statUpdate;
             }
 
-            await Task.Delay((int)(Math.Min(updateInterval, renderInterval) / 4.0));
+            await Task.Delay((int)(Math.Min(updateInterval, renderInterval) / 4.0), stoppingToken);
         }
 
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);

@@ -1,46 +1,252 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="TDT4900_MasterThesis.view.MainWindow">
-        
-        <Grid>
-                <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
+<Window
+    x:Class="TDT4900_MasterThesis.view.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:TDT4900_MasterThesis.view.controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:TDT4900_MasterThesis.viewmodel;assembly=TDT4900-MasterThesis"
+    MinWidth="1064"
+    d:DesignHeight="450"
+    d:DesignWidth="850"
+    mc:Ignorable="d">
 
-                </Grid.RowDefinitions>
-                
-                <Grid>
-                        <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="2" />
-                                <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        
-                        <Grid Grid.Column="0" Grid.RowDefinitions="Auto *" Margin="8">
-                                <Label FontSize="18" VerticalAlignment="Center">Graph Plot</Label>
-                                <Border Grid.Row="1" Name="GraphPlotContainer"/>
-                        </Grid>
-                        
-                        <GridSplitter ResizeDirection="Columns" Grid.Column="1" Background="LightGray" />
-                
-                        <Grid Grid.Column="2" RowDefinitions="Auto *" Margin="8">
-                                <Label FontSize="18" VerticalAlignment="Center">Node Sequence Plot</Label>
-                                <Border Grid.Row="1" Name="NodeSequencePlotContainer"/>
-                        </Grid>
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="#1C1C1C" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1C1C1C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="18 8" />
+        </Style>
+
+        <Style Selector="TextBlock.Header1">
+            <Setter Property="FontSize">22</Setter>
+        </Style>
+
+        <Style Selector="TextBlock.Header2">
+            <Setter Property="FontSize">18</Setter>
+        </Style>
+
+
+    </Window.Styles>
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid
+        Margin="32"
+        ColumnDefinitions="*"
+        RowDefinitions="*,Auto">
+
+        <Grid Margin="0,0,0,32" ColumnDefinitions="*,Auto,*">
+
+            <Grid
+                Grid.Column="0"
+                Margin="8"
+                Grid.RowDefinitions="Auto *">
+                <TextBlock VerticalAlignment="Center" Classes="Header1">
+                    Graph Plot
+                </TextBlock>
+                <Border Name="GraphPlotContainer" Grid.Row="1" />
+            </Grid>
+
+            <GridSplitter
+                Grid.Column="1"
+                Width="1"
+                Height="100"
+                MaxWidth="1"
+                VerticalAlignment="Center"
+                Background="LightGray"
+                ResizeDirection="Columns" />
+
+            <Grid
+                Grid.Column="2"
+                Margin="8"
+                RowDefinitions="Auto * Auto">
+                <Design.DataContext>
+                    <vm:SequencePlotViewModel />
+                </Design.DataContext>
+
+                <Grid Grid.ColumnDefinitions="*, Auto">
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Classes="Header1">
+                        Node Sequence Plot
+                    </TextBlock>
+                    <ToggleSwitch
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsChecked="True"
+                        OffContent="Autoscroll Off"
+                        OnContent="Autoscroll On" />
                 </Grid>
-                
-                
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8" Spacing="4">
-                        <Button x:Name="Pause" Click="Pause_OnClick">Pause</Button>
-                        <Button x:Name="Play" Click="Play_OnClick">Play</Button>
-                        <Button x:Name="Restart" Click="Restart_OnClick">Restart</Button>
-                </StackPanel>
+
+                <Border Name="NodeSequencePlotContainer" Grid.Row="1" />
+            </Grid>
         </Grid>
 
-        
-        
+        <Grid
+            Grid.Row="1"
+            MinWidth="950"
+            MaxWidth="1200"
+            ColumnDefinitions="*, *, *">
+
+            <!--  Column 1  -->
+            <StackPanel Grid.Column="0" Spacing="16">
+
+                <!--  Graph Settings  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Graph Settings</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Number of nodes"
+                            Label="Nodes"
+                            Text="{Binding GraphSettingsNodeCount, Mode=TwoWay}" />
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Number of edges"
+                            Label="Edges"
+                            Text="{Binding GraphSettingsEdgeCount, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <Button Command="{Binding ResetSimulationCommand}">Generate New Graph</Button>
+                </StackPanel>
+
+                <!--  Simulation Configuration  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Simulation Configuration</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node to find path from"
+                            Label="Source Node"
+                            Text="0" />
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node to find the path to"
+                            Label="Target Node"
+                            Text="10" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Target ticks per second"
+                            Label="Target TPS"
+                            Text="60" />
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Target frames per second for plots"
+                            Label="Target FPS"
+                            Text="30" />
+                    </StackPanel>
+
+                    <Button>Apply Configuration</Button>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--  Column 2  -->
+            <StackPanel Grid.Column="1" Spacing="16">
+
+                <!--  Node Configuration  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Node Configuration</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Excitatory message travel time"
+                            Label="Δt-excitatory"
+                            Text="0" />
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Inhibitory message travel time"
+                            Label="Δt-inhibitory"
+                            Text="10" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node processing time"
+                            Label="𝜏-zero"
+                            Text="60" />
+
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Tagged node processing time"
+                            Label="𝜏-plus"
+                            Text="30" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Width="140"
+                            Description="Node refractory period"
+                            Label="ρ-zero"
+                            Text="60" />
+                    </StackPanel>
+
+                    <Button>Apply Configuration</Button>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--  Column 3  -->
+            <StackPanel Grid.Column="2" Spacing="16">
+
+                <!--  Simulation Control  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Simulation Configuration</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField
+                            Width="140"
+                            Description="Elapsed ticks in simulation"
+                            Label="Current tick"
+                            Text="0" />
+                        <controls:LabeledTextField
+                            Width="140"
+                            Description="Either running, paused or stopped"
+                            Label="State"
+                            Text="10" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField
+                            Width="140"
+                            Description="Current ticks per second"
+                            Label="TPS"
+                            Text="60" />
+                        <controls:LabeledTextField
+                            Width="140"
+                            Description="Current frames per second"
+                            Label="FPS"
+                            Text="30" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button IsEnabled="False">Play</Button>
+                        <Button>Pause</Button>
+                        <Button>Restart</Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+        </Grid>
+    </Grid>
+
+
+
 </Window>

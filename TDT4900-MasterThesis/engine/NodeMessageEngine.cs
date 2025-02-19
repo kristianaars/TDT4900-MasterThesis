@@ -1,4 +1,6 @@
+using CommunityToolkit.Mvvm.Messaging;
 using Serilog;
+using TDT4900_MasterThesis.message;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
@@ -22,16 +24,23 @@ public class NodeMessageEngine : IUpdatable
 
     private readonly SequencePlotView? _sequencePlotView;
 
-    private readonly Graph _graph;
+    private Graph? _graph;
 
-    public NodeMessageEngine(Graph graph, SequencePlotView? sequencePlotView)
+    public NodeMessageEngine(SequencePlotView? sequencePlotView)
     {
         _sequencePlotView = sequencePlotView;
-        _graph = graph;
+
+        WeakReferenceMessenger.Default.Register<NewGraphMessage>(
+            this,
+            (r, m) => ReceiveNewGraphMessage(m)
+        );
     }
 
     public void Update(long currentTick)
     {
+        if (_graph == null)
+            return;
+
         if (_messageQueue.Count + _processingQueue.Count == 0)
         {
             BeginNewWave(currentTick);
@@ -56,7 +65,7 @@ public class NodeMessageEngine : IUpdatable
 
     public void BeginNewWave(long atTick)
     {
-        var target = _graph.Nodes[0];
+        var target = _graph!.Nodes[0];
         _graph.Nodes.ForEach(node => node.State = NodeState.Neutral);
 
         // Solution is found, no need to perform a new wave
@@ -119,5 +128,12 @@ public class NodeMessageEngine : IUpdatable
         {
             QueueProcessMessage(processMessage);
         }
+    }
+
+    private void ReceiveNewGraphMessage(NewGraphMessage message)
+    {
+        _messageQueue.Clear();
+        _processingQueue.Clear();
+        _graph = message.Value;
     }
 }

@@ -1,10 +1,12 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Core;
 using TDT4900_MasterThesis.engine;
 using TDT4900_MasterThesis.factory;
 using TDT4900_MasterThesis.host;
@@ -30,13 +32,28 @@ public class App : Application
             desktop.Exit += (sender, args) =>
             {
                 Host!.StopAsync();
-                Host.WaitForShutdown();
+                Environment.Exit(0);
             };
         }
 
+        // Global UI Exception Handling
+        Dispatcher.UIThread.UnhandledException += (sender, e) =>
+        {
+            Log.Fatal(e.Exception, "Unhandled exception in UI thread");
+            e.Handled = true;
+        };
+
+        // Handle Ctrl+C (SIGINT) to ensure cleanup
+        Console.CancelKeyPress += async (sender, e) =>
+        {
+            e.Cancel = true; // Prevent immediate shutdown
+            await Host!.StopAsync();
+            Environment.Exit(0);
+        };
+
         // Start the application host for background services
 
-        Task.Run(async () => await Host.StartAsync());
+        Task.Run(() => Host.Start());
 
         base.OnFrameworkInitializationCompleted();
     }

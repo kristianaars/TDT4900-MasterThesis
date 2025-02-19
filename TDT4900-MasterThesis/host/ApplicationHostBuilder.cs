@@ -8,6 +8,7 @@ using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
 using TDT4900_MasterThesis.view;
 using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.viewmodel;
 
 namespace TDT4900_MasterThesis.host;
 
@@ -34,9 +35,10 @@ public class ApplicationHostBuilder
     {
         _services.AddSingleton<NodeMessageEngine>();
         _services.AddSingleton<SimulationEngine>();
+        _services.AddSingleton<NodeEngine>();
 
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<NodeMessageEngine>());
-        _services.AddTransient<IUpdatable>(p => p.GetRequiredService<Graph>());
+        _services.AddTransient<IUpdatable>(p => p.GetRequiredService<NodeEngine>());
 
         _services.AddHostedService<SimulationHost>();
         return this;
@@ -44,6 +46,12 @@ public class ApplicationHostBuilder
 
     public ApplicationHostBuilder UseGui()
     {
+        // View Models
+        _services.AddSingleton<GraphPlotViewModel>();
+        _services.AddSingleton<SequencePlotViewModel>();
+        _services.AddSingleton<MainWindowViewModel>();
+
+        // Views
         _services.AddSingleton<MainWindow>();
         _services.AddSingleton<GraphPlotView>();
         _services.AddSingleton<SequencePlotView>();
@@ -53,20 +61,6 @@ public class ApplicationHostBuilder
 
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<SequencePlotView>());
         _services.AddTransient<IDrawable>(p => p.GetRequiredService<SequencePlotView>());
-
-        return this;
-    }
-
-    public ApplicationHostBuilder UseRandomGraph(int vertexCount, int edgeCount, int targetNode)
-    {
-        RandomGraphFactory f = new RandomGraphFactory(vertexCount, edgeCount);
-        Graph graph = f.GetGraph();
-
-        graph.Nodes.ForEach(n => n.SimulationSettings = _appSettings.Simulation);
-
-        _services.AddSingleton(graph);
-
-        graph.Nodes[targetNode].IsTagged = true;
 
         return this;
     }

@@ -2,46 +2,31 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using TDT4900_MasterThesis.engine;
 using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.viewmodel;
 
 namespace TDT4900_MasterThesis.view;
 
 public partial class MainWindow : Window
 {
-    private readonly GraphPlotView _graphPlotView;
-
-    private readonly SimulationEngine _engine;
-
     public MainWindow(
-        GraphPlotView graphPlotView,
-        SequencePlotView sequencePlotView,
-        SimulationEngine engine,
-        AppSettings appSettings
+        AppSettings appSettings,
+        SequencePlotViewModel sequencePlotViewModel,
+        GraphPlotViewModel graphPlotViewModel,
+        MainWindowViewModel mainWindowViewModel
     )
     {
         InitializeComponent();
-
-        _engine = engine;
 
         Title = appSettings.WindowTitle;
         Width = appSettings.DefaultWindowWidth;
         Height = appSettings.DefaultWindowHeight;
 
-        GraphPlotContainer.Child = graphPlotView;
-        NodeSequencePlotContainer.Child = sequencePlotView;
-    }
+        DataContext = mainWindowViewModel;
 
-    private void Pause_OnClick(object? sender, RoutedEventArgs e)
-    {
-        _engine.Pause();
-    }
+        GraphPlotContainer.DataContext = graphPlotViewModel;
+        GraphPlotContainer.Child = graphPlotViewModel.GraphPlotView;
 
-    private void Play_OnClick(object? sender, RoutedEventArgs e)
-    {
-        _engine.Play();
-    }
-
-    private void Restart_OnClick(object? sender, RoutedEventArgs e)
-    {
-        _engine.Restart();
+        NodeSequencePlotContainer.Child = sequencePlotViewModel.SequencePlotView;
+        NodeSequencePlotContainer.DataContext = sequencePlotViewModel;
     }
 }

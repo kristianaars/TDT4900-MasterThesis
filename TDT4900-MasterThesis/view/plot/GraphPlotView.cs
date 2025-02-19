@@ -1,7 +1,7 @@
+using Avalonia;
 using ScottPlot;
 using ScottPlot.Avalonia;
 using ScottPlot.Plottables;
-using Serilog;
 using TDT4900_MasterThesis.constants;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
@@ -10,73 +10,81 @@ namespace TDT4900_MasterThesis.view.plot;
 
 public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
 {
-    private Graph _graph;
+    private List<LinePlot>? _edges = new();
+    private List<Ellipse>? _nodes = new();
+    private List<NodeState>[]? _stateHistory;
 
-    public GraphPlotView(Graph graph, AppSettings appSettings)
+    private Graph? _graph;
+    public Graph? Graph
     {
-        _graph = graph;
-        Init();
+        get => _graph;
+        set
+        {
+            _graph = value;
+            ResetData();
+        }
     }
 
-    private List<Arrow> _edges = new();
-    private List<Ellipse> _nodes = new();
-
-    public void Init()
+    public GraphPlotView()
     {
-        var edges = _graph.Edges;
-        var nodes = _graph.Nodes;
+        Plot.Grid.IsVisible = false;
+        Plot.Axes.Left.TickLabelStyle.IsVisible = false;
+        Margin = new Thickness(0);
+
+        SizeChanged += (sender, args) => MaintainAspectRatio();
+        Loaded += (sender, args) => MaintainAspectRatio();
+        MaintainAspectRatio();
+    }
+
+    private void Init()
+    {
+        var edges = Graph!.Edges;
+        var nodes = Graph.Nodes;
 
         // Draw edges
         foreach (var e in edges)
         {
-            int start = e.Source.Id;
-            int end = e.Target.Id;
+            var start = e.Source.Id;
+            var end = e.Target.Id;
 
             double x1 = nodes[start].X,
                 y1 = nodes[start].Y;
             double x2 = nodes[end].X,
                 y2 = nodes[end].Y;
 
-            var line = Plot.Add.Arrow(x1, y1, x2, y2);
-            line.ArrowFillColor = Colors.Black;
-            line.ArrowLineColor = Colors.Transparent;
-            line.ArrowWidth = 2f;
-            line.ArrowheadWidth = 15f;
-            line.ArrowheadAxisLength = 10f;
-            _edges.Add(line);
+            var line = Plot.Add.Line(x1, y1, x2, y2);
+            line.LineWidth = 2;
+            line.LineColor = PlotColors.DarkGray;
+            _edges!.Add(line);
         }
 
         // Draw nodes
         foreach (var n in nodes)
         {
-            var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 10);
+            var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 16);
 
             node.FillColor = GetStateFillColor(n.State);
             node.LineColor = GetStateBorderColor(n.State);
-            node.LineWidth = 2;
+            node.LineWidth = 4;
 
             var text = Plot.Add.Text($"{n.Id}", n.X, n.Y);
-            text.Alignment = Alignment.MiddleCenter;
+            text.LabelFontSize = 12;
+            text.OffsetY = 2;
             text.LabelFontColor = PlotColors.Black;
+            text.Alignment = Alignment.MiddleCenter;
 
-            _nodes.Add(node);
+            _nodes!.Add(node);
         }
-
-        Plot.Grid.IsVisible = false;
-        Plot.Axes.Left.TickLabelStyle.IsVisible = false;
-        Plot.Axes.Bottom.TickLabelStyle.IsVisible = false;
     }
 
     public void Draw()
     {
-        Refresh();
-    }
+        if (_graph == null)
+            return;
 
-    public void Update(long currentTick)
-    {
         foreach (var n in _graph.Nodes)
         {
-            var node = _nodes[n.Id];
+            var node = _nodes![n.Id];
 
             node.FillColor = GetStateFillColor(n.State);
             node.LineColor = GetStateBorderColor(n.State);
@@ -91,7 +99,11 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
                 node.LineColor = PlotColors.BlueLightBorder;
             }
         }
+
+        Refresh();
     }
+
+    public void Update(long currentTick) { }
 
     private Color GetStateFillColor(NodeState state) =>
         state switch
@@ -112,4 +124,59 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
             NodeState.Inhibited => PlotColors.DarkRedBorder,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
         };
+
+    private void MaintainAspectRatio()
+    {
+        var plot = Plot;
+        double width = Bounds.Width;
+        double height = Bounds.Height;
+
+        if (width == 0 || height == 0)
+            return; // Prevent division by zero
+
+        // Preserve square aspect ratio
+        double aspectRatio = width / height;
+
+        double xCenter = (plot.Axes.Bottom.Max + plot.Axes.Bottom.Min) / 2;
+        double yCenter = (plot.Axes.Left.Max + plot.Axes.Left.Min) / 2;
+
+        double xSpan = plot.Axes.Bottom.Max - plot.Axes.Bottom.Min;
+        double ySpan = plot.Axes.Left.Max - plot.Axes.Left.Min;
+
+        double newXSpan,
+            newYSpan;
+
+        if (aspectRatio > 1) // Wide window
+        {
+            newXSpan = ySpan * aspectRatio;
+            newYSpan = ySpan;
+        }
+        else // Tall window
+        {
+            newXSpan = xSpan;
+            newYSpan = xSpan / aspectRatio;
+        }
+
+        plot.Axes.Bottom.Min = xCenter - newXSpan / 2;
+        plot.Axes.Bottom.Max = xCenter + newXSpan / 2;
+        plot.Axes.Left.Min = yCenter - newYSpan / 2;
+        plot.Axes.Left.Max = yCenter + newYSpan / 2;
+
+        Refresh();
+    }
+
+    /// <summary>
+    /// Resets the historical data of the graph. Initialized when a new graph is sat
+    /// </summary>
+    private void ResetData()
+    {
+        Plot.Clear();
+        _stateHistory = new List<NodeState>[Graph!.Nodes.Count];
+        _edges = new List<LinePlot>();
+        _nodes = new List<Ellipse>();
+
+        Init();
+        Plot.Axes.AutoScale();
+        MaintainAspectRatio();
+    }
 }
