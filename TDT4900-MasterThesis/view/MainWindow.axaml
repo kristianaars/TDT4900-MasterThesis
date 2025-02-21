@@ -69,6 +69,7 @@
                 Grid.Column="2"
                 Margin="8"
                 RowDefinitions="Auto * Auto">
+
                 <Design.DataContext>
                     <vm:SequencePlotViewModel />
                 </Design.DataContext>
@@ -83,7 +84,7 @@
                     <ToggleSwitch
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        IsChecked="True"
+                        IsChecked="{Binding EnableAutoScroll, Mode=TwoWay}"
                         OffContent="Autoscroll Off"
                         OnContent="Autoscroll On" />
                 </Grid>

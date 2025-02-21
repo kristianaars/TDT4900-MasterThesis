@@ -1,7 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using TDT4900_MasterThesis.engine;
-using TDT4900_MasterThesis.view.plot;
 using TDT4900_MasterThesis.viewmodel;
 
 namespace TDT4900_MasterThesis.view;
@@ -23,10 +20,10 @@ public partial class MainWindow : Window
 
         DataContext = mainWindowViewModel;
 
-        GraphPlotContainer.DataContext = graphPlotViewModel;
         GraphPlotContainer.Child = graphPlotViewModel.GraphPlotView;
+        GraphPlotContainer.Parent!.DataContext = graphPlotViewModel;
 
         NodeSequencePlotContainer.Child = sequencePlotViewModel.SequencePlotView;
-        NodeSequencePlotContainer.DataContext = sequencePlotViewModel;
+        NodeSequencePlotContainer.Parent!.DataContext = sequencePlotViewModel;
     }
 }

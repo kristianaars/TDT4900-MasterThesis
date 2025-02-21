@@ -5,9 +5,12 @@ using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.viewmodel;
 
-public class SequencePlotViewModel : ObservableRecipient, IRecipient<NewGraphMessage>
+public partial class SequencePlotViewModel : ObservableRecipient, IRecipient<NewGraphMessage>
 {
     public SequencePlotView SequencePlotView;
+
+    [ObservableProperty]
+    private bool _enableAutoScroll = true;
 
     public SequencePlotViewModel(SequencePlotView sequencePlotView)
     {
@@ -18,5 +21,10 @@ public class SequencePlotViewModel : ObservableRecipient, IRecipient<NewGraphMes
     public void Receive(NewGraphMessage message)
     {
         SequencePlotView.Graph = message.Value;
+    }
+
+    partial void OnEnableAutoScrollChanged(bool value)
+    {
+        SequencePlotView.EnableAutoScroll = value;
     }
 }
