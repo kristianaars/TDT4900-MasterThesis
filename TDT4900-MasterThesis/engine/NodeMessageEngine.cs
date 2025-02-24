@@ -63,6 +63,12 @@ public class NodeMessageEngine : IUpdatable
         }
     }
 
+    public void ResetComponent()
+    {
+        _messageQueue.Clear();
+        _processingQueue.Clear();
+    }
+
     public void BeginNewWave(long atTick)
     {
         var target = _graph!.Nodes[0];
@@ -96,13 +102,13 @@ public class NodeMessageEngine : IUpdatable
         {
             case NodeMessage.MessageType.Excitatory:
                 if (receiver.State != NodeState.Refractory)
-                    _sequencePlotView?.PlotNodeMessage(nodeMessage);
+                    _sequencePlotView?.AppendNodeMessage(nodeMessage);
 
                 newMessages = receiver.Excite(currentTick);
                 break;
             case NodeMessage.MessageType.Inhibitory:
                 newMessages = receiver.Inhibit(currentTick);
-                _sequencePlotView?.PlotNodeMessage(nodeMessage);
+                _sequencePlotView?.AppendNodeMessage(nodeMessage);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -117,7 +123,7 @@ public class NodeMessageEngine : IUpdatable
     /// <param name="message">Message to be sent</param>
     public void QueueProcessMessage(ProcessMessage message)
     {
-        Log.Information("Queuing message {message}", message);
+        //Log.Information("Queuing message {message}", message);
 
         _processingQueue.Enqueue(message, message.ReceiveAt);
     }
@@ -132,8 +138,7 @@ public class NodeMessageEngine : IUpdatable
 
     private void ReceiveNewGraphMessage(NewGraphMessage message)
     {
-        _messageQueue.Clear();
-        _processingQueue.Clear();
         _graph = message.Value;
+        ResetComponent();
     }
 }

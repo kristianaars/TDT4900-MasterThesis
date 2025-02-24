@@ -20,6 +20,11 @@ public class SimulationEngine
 
     private Stopwatch _stopwatch;
 
+    /// <summary>
+    /// Lock to prevent multiple threads from updating the simulation data at the same time
+    /// </summary>
+    public static readonly Lock UpdateLock = new();
+
     public readonly List<IUpdatable> UpdatableComponents;
     public readonly List<IDrawable> DrawableComponents;
 
@@ -113,16 +118,27 @@ public class SimulationEngine
 
     private void Update(long currentTick)
     {
-        if (MainWindowViewModel != null)
-            MainWindowViewModel.CurrentTick = currentTick;
+        lock (UpdateLock)
+        {
+            if (MainWindowViewModel != null)
+                MainWindowViewModel.CurrentTick = currentTick;
 
-        _tickCounter++;
-        UpdatableComponents.ForEach(c => c.Update(currentTick));
+            _tickCounter++;
+            UpdatableComponents.ForEach(c => c.Update(currentTick));
+        }
     }
 
     private void Render()
     {
-        DrawableComponents.ForEach(c => Dispatcher.UIThread.Invoke(c.Draw));
+        var readyToRender = DrawableComponents.All(c => c.IsReadyToDraw);
+
+        if (!readyToRender)
+            return;
+
+        DrawableComponents.ForEach(c =>
+        {
+            Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Background);
+        });
         _frameCounter++;
     }
 
@@ -142,8 +158,13 @@ public class SimulationEngine
         _stopwatch.Start();
     }
 
-    public void Restart()
+    public void Reset()
     {
-        throw new NotImplementedException();
+        lock (UpdateLock)
+        {
+            _currentTick = 0;
+            Play();
+            UpdatableComponents.ForEach(c => c.ResetComponent());
+        }
     }
 }

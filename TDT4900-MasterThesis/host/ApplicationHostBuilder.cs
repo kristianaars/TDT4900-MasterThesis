@@ -56,7 +56,6 @@ public class ApplicationHostBuilder
         _services.AddSingleton<GraphPlotView>();
         _services.AddSingleton<SequencePlotView>();
 
-        _services.AddTransient<IUpdatable>(p => p.GetRequiredService<GraphPlotView>());
         _services.AddTransient<IDrawable>(p => p.GetRequiredService<GraphPlotView>());
 
         _services.AddTransient<IUpdatable>(p => p.GetRequiredService<SequencePlotView>());

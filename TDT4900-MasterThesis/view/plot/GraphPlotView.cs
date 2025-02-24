@@ -1,28 +1,29 @@
 using Avalonia;
+using Avalonia.Media;
 using ScottPlot;
 using ScottPlot.Avalonia;
 using ScottPlot.Plottables;
+using Serilog;
 using TDT4900_MasterThesis.constants;
+using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
+using Color = ScottPlot.Color;
 
 namespace TDT4900_MasterThesis.view.plot;
 
-public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
+public class GraphPlotView : AvaPlot, IDrawable
 {
-    private List<LinePlot>? _edges = new();
-    private List<Ellipse>? _nodes = new();
-    private List<NodeState>[]? _stateHistory;
+    private List<LinePlot> _edges = new();
+    private List<Ellipse> _nodes = new();
 
-    private Graph? _graph;
-    public Graph? Graph
+    private readonly Lock _stateHistoryQueueLock = new();
+    private Queue<NodeStateUpdate> _unprocessedStateHistoryQueue = new();
+    private Queue<NodeStateUpdate> _drawBuffer = new();
+
+    public bool IsReadyToDraw
     {
-        get => _graph;
-        set
-        {
-            _graph = value;
-            ResetData();
-        }
+        get => _drawBuffer.Count == 0;
     }
 
     public GraphPlotView()
@@ -36,10 +37,30 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
         MaintainAspectRatio();
     }
 
-    private void Init()
+    public void AppendStateHistory(NodeStateUpdate update)
     {
-        var edges = Graph!.Edges;
-        var nodes = Graph.Nodes;
+        lock (_stateHistoryQueueLock)
+        {
+            if (_unprocessedStateHistoryQueue.Count < 10)
+                _unprocessedStateHistoryQueue.Enqueue(update);
+        }
+    }
+
+    public void Init(Graph graph)
+    {
+        lock (_unprocessedStateHistoryQueue)
+        {
+            _unprocessedStateHistoryQueue.Clear();
+            _drawBuffer.Clear();
+        }
+
+        Plot.Clear();
+
+        var edges = graph!.Edges;
+        var nodes = graph.Nodes;
+
+        _edges.Clear();
+        _nodes.Clear();
 
         // Draw edges
         foreach (var e in edges)
@@ -75,35 +96,23 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
 
             _nodes!.Add(node);
         }
+
+        Plot.Axes.AutoScale();
+        MaintainAspectRatio();
     }
 
     public void Draw()
     {
-        if (_graph == null)
-            return;
-
-        foreach (var n in _graph.Nodes)
+        lock (_stateHistoryQueueLock)
         {
-            var node = _nodes![n.Id];
-
-            node.FillColor = GetStateFillColor(n.State);
-            node.LineColor = GetStateBorderColor(n.State);
-
-            if (n.IsTagged)
-            {
-                if (n.State == NodeState.Neutral)
-                {
-                    node.FillColor = PlotColors.LightBlue;
-                }
-                node.LineWidth = 4;
-                node.LineColor = PlotColors.BlueLightBorder;
-            }
+            if (!IsReadyToDraw)
+                return;
+            _drawBuffer = new Queue<NodeStateUpdate>(_unprocessedStateHistoryQueue!);
+            _unprocessedStateHistoryQueue.Clear();
         }
 
-        Refresh();
+        InvalidateVisual();
     }
-
-    public void Update(long currentTick) { }
 
     private Color GetStateFillColor(NodeState state) =>
         state switch
@@ -161,21 +170,40 @@ public class GraphPlotView : AvaPlot, IDrawable, IUpdatable
         plot.Axes.Bottom.Max = xCenter + newXSpan / 2;
         plot.Axes.Left.Min = yCenter - newYSpan / 2;
         plot.Axes.Left.Max = yCenter + newYSpan / 2;
+    }
 
-        Refresh();
+    public override void Render(DrawingContext context)
+    {
+        while (_drawBuffer.Count != 0)
+        {
+            var update = _drawBuffer.Dequeue();
+            var node = _nodes![update.NodeId];
+
+            node.FillColor = GetStateFillColor(update.State);
+            node.LineColor = GetStateBorderColor(update.State);
+
+            if (update.IsTagged)
+            {
+                if (update.State == NodeState.Neutral)
+                {
+                    node.FillColor = PlotColors.LightBlue;
+                }
+                node.LineWidth = 4;
+                node.LineColor = PlotColors.BlueLightBorder;
+            }
+        }
+
+        base.Render(context);
     }
 
     /// <summary>
     /// Resets the historical data of the graph. Initialized when a new graph is sat
     /// </summary>
-    private void ResetData()
+    public void ResetComponent()
     {
         Plot.Clear();
-        _stateHistory = new List<NodeState>[Graph!.Nodes.Count];
-        _edges = new List<LinePlot>();
-        _nodes = new List<Ellipse>();
-
-        Init();
+        _unprocessedStateHistoryQueue = new Queue<NodeStateUpdate>();
+        _drawBuffer = new Queue<NodeStateUpdate>();
         Plot.Axes.AutoScale();
         MaintainAspectRatio();
     }

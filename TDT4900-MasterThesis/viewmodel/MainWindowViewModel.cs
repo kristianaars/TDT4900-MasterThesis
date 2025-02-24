@@ -13,19 +13,21 @@ namespace TDT4900_MasterThesis.viewmodel;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private SequencePlotViewModel _sequencePlotViewModel;
-    private GraphPlotViewModel _graphPlotViewModel;
+    private NodeEngine _nodeEngine;
 
     private SimulationEngine _simulationEngine;
 
     private AppSettings _appSettings;
 
+    #region Graph Settings Properties
     [ObservableProperty]
     private int _graphSettingsNodeCount;
 
     [ObservableProperty]
     private int _graphSettingsEdgeCount;
+    #endregion
 
+    #region Simulation Configuration Properties
     [ObservableProperty]
     private int _sourceNodeId;
 
@@ -37,7 +39,27 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private int _targetFps;
+    #endregion
 
+    #region Node Configuration Properties
+    [ObservableProperty]
+    private int _deltaExcitatory;
+
+    [ObservableProperty]
+    private int _deltaInhibitory;
+
+    [ObservableProperty]
+    private int _tauPlus;
+
+    [ObservableProperty]
+    private int _tauZero;
+
+    [ObservableProperty]
+    private int _refractoryPeriod;
+
+    #endregion
+
+    # region Simulation Control Properties
     [ObservableProperty]
     private long _currentTick;
 
@@ -49,18 +71,17 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string _simulationState = "Stopped";
+    #endregion
 
     public MainWindowViewModel(
-        SequencePlotViewModel sequencePlotViewModel,
-        GraphPlotViewModel graphPlotViewModel,
         AppSettings appSettings,
-        SimulationEngine simulationEngine
+        SimulationEngine simulationEngine,
+        NodeEngine nodeEngine
     )
     {
-        _sequencePlotViewModel = sequencePlotViewModel;
-        _graphPlotViewModel = graphPlotViewModel;
         _appSettings = appSettings;
         _simulationEngine = simulationEngine;
+        _nodeEngine = nodeEngine;
 
         _graphSettingsNodeCount = _appSettings.Simulation.GraphNodeCount;
         _graphSettingsEdgeCount = _appSettings.Simulation.GraphEdgeCount;
@@ -70,6 +91,12 @@ public partial class MainWindowViewModel : ObservableObject
 
         _targetTps = _appSettings.Simulation.TargetTps;
         _targetFps = _appSettings.Simulation.TargetFps;
+
+        _deltaExcitatory = _nodeEngine.DeltaExcitatory;
+        _deltaInhibitory = _nodeEngine.DeltaInhibitory;
+        _tauPlus = _nodeEngine.TauPlus;
+        _tauZero = _nodeEngine.TauZero;
+        _refractoryPeriod = _nodeEngine.RefractoryPeriod;
 
         _simulationEngine.MainWindowViewModel = this;
     }
@@ -82,7 +109,17 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ResetSimulation()
+    private void ApplyGraphConfiguration()
+    {
+        _nodeEngine.DeltaExcitatory = DeltaExcitatory;
+        _nodeEngine.DeltaInhibitory = DeltaInhibitory;
+        _nodeEngine.TauZero = TauZero;
+        _nodeEngine.TauPlus = TauPlus;
+        _nodeEngine.RefractoryPeriod = RefractoryPeriod;
+    }
+
+    [RelayCommand]
+    private void GenerateNewGraph()
     {
         var nodeCount = GraphSettingsNodeCount;
         var edgeCount = GraphSettingsEdgeCount;
@@ -91,15 +128,12 @@ public partial class MainWindowViewModel : ObservableObject
 
         Graph graph = f.GetGraph();
 
-        graph.Nodes.ForEach(n => n.SimulationSettings = _appSettings.Simulation);
-
         if (TargetNodeId >= nodeCount || TargetNodeId == 0)
         {
             TargetNodeId = new Random().Next(1, graph.Nodes.Count);
         }
 
-        graph.Nodes[TargetNodeId].IsTagged = true;
-
+        _nodeEngine.TargetNodeId = TargetNodeId;
         WeakReferenceMessenger.Default.Send(new NewGraphMessage(graph));
     }
 
@@ -113,5 +147,11 @@ public partial class MainWindowViewModel : ObservableObject
     private void PauseSimulation()
     {
         _simulationEngine.Pause();
+    }
+
+    [RelayCommand]
+    private void ResetSimulation()
+    {
+        _simulationEngine.Reset();
     }
 }

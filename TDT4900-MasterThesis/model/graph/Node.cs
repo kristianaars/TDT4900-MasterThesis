@@ -3,13 +3,10 @@ using TDT4900_MasterThesis.model.simulation;
 namespace TDT4900_MasterThesis.model.graph;
 
 using MessageType = NodeMessage.MessageType;
-using SimulationSettings = AppSettings.SimulationSettings;
 
-public class Node(int id) : MIConvexHull.IVertex, IUpdatable
+public class Node : MIConvexHull.IVertex
 {
-    public SimulationSettings? SimulationSettings;
-
-    public int Id { get; } = id;
+    public int Id { get; init; }
 
     public int X { get; set; }
     public int Y { get; set; }
@@ -22,7 +19,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     /// <summary>
     /// Tau is the processing time, e.g. how long a message takes to process before sending it to the next node.
     /// </summary>
-    public int Tau => IsTagged ? SimulationSettings!.TauPlus : SimulationSettings!.TauZero;
+    public int Tau => IsTagged ? TauPlus : TauZero;
 
     /// <summary>
     /// Marks if the node is tagged or not. Tagged nodes have a shorter processing time <see cref="Tau"/>.
@@ -32,13 +29,22 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     /// <summary>
     /// Current state of the node
     /// </summary>
-    public NodeState State { get; set; } = NodeState.Neutral;
-
-    private int _refractoryPeriod => SimulationSettings!.RefractoryPeriod;
+    public NodeState State { get; set; }
 
     private int _refractoryCounter;
-
     private long _taggedExcitationWindow;
+
+    public int DeltaExcitatory { get; set; }
+    public int DeltaInhibitory { get; set; }
+    public int TauZero { get; set; }
+    public int TauPlus { get; set; }
+    public int RefractoryPeriod { get; set; }
+
+    public Node(int id)
+    {
+        Id = id;
+        Reset();
+    }
 
     public void Update(long currentTick)
     {
@@ -54,11 +60,22 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
             {
                 if (this is not { State: NodeState.Refractory })
                     throw new InvalidOperationException(
-                        $"Cannot disable refractory state when node is in state {State}. Node: {this}"
+                        $"Cannot disable refractory state when node is in state {State}. Refractory counter: {_refractoryCounter}. Node: {this}"
                     );
                 State = NodeState.Neutral;
             }
         }
+    }
+
+    /// <summary>
+    /// Reset the state of the node to its neutral initial state. Used when resetting simulation
+    /// </summary>
+    public void Reset()
+    {
+        _refractoryCounter = 0;
+        _taggedExcitationWindow = 0;
+        IsTagged = false;
+        State = NodeState.Neutral;
     }
 
     public void BeginRefraction()
@@ -69,7 +86,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
                 $"Node must be in processing, or refractory state to begin refraction. Node: {this}"
             );
         }
-        _refractoryCounter = _refractoryPeriod;
+        _refractoryCounter = RefractoryPeriod;
         State = NodeState.Refractory;
     }
 
@@ -78,8 +95,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
         switch (State)
         {
             case NodeState.Neutral:
-                _taggedExcitationWindow =
-                    +SimulationSettings!.DeltaTExcitatory * 2 + SimulationSettings.TauZero * 2;
+                _taggedExcitationWindow = +DeltaExcitatory * 2 + TauZero * 2;
 
                 State = NodeState.Processing;
                 return NeighbourExcitatoryMessageBurst(currentTick)
@@ -92,10 +108,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
             case NodeState.Processing:
                 return NoAction();
             case NodeState.Inhibited:
-                if (
-                    _taggedExcitationWindow < SimulationSettings!.TauZero
-                    && _taggedExcitationWindow > 0
-                )
+                if (_taggedExcitationWindow < TauZero && _taggedExcitationWindow > 0)
                     IsTagged = true;
                 return NoAction();
             default:
@@ -132,7 +145,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     private ProcessMessage[] NeighbourExcitatoryMessageBurst(long currentTick)
     {
         var sendAt = currentTick + Tau;
-        var receiveAt = sendAt + SimulationSettings!.DeltaTExcitatory;
+        var receiveAt = sendAt + DeltaExcitatory;
 
         return Neighbours
             .Select(n => new ProcessMessage(
@@ -150,7 +163,7 @@ public class Node(int id) : MIConvexHull.IVertex, IUpdatable
     public ProcessMessage[] GlobalInhibitoryMessageBurst(long currentTick)
     {
         var sendAt = currentTick + Tau;
-        var receiveAt = sendAt + SimulationSettings!.DeltaTInhibitory;
+        var receiveAt = sendAt + DeltaInhibitory;
 
         return AllNodes
             .Select(n => new ProcessMessage(

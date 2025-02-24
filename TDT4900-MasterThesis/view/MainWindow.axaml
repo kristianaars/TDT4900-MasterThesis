@@ -74,19 +74,27 @@
                     <vm:SequencePlotViewModel />
                 </Design.DataContext>
 
-                <Grid Grid.ColumnDefinitions="*, Auto">
+                <Grid Grid.ColumnDefinitions="*, Auto, Auto">
                     <TextBlock
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Classes="Header1">
                         Node Sequence Plot
                     </TextBlock>
+
                     <ToggleSwitch
                         Grid.Column="1"
                         VerticalAlignment="Center"
                         IsChecked="{Binding EnableAutoScroll, Mode=TwoWay}"
                         OffContent="Autoscroll Off"
                         OnContent="Autoscroll On" />
+
+                    <ToggleSwitch
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding EnableDataUpdate, Mode=TwoWay}"
+                        OffContent="Disabled"
+                        OnContent="Enabled" />
                 </Grid>
 
                 <Border Name="NodeSequencePlotContainer" Grid.Row="1" />
@@ -132,7 +140,7 @@
                             Text="{Binding TargetNodeId}" />
                     </StackPanel>
 
-                    <Button Command="{Binding ResetSimulationCommand}">Generate New Graph</Button>
+                    <Button Command="{Binding GenerateNewGraphCommand}">Generate New Graph</Button>
                 </StackPanel>
 
                 <!--  Simulation Configuration  -->
@@ -171,12 +179,12 @@
                             Width="140"
                             Description="Excitatory message travel time"
                             Label="Δt-excitatory"
-                            Text="0" />
+                            Text="{Binding DeltaExcitatory}" />
                         <controls:LabeledTextBox
                             Width="140"
                             Description="Inhibitory message travel time"
                             Label="Δt-inhibitory"
-                            Text="10" />
+                            Text="{Binding DeltaInhibitory}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -184,13 +192,13 @@
                             Width="140"
                             Description="Node processing time"
                             Label="𝜏-zero"
-                            Text="60" />
+                            Text="{Binding TauZero}" />
 
                         <controls:LabeledTextBox
                             Width="140"
                             Description="Tagged node processing time"
                             Label="𝜏-plus"
-                            Text="30" />
+                            Text="{Binding TauPlus}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -198,10 +206,10 @@
                             Width="140"
                             Description="Node refractory period"
                             Label="ρ-zero"
-                            Text="60" />
+                            Text="{Binding RefractoryPeriod}" />
                     </StackPanel>
 
-                    <Button>Apply Configuration</Button>
+                    <Button Command="{Binding ApplyGraphConfigurationCommand}">Apply Configuration</Button>
                 </StackPanel>
 
             </StackPanel>
@@ -242,7 +250,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Command="{Binding PlaySimulationCommand}">Play</Button>
                         <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
-                        <Button>Restart</Button>
+                        <Button Command="{Binding ResetSimulationCommand}">Reset</Button>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
