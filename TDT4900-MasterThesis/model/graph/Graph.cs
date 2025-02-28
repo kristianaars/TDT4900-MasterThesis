@@ -1,4 +1,5 @@
 using TDT4900_MasterThesis.helpers;
+using TDT4900_MasterThesis.model.simulation;
 
 namespace TDT4900_MasterThesis.model.graph;
 

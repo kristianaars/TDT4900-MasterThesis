@@ -1,19 +1,14 @@
-using System.Collections;
 using System.Diagnostics;
-using Gtk;
+using Avalonia.Threading;
 using Serilog;
-using SkiaSharp;
-using SkiaSharp.Views.Desktop;
-using TDT4900_MasterThesis.engine;
+using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
-using TDT4900_MasterThesis.view;
+using TDT4900_MasterThesis.viewmodel;
 
-namespace TDT4900_MasterThesis.simulation;
+namespace TDT4900_MasterThesis.engine;
 
 public class SimulationEngine
 {
-    private readonly MainCanvas _mainCanvas;
-
     private long _currentTick;
 
     private int _frameCounter = 0;
@@ -22,46 +17,67 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
-    public readonly List<IUpdatable> UpdatableComponents = [];
-    public readonly List<IDrawable> DrawableComponents = [];
+    private Stopwatch _stopwatch;
 
-    public SimulationEngine(MainCanvas mainCanvas, AppSettings appSettings)
+    /// <summary>
+    /// Lock to prevent multiple threads from updating the simulation data at the same time
+    /// </summary>
+    public static readonly Lock UpdateLock = new();
+
+    public readonly List<IUpdatable> UpdatableComponents;
+    public readonly List<IDrawable> DrawableComponents;
+
+    private List<NodeState>[] _stateHistory;
+
+    public SimulationEngine(
+        AppSettings appSettings,
+        IEnumerable<IUpdatable> updatableComponents,
+        IEnumerable<IDrawable> drawableComponents
+    )
     {
-        _mainCanvas = mainCanvas;
-        _mainCanvas.PaintSurface += OnPaintSurface;
+        TargetFps = appSettings.Simulation.TargetFps;
+        TargetTps = appSettings.Simulation.TargetTps;
 
-        _targetFps = appSettings.Simulation.TargetFps;
-        _targetTps = appSettings.Simulation.TargetTps;
+        UpdatableComponents = updatableComponents.ToList();
+        DrawableComponents = drawableComponents.ToList();
     }
 
     /// <summary>
     /// Target Ticks Per Second
     /// </summary>
-    private readonly int _targetTps;
+    public int TargetTps;
 
     /// <summary>
     /// Target Frames Per Second
     /// </summary>
-    private readonly int _targetFps;
+    public int TargetFps;
 
     private bool _isRunning = false;
 
-    public void RunSimulation()
+    public MainWindowViewModel? MainWindowViewModel { get; set; }
+
+    public async Task RunSimulation(CancellationToken stoppingToken)
     {
         _isRunning = true;
-        var stopwatch = Stopwatch.StartNew();
+        _stopwatch = new Stopwatch();
 
-        var updateInterval = 1000.0 / _targetTps;
-        var renderInterval = 1000.0 / _targetFps;
+        double updateInterval;
+        double renderInterval;
         var statUpdate = 1000.0;
 
-        double nextUpdate = stopwatch.ElapsedMilliseconds;
-        double nextRender = stopwatch.ElapsedMilliseconds;
-        double nextStatUpdate = stopwatch.ElapsedMilliseconds + statUpdate;
+        double nextUpdate = _stopwatch.ElapsedMilliseconds;
+        double nextRender = _stopwatch.ElapsedMilliseconds;
+        double nextStatUpdate = _stopwatch.ElapsedMilliseconds + statUpdate;
 
-        while (_isRunning)
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Running";
+
+        while (_isRunning && !stoppingToken.IsCancellationRequested)
         {
-            double currentTime = stopwatch.ElapsedMilliseconds;
+            updateInterval = 1000.0 / TargetTps;
+            renderInterval = 1000.0 / TargetFps;
+
+            double currentTime = _stopwatch.ElapsedMilliseconds;
 
             if (currentTime >= nextUpdate)
             {
@@ -80,46 +96,74 @@ public class SimulationEngine
                 _fps = (int)(_frameCounter / (statUpdate / 1000.0));
                 _tps = (int)(_tickCounter / (statUpdate / 1000.0));
 
-                Log.Debug("Current Tick: {tick}, TPS: {TPS}, FPS: {FPS}", _currentTick, _tps, _fps);
+                if (MainWindowViewModel != null)
+                {
+                    MainWindowViewModel.Tps = _tps;
+                    MainWindowViewModel.Fps = _fps;
+                }
 
                 _tickCounter = _frameCounter = 0;
                 nextStatUpdate += statUpdate;
             }
 
-            Thread.Sleep((int)(Math.Min(updateInterval, renderInterval) / 4.0));
+            await Task.Delay((int)(Math.Min(updateInterval, renderInterval) / 4.0), stoppingToken);
         }
+
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Stopped";
+
+        Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
     }
 
     private void Update(long currentTick)
     {
-        _tickCounter++;
-        UpdatableComponents.ForEach(c => c.Update(currentTick));
+        lock (UpdateLock)
+        {
+            if (MainWindowViewModel != null)
+                MainWindowViewModel.CurrentTick = currentTick;
+
+            _tickCounter++;
+            UpdatableComponents.ForEach(c => c.Update(currentTick));
+        }
     }
 
     private void Render()
     {
-        Application.Invoke(
-            delegate
-            {
-                _mainCanvas.QueueDraw();
-            }
-        );
+        var readyToRender = DrawableComponents.All(c => c.IsReadyToDraw);
+
+        if (!readyToRender)
+            return;
+
+        DrawableComponents.ForEach(c =>
+        {
+            Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Background);
+        });
+        _frameCounter++;
     }
 
-    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    public void Pause()
     {
-        _frameCounter++;
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Paused";
 
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.White);
+        _stopwatch.Stop();
+    }
 
-        canvas.DrawText(
-            $"Tick: {_currentTick}, TPS: {_tps}, FPS: {_fps}",
-            10,
-            20,
-            new SKPaint { Color = SKColors.Black }
-        );
+    public void Play()
+    {
+        if (MainWindowViewModel != null)
+            MainWindowViewModel.SimulationState = "Running";
 
-        DrawableComponents.ForEach(c => c.Draw(canvas));
+        _stopwatch.Start();
+    }
+
+    public void Reset()
+    {
+        lock (UpdateLock)
+        {
+            _currentTick = 0;
+            Play();
+            UpdatableComponents.ForEach(c => c.ResetComponent());
+        }
     }
 }

@@ -10,6 +10,9 @@ public class AppSettings
 
     public class SimulationSettings
     {
+        public readonly int GraphNodeCount = 20;
+        public readonly int GraphEdgeCount = 25;
+
         /// <summary>
         /// Target Frames per second for simulation
         /// </summary>
@@ -18,36 +21,31 @@ public class AppSettings
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 150;
+        public readonly int TargetTps = 40;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)
         /// </summary>
-        public readonly int NodeCooldownPeriod = 100;
-
-        /// <summary>
-        /// The interval in which a new wave of messages is sent (in ticks)
-        /// </summary>
-        public readonly int WaveInterval = 250;
+        public readonly int RefractoryPeriod = 22;
 
         /// <summary>
         /// The time it takes for an excitatory message to reach a node  (in ticks)
         /// </summary>
-        public readonly int DeltaTExcitatory = 25;
+        public readonly int DeltaTExcitatory = 7;
 
         /// <summary>
         /// The time it takes for an inhibitory message to reach a node (in ticks)
         /// </summary>
-        public readonly int DeltaTInhibitory = 10;
+        public readonly int DeltaTInhibitory = 5;
 
         /// <summary>
         /// Forward latency for tagged nodes (in ticks)
         /// </summary>
-        public readonly int TauPlus = 5;
+        public readonly int TauPlus = 2;
 
         /// <summary>
         /// Forward latency for non-tagged nodes (in ticks)
         /// </summary>
-        public readonly int TauZero = 10;
+        public readonly int TauZero = 4;
     }
 }

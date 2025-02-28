@@ -4,5 +4,6 @@ namespace TDT4900_MasterThesis.model.simulation;
 
 public interface IDrawable
 {
-    public void Draw(SKCanvas canvas);
+    public void Draw();
+    public bool IsReadyToDraw { get; }
 }

@@ -54,7 +54,17 @@ public class RandomGraphFactory
 
         var finalEdges = mstEdges.Concat(remainingEdges).ToList();
 
-        return new Graph(vertices.ToArray(), finalEdges.ToArray());
+        var g = new Graph(vertices.ToArray(), finalEdges.ToArray());
+
+        g.ConvertToBidirectional();
+
+        g.Nodes.ForEach(n =>
+        {
+            n.Neighbours = g.GetOutEdges(n).Select(e => e.Target).ToArray();
+            n.AllNodes = g.Nodes.ToArray();
+        });
+
+        return g;
     }
 
     private void AddEdgeIfNotExists(Node v1, Node v2, List<Edge> edges, int[,] edgeConnectionMatrix)

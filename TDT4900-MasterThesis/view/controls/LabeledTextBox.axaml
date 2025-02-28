@@ -1,0 +1,27 @@
+<UserControl
+    x:Class="TDT4900_MasterThesis.view.controls.LabeledTextBox"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Spacing="4">
+        <TextBlock
+            HorizontalAlignment="Left"
+            FontSize="14"
+            Foreground="#1C1C1C"
+            Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <TextBlock
+            Width="{Binding Width, RelativeSource={RelativeSource AncestorType=StackPanel}}"
+            HorizontalAlignment="Left"
+            FontSize="10"
+            Foreground="#757575"
+            Text="{Binding Description, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <TextBox
+            Height="24"
+            HorizontalAlignment="Stretch"
+            VerticalContentAlignment="Center"
+            BorderBrush="#757575"
+            BorderThickness="1"
+            CornerRadius="8"
+            Foreground="#1C1C1C"
+            Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+    </StackPanel>
+</UserControl>

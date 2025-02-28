@@ -1,294 +1,142 @@
-using Serilog;
+using CommunityToolkit.Mvvm.Messaging;
+using TDT4900_MasterThesis.message;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
-using TDT4900_MasterThesis.view;
+using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.engine;
 
 public class NodeMessageEngine : IUpdatable
 {
     /// <summary>
-    /// Holds the cooldown period of a node in number of remaining ticks. A node in cooldown period cannot be
-    /// activated
-    /// </summary>
-    private readonly int[] _cooldownPeriods;
-
-    private readonly int[] _iEMessagePairWindow;
-
-    /// <summary>
-    /// Cooldown for nodes after activation (in ticks)
-    /// </summary>
-    private readonly int _nodeCooldownPeriod;
-
-    /// <summary>
-    /// The time it takes for an excitatory message to reach a node  (in ticks)
-    /// </summary>
-    private readonly int _deltaTExcitatory;
-
-    /// <summary>
-    /// The time it takes for an inhibitory message to reach a node (in ticks)
-    /// </summary>
-    private readonly int _deltaTInhibitory;
-
-    /// <summary>
-    /// Forward latency for tagged nodes (in ticks)
-    /// </summary>
-    private readonly int _tauPlus;
-
-    /// <summary>
-    /// Forward latency for non-tagged nodes (in ticks)
-    /// </summary>
-    private readonly int _tauZero;
-
-    /// <summary>
     /// Queue which holds all processed messages ready to be executed at a specific tick.
     /// Structure is (message, executionTick) where executionTick is the tick at which the message is to be executed
     /// </summary>
-    private readonly PriorityQueue<Message, long> _messageQueue = new();
+    private readonly PriorityQueue<NodeMessage, long> _messageQueue = new();
 
     /// <summary>
     /// Queue which holds all messages currently being "processed". A processed message should be added to the queue
     /// if the sender is not inhibited in the meantime.
     /// </summary>
-    private readonly PriorityQueue<Message, long> _processingQueue = new();
+    private readonly PriorityQueue<ProcessMessage, long> _processingQueue = new();
 
-    /// <summary>
-    /// Graph to be used for the simulation
-    /// </summary>
-    private readonly Graph _graph;
+    private readonly SequencePlotView? _sequencePlotView;
 
-    /// <summary>
-    /// Visualization of the message passing
-    /// </summary>
-    private readonly GraphView _graphView;
+    private Graph? _graph;
 
-    public NodeMessageEngine(Graph graph, GraphView graphView, AppSettings appSettings)
+    public NodeMessageEngine(SequencePlotView? sequencePlotView)
     {
-        _graph = graph;
-        _graphView = graphView;
+        _sequencePlotView = sequencePlotView;
 
-        _cooldownPeriods = new int[_graph.Nodes.Count];
-        _iEMessagePairWindow = new int[_graph.Nodes.Count];
-
-        _nodeCooldownPeriod = appSettings.Simulation.NodeCooldownPeriod;
-
-        _deltaTExcitatory = appSettings.Simulation.DeltaTExcitatory;
-        _deltaTInhibitory = appSettings.Simulation.DeltaTInhibitory;
-
-        _tauZero = appSettings.Simulation.TauZero;
-        _tauPlus = appSettings.Simulation.TauPlus;
+        WeakReferenceMessenger.Default.Register<NewGraphMessage>(
+            this,
+            (r, m) => ReceiveNewGraphMessage(m)
+        );
     }
 
     public void Update(long currentTick)
     {
-        // Decrease time periods for all nodes
-        for (var i = 0; i < _graph.Nodes.Count; i++)
-        {
-            if (_iEMessagePairWindow[i] > 0)
-            {
-                _iEMessagePairWindow[i]--;
-            }
+        if (_graph == null)
+            return;
 
-            if (_cooldownPeriods[i] > 0)
-            {
-                _cooldownPeriods[i]--;
-            }
+        if (_messageQueue.Count + _processingQueue.Count == 0)
+        {
+            BeginNewWave(currentTick);
         }
 
         while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
         {
-            var message = _processingQueue.Dequeue();
-            if (message.Sender.IsInhibited)
-                continue;
+            var message = _processingQueue.Dequeue().SendMessage;
+            var sender = message.Sender;
+
             _messageQueue.Enqueue(message, message.ReceiveAt);
+
+            // Begin refraction if sender exists (It does not exist if the message is a "start" message)
+            sender?.BeginRefraction();
         }
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)
         {
-            ExecuteMessage(_messageQueue.Dequeue());
+            ExecuteNodeMessage(_messageQueue.Dequeue());
         }
     }
 
-    /// <summary>
-    /// Executes the message
-    /// </summary>
-    /// <param name="message">Message to execute</param>
-    private void ExecuteMessage(Message message)
+    public void ResetComponent()
     {
-        var receiver = message.Receiver;
-
-        var currentTick = message.ReceiveAt;
-
-        Log.Information("[{tick}] Received message {msg}", currentTick, message);
-
-        switch (message.Type)
-        {
-            case Message.MessageType.Excitatory:
-
-                if (receiver.IsTagged)
-                {
-                    GlobalInhibitoryMessageBurst(
-                        source: receiver,
-                        currentTick: currentTick,
-                        tau: _tauPlus,
-                        deltaT: _deltaTInhibitory
-                    );
-
-                    ExcitatoryMessageBurst(
-                        source: receiver,
-                        currentTick: currentTick,
-                        tau: _tauPlus,
-                        deltaT: _deltaTExcitatory
-                    );
-
-                    _graphView.ActivateNode(receiver);
-                }
-                else if (receiver.IsInhibited)
-                {
-                    if (
-                        _iEMessagePairWindow[receiver.Id] > 0
-                        && _iEMessagePairWindow[receiver.Id] < _tauZero
-                    )
-                    {
-                        receiver.IsTagged = true;
-
-                        Log.Information(
-                            "Excitatory message pair window is active for node {node} with expiration in {window} ticks",
-                            receiver,
-                            _iEMessagePairWindow[receiver.Id]
-                        );
-                    }
-                }
-                else
-                {
-                    // If the source node is in cooldown, do not burst messages
-                    var isInCooldown = _cooldownPeriods[receiver.Id] > 0;
-                    if (isInCooldown)
-                        return;
-
-                    // Burst to all neighbouring nodes
-                    ExcitatoryMessageBurst(
-                        source: receiver,
-                        currentTick: currentTick,
-                        tau: _tauZero,
-                        deltaT: _deltaTExcitatory
-                    );
-
-                    // Visualize the activation of the node
-                    _graphView.ActivateNode(receiver);
-                }
-                break;
-            case Message.MessageType.Inhibitory:
-                receiver.IsInhibited = true;
-                break;
-        }
+        _messageQueue.Clear();
+        _processingQueue.Clear();
     }
 
-    /// <summary>
-    /// Bursts an excitatory message to all neighbouring nodes of the source node.
-    /// </summary>
-    /// <param name="source">The source of the excitatory message burst</param>
-    /// <param name="currentTick">The current tick in time, will be used together with tau to decide actual message time</param>
-    /// <param name="tau">Forward latency for the source node (Processing time)</param>
-    /// <param name="deltaT">Time it takes for the excitatory burst being received by targets</param>
-    private void ExcitatoryMessageBurst(Node source, long currentTick, int tau, int deltaT)
+    public void BeginNewWave(long atTick)
     {
-        if (source.IsInhibited)
+        var target = _graph!.Nodes[0];
+        _graph.Nodes.ForEach(node => node.DisinhibitNode());
+
+        // Solution is found, no need to perform a new wave
+        if (target.IsTagged)
             return;
 
-        // One extra _tauZero since the message pair window is defined before the message is sent
-        _iEMessagePairWindow[source.Id] = (2 * _deltaTExcitatory + 2 * _tauZero) - 1;
-        Log.Information(
-            "[{tick}] Setting message pair window for node {node} to {exitation} ticks",
-            currentTick,
-            source,
-            _iEMessagePairWindow[source.Id]
+        QueueProcessMessage(
+            new ProcessMessage(
+                atTick,
+                atTick,
+                new NodeMessage(atTick, atTick, null, target, NodeMessage.MessageType.Excitatory)
+            )
         );
-
-        // refractory period
-        _cooldownPeriods[source.Id] = _nodeCooldownPeriod;
-        Log.Information(
-            "[{tick}] Setting cooldown period for node {node} to {cooldown} ticks",
-            currentTick,
-            source,
-            _cooldownPeriods[source.Id]
-        );
-
-        var outEdges = _graph.GetOutEdges(source);
-        foreach (var edge in outEdges)
-        {
-            SendMessage(
-                new Message(
-                    currentTick + deltaT + tau,
-                    source,
-                    edge.Target,
-                    Message.MessageType.Excitatory
-                ),
-                tau
-            );
-        }
     }
 
     /// <summary>
-    /// Bursts an inhibitory message to all neighbouring nodes of the source node.
+    /// Executes the message and queues successive messages as a result of the message
     /// </summary>
-    /// <param name="source">The source of the inhibitory message burst</param>
-    /// <param name="currentTick">The current tick in time, will be used together with tau to decide actual message time</param>
-    /// <param name="tau">Forward latency for the source node (Processing time)</param>
-    /// <param name="deltaT">Time it takes for the inhibitory burst being received by targets</param>
-    private void InhibitoryMessageBurst(Node source, long currentTick, int tau, int deltaT)
+    /// <param name="nodeMessage">Message to execute</param>
+    private void ExecuteNodeMessage(NodeMessage nodeMessage)
     {
-        if (source.IsInhibited)
-            return;
+        var receiver = nodeMessage.Receiver;
+        var currentTick = nodeMessage.ReceiveAt;
 
-        var outEdges = _graph.GetOutEdges(source);
-        foreach (var edge in outEdges)
+        ProcessMessage[] newMessages;
+        switch (nodeMessage.Type)
         {
-            SendMessage(
-                new Message(
-                    currentTick + deltaT + tau,
-                    source,
-                    edge.Target,
-                    Message.MessageType.Inhibitory
-                ),
-                tau
-            );
+            case NodeMessage.MessageType.Excitatory:
+                if (receiver.State != NodeState.Refractory)
+                    _sequencePlotView?.AppendNodeMessage(nodeMessage);
+
+                newMessages = receiver.Excite(currentTick);
+                break;
+            case NodeMessage.MessageType.Inhibitory:
+                newMessages = receiver.Inhibit(currentTick);
+                _sequencePlotView?.AppendNodeMessage(nodeMessage);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
+
+        QueueProcessMessages(newMessages!);
     }
 
     /// <summary>
-    /// Sends an inhibitory message burst to all nodes in <see cref="_graph"/>
-    /// </summary>
-    /// <param name="source">The source of the inhibitory message burst</param>
-    /// <param name="currentTick">The tick when the inhibitory burst should be processed</param>
-    /// <param name="tau">Forward latency for the source node (Processing time)</param>
-    /// <param name="deltaT">Time it takes for the inhibitory burst being received by targets</param>
-    private void GlobalInhibitoryMessageBurst(Node source, long currentTick, int tau, int deltaT)
-    {
-        _graph.Nodes.ForEach(n =>
-        {
-            if (!Equals(n, source))
-                SendMessage(
-                    new Message(
-                        currentTick + deltaT + tau,
-                        source,
-                        n,
-                        Message.MessageType.Inhibitory
-                    ),
-                    tau
-                );
-        });
-    }
-
-    /// <summary>
-    /// Adds a message to the message queue with the specified execution time
+    /// Adds a message to the message-processing queue with the specified execution time
     /// </summary>
     /// <param name="message">Message to be sent</param>
-    /// <param name="tau">Processing time for message before being sent</param>
-    public void SendMessage(Message message, int tau)
+    public void QueueProcessMessage(ProcessMessage message)
     {
-        Log.Information("Queuing message {msg}", message);
-        _processingQueue.Enqueue(message, message.ReceiveAt + tau);
+        //Log.Information("Queuing message {message}", message);
+
+        _processingQueue.Enqueue(message, message.ReceiveAt);
+    }
+
+    public void QueueProcessMessages(ProcessMessage[] messages)
+    {
+        foreach (var processMessage in messages)
+        {
+            QueueProcessMessage(processMessage);
+        }
+    }
+
+    private void ReceiveNewGraphMessage(NewGraphMessage message)
+    {
+        _graph = message.Value;
+        ResetComponent();
     }
 }
