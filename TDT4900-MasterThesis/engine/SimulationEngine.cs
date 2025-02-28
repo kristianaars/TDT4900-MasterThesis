@@ -3,7 +3,6 @@ using Avalonia.Threading;
 using Serilog;
 using TDT4900_MasterThesis.model.graph;
 using TDT4900_MasterThesis.model.simulation;
-using TDT4900_MasterThesis.view.plot;
 using TDT4900_MasterThesis.viewmodel;
 
 namespace TDT4900_MasterThesis.engine;
@@ -60,7 +59,7 @@ public class SimulationEngine
     public async Task RunSimulation(CancellationToken stoppingToken)
     {
         _isRunning = true;
-        _stopwatch = Stopwatch.StartNew();
+        _stopwatch = new Stopwatch();
 
         double updateInterval;
         double renderInterval;

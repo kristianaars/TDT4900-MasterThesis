@@ -1,7 +1,10 @@
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Remote.Protocol.Input;
 using ScottPlot;
 using ScottPlot.Avalonia;
+using ScottPlot.AxisRules;
+using ScottPlot.Interactivity.UserActionResponses;
 using ScottPlot.Plottables;
 using TDT4900_MasterThesis.constants;
 using TDT4900_MasterThesis.helpers;
@@ -11,6 +14,7 @@ using TDT4900_MasterThesis.model.simulation;
 using TDT4900_MasterThesis.view.plot.generator;
 using Color = ScottPlot.Color;
 using Colors = ScottPlot.Colors;
+using MouseButton = ScottPlot.Interactivity.MouseButton;
 
 namespace TDT4900_MasterThesis.view.plot;
 
@@ -27,6 +31,10 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
     private readonly Queue<NodeMessage> _unprocessedNodeMessagesQueue;
     private Queue<NodeMessage> _drawBufferMessages;
 
+    private int _tickWindow = 80;
+    private float _tickOffsetRightRatio = 0.05f;
+    private int TickOffsetRight => (int)(_tickWindow * _tickOffsetRightRatio);
+
     public bool IsReadyToDraw
     {
         get => _drawBufferStateUpdate.Count + _drawBufferMessages.Count == 0;
@@ -34,6 +42,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     private BarPlot[] _bars;
     private bool[] _isNeutral;
+    private bool[] _taggedVisualized;
+    private long _latestTick = 0;
 
     /// <summary>
     /// Vertical size of the sequence state bars
@@ -49,12 +59,17 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
         Plot.Axes.Bottom.TickGenerator = new IntegerTickGenerator();
 
+        Plot.Axes.Rules.Add(
+            new LockedVertical(Plot.Axes.Left, Plot.Axes.Left.Min, Plot.Axes.Left.Max)
+        );
+
         Margin = new Thickness(0);
 
         _bars = [];
         _isNeutral = [];
         _unprocessedStateHistoryQueue = [];
         _drawBufferStateUpdate = [];
+        _taggedVisualized = [];
 
         _unprocessedNodeMessagesQueue = [];
         _drawBufferMessages = [];
@@ -73,13 +88,16 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public void AppendNodeMessage(NodeMessage message)
     {
+        if (!EnableDataUpdate)
+            return;
+
         lock (_stateHistoryQueueLock)
         {
             _unprocessedNodeMessagesQueue.Enqueue(message);
         }
     }
 
-    private void AppendNewBar(int nodeId, NodeState state, long atTick, bool isTagged)
+    private void PlotNewBar(int nodeId, NodeState state, long atTick, bool isTagged)
     {
         _bars!
             [nodeId]
@@ -94,6 +112,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
                     ValueBase = atTick,
                     Value = atTick,
                     FillHatch = isTagged ? new ScottPlot.Hatches.Striped() : null,
+                    FillHatchColor = GetStateFillColor(state).Darken(0.2),
                 }
             );
     }
@@ -114,9 +133,11 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         var x2 = message.ReceiveAt;
 
         var line = Plot.Add.Line(x1, y1, x2, y2);
-        var lineColor = isExcitatory ? PlotColors.GreenBorder : Colors.Transparent;
+        var lineColor = isExcitatory ? PlotColors.GreenBorder : PlotColors.DarkRedBorder;
         var endLineColor = isExcitatory ? PlotColors.GreenBorder : PlotColors.DarkRedBorder;
         var startLineColor = isExcitatory ? Colors.Transparent : PlotColors.DarkRedBorder;
+
+        line.LinePattern = isExcitatory ? LinePattern.Solid : LinePattern.Dashed;
 
         line.LineWidth = 2;
         line.LineColor = lineColor;
@@ -130,9 +151,9 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         verticaEndLine.LineColor = endLineColor;
     }
 
-    public void MarkNodeAsTagged(long atTick, Node n)
+    public void MarkNodeAsTagged(long atTick, int nodeId)
     {
-        var yCenter = _bars![n.Id].Bars[^1].Rect.VerticalCenter;
+        var yCenter = _bars![nodeId].Bars[^1].Rect.VerticalCenter;
 
         var verticalLine = Plot.Add.Line(
             atTick,
@@ -161,12 +182,63 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         InvalidateVisual();
     }
 
+    public override void Render(DrawingContext context)
+    {
+        while (_drawBufferStateUpdate.Count != 0)
+        {
+            var update = _drawBufferStateUpdate.Dequeue();
+            var nodeId = update.NodeId;
+            var updateTick = update.Tick;
+
+            // If there exists a bar for the node, update it up until the update tick
+            if (!_isNeutral[update.NodeId])
+            {
+                UpdateLastBarValue(nodeId, updateTick);
+            }
+
+            _isNeutral[update.NodeId] = update.State == NodeState.Neutral;
+
+            if (!_isNeutral[update.NodeId])
+                PlotNewBar(update.NodeId, update.State, update.Tick, update.IsTagged);
+
+            // Visualize the moment a node is tagged
+            if (update.IsTagged && !_taggedVisualized[update.NodeId])
+            {
+                MarkNodeAsTagged(update.Tick, nodeId);
+                _taggedVisualized[update.NodeId] = true;
+            }
+        }
+
+        // Draw new node-messages
+        while (_drawBufferMessages.Count != 0)
+        {
+            var message = _drawBufferMessages.Dequeue();
+            PlotNodeMessage(message);
+        }
+
+        // Update active bars to latest tick
+        for (var n = 0; n < _isNeutral.Length; n++)
+        {
+            if (_isNeutral[n])
+                continue;
+            UpdateLastBarValue(n, _latestTick);
+        }
+
+        if (EnableAutoScroll)
+        {
+            Plot.Axes.SetLimitsX(
+                _latestTick - (_tickWindow - TickOffsetRight),
+                _latestTick + TickOffsetRight
+            );
+        }
+
+        base.Render(context);
+    }
+
     private void UpdateLastBarValue(int nodeId, long toValue)
     {
         _bars![nodeId].Bars[^1].Value = toValue;
     }
-
-    private long _latestTick = 0;
 
     public void Update(long currentTick)
     {
@@ -190,18 +262,43 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         _bars = Plot.Add.StackedRanges(ranges, horizontal: true);
 
         _isNeutral = new bool[g.Nodes.Count];
+        _taggedVisualized = new bool[g.Nodes.Count];
+
         ArrayHelper.FillArray(_isNeutral, true);
+        ArrayHelper.FillArray(_taggedVisualized, false);
 
         Plot.Axes.AutoScale();
+
+        foreach (Node n in g.Nodes)
+        {
+            AppendStateUpdate(new NodeStateUpdate(n.Id, n.State, n.IsTagged, 0));
+        }
+
+        Plot.Axes.Rules.Clear();
+        Plot.Axes.Rules.Add(
+            new LockedVertical(Plot.Axes.Left, Plot.Axes.Left.Min, Plot.Axes.Left.Max)
+        );
     }
 
+    /// <summary>
+    /// Reset method implemented by <see cref="IUpdatable"/> to reset simulation related data
+    /// </summary>
     public void ResetComponent()
     {
         _latestTick = 0;
+    }
+
+    /// <summary>
+    /// Reset the view-related data to its initial state
+    /// </summary>
+    public void ResetView()
+    {
         foreach (var b in _bars)
         {
             b.Bars.Clear();
         }
+
+        Plot.Remove<LinePlot>();
 
         ArrayHelper.FillArray(_isNeutral, true);
     }
@@ -215,45 +312,4 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
             NodeState.Inhibited => PlotColors.DarkRed,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
         };
-
-    public override void Render(DrawingContext context)
-    {
-        while (_drawBufferStateUpdate.Count != 0)
-        {
-            var update = _drawBufferStateUpdate.Dequeue();
-            var nodeId = update.NodeId;
-            var updateTick = update.Tick;
-
-            // If there exists a bar for the node, update it up until the update tick
-            if (!_isNeutral[update.NodeId])
-            {
-                UpdateLastBarValue(nodeId, updateTick);
-            }
-
-            _isNeutral[update.NodeId] = update.State == NodeState.Neutral;
-
-            if (!_isNeutral[update.NodeId])
-                AppendNewBar(update.NodeId, update.State, update.Tick, update.IsTagged);
-        }
-
-        // Draw new node-messages
-        while (_drawBufferMessages.Count != 0)
-        {
-            var message = _drawBufferMessages.Dequeue();
-            PlotNodeMessage(message);
-        }
-
-        // Update active bars to latest tick
-        for (var n = 0; n < _isNeutral.Length; n++)
-        {
-            if (_isNeutral[n])
-                continue;
-            UpdateLastBarValue(n, _latestTick);
-        }
-
-        if (EnableAutoScroll)
-            Plot.Axes.SetLimitsX(_latestTick - 50, _latestTick + 25);
-
-        base.Render(context);
-    }
 }

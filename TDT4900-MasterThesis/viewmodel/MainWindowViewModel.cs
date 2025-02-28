@@ -16,6 +16,8 @@ public partial class MainWindowViewModel : ObservableObject
     private NodeEngine _nodeEngine;
 
     private SimulationEngine _simulationEngine;
+    private SequencePlotViewModel _sequencePlotViewModel;
+    private GraphPlotViewModel _graphPlotViewModel;
 
     private AppSettings _appSettings;
 
@@ -76,12 +78,16 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         AppSettings appSettings,
         SimulationEngine simulationEngine,
-        NodeEngine nodeEngine
+        NodeEngine nodeEngine,
+        SequencePlotViewModel sequencePlotViewModel,
+        GraphPlotViewModel graphPlotViewModel
     )
     {
         _appSettings = appSettings;
         _simulationEngine = simulationEngine;
         _nodeEngine = nodeEngine;
+        _graphPlotViewModel = graphPlotViewModel;
+        _sequencePlotViewModel = sequencePlotViewModel;
 
         _graphSettingsNodeCount = _appSettings.Simulation.GraphNodeCount;
         _graphSettingsEdgeCount = _appSettings.Simulation.GraphEdgeCount;
@@ -121,12 +127,22 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void GenerateNewGraph()
     {
+        /*
         var nodeCount = GraphSettingsNodeCount;
         var edgeCount = GraphSettingsEdgeCount;
 
         var f = new RandomGraphFactory(nodeCount, edgeCount);
 
         Graph graph = f.GetGraph();
+        */
+
+        var nodeCount = GraphSettingsNodeCount;
+        var nodeSpacing = 70;
+        var nodeRadius = 100;
+        var noise = 20;
+
+        var f = new NeighbouringGraphFactory(nodeCount, nodeSpacing, nodeRadius, noise);
+        var graph = f.GetGraph();
 
         if (TargetNodeId >= nodeCount || TargetNodeId == 0)
         {
@@ -152,6 +168,11 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void ResetSimulation()
     {
-        _simulationEngine.Reset();
+        lock (SimulationEngine.UpdateLock)
+        {
+            _simulationEngine.Reset();
+            _graphPlotViewModel.Reset();
+            _sequencePlotViewModel.Reset();
+        }
     }
 }

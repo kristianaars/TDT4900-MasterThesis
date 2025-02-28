@@ -16,12 +16,12 @@ public class AppSettings
         /// <summary>
         /// Target Frames per second for simulation
         /// </summary>
-        public readonly int TargetFps = 10;
+        public readonly int TargetFps = 60;
 
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 10;
+        public readonly int TargetTps = 40;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)

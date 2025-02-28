@@ -16,7 +16,7 @@ public class IntegerTickGenerator : ITickGenerator
         var ticks = new List<Tick>();
 
         var min = (int)Math.Floor(range.Min);
-        var max = (int)Math.Ceiling(range.Max);
+        var max = (int)Math.Floor(range.Max);
         var spacing = (int)Math.Max(Math.Floor(range.Length / size.Length * 40), 1);
 
         for (int i = min; i <= max; i += spacing)

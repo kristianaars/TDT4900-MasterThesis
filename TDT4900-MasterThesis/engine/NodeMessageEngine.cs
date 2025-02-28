@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.Messaging;
-using Serilog;
 using TDT4900_MasterThesis.message;
 using TDT4900_MasterThesis.model;
 using TDT4900_MasterThesis.model.graph;
@@ -72,7 +71,7 @@ public class NodeMessageEngine : IUpdatable
     public void BeginNewWave(long atTick)
     {
         var target = _graph!.Nodes[0];
-        _graph.Nodes.ForEach(node => node.State = NodeState.Neutral);
+        _graph.Nodes.ForEach(node => node.DisinhibitNode());
 
         // Solution is found, no need to perform a new wave
         if (target.IsTagged)
@@ -97,7 +96,6 @@ public class NodeMessageEngine : IUpdatable
         var currentTick = nodeMessage.ReceiveAt;
 
         ProcessMessage[] newMessages;
-
         switch (nodeMessage.Type)
         {
             case NodeMessage.MessageType.Excitatory:

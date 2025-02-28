@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using ScottPlot;
 using ScottPlot.Avalonia;
+using ScottPlot.Hatches;
 using ScottPlot.Plottables;
 using Serilog;
 using TDT4900_MasterThesis.constants;
@@ -41,8 +42,7 @@ public class GraphPlotView : AvaPlot, IDrawable
     {
         lock (_stateHistoryQueueLock)
         {
-            if (_unprocessedStateHistoryQueue.Count < 10)
-                _unprocessedStateHistoryQueue.Enqueue(update);
+            _unprocessedStateHistoryQueue.Enqueue(update);
         }
     }
 
@@ -188,8 +188,17 @@ public class GraphPlotView : AvaPlot, IDrawable
                 {
                     node.FillColor = PlotColors.LightBlue;
                 }
+
+                node.FillHatch = new Striped();
+                node.FillHatchColor = PlotColors.LightBlue.Darken(0.2);
+
                 node.LineWidth = 4;
                 node.LineColor = PlotColors.BlueLightBorder;
+            }
+            else
+            {
+                node.FillHatch = null;
+                node.LineWidth = 2;
             }
         }
 
@@ -199,12 +208,20 @@ public class GraphPlotView : AvaPlot, IDrawable
     /// <summary>
     /// Resets the historical data of the graph. Initialized when a new graph is sat
     /// </summary>
-    public void ResetComponent()
+    public void ResetView()
     {
-        Plot.Clear();
         _unprocessedStateHistoryQueue = new Queue<NodeStateUpdate>();
         _drawBuffer = new Queue<NodeStateUpdate>();
-        Plot.Axes.AutoScale();
-        MaintainAspectRatio();
+
+        MarkAllNodesAsNeutral();
+    }
+
+    private void MarkAllNodesAsNeutral()
+    {
+        var nodeCount = _nodes.Count;
+        for (int n = 0; n < nodeCount; n++)
+        {
+            AppendStateHistory(new NodeStateUpdate(n, NodeState.Neutral, false, 0));
+        }
     }
 }

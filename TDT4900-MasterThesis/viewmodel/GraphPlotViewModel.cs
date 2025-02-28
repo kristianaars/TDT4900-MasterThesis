@@ -35,4 +35,9 @@ public class GraphPlotViewModel : ObservableRecipient, IRecipient<NewGraphMessag
             GraphPlotView.Init(graph);
         }
     }
+
+    public void Reset()
+    {
+        //GraphPlotView.ResetView();
+    }
 }

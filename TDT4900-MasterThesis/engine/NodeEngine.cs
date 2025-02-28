@@ -16,6 +16,7 @@ public class NodeEngine : IUpdatable
     private readonly GraphPlotViewModel _graphPlotViewModel;
 
     private NodeState[] _previousState;
+    private bool[] _isTagged;
 
     private Graph? _graph;
 
@@ -97,6 +98,7 @@ public class NodeEngine : IUpdatable
         _refractoryPeriod = appSettings.Simulation.RefractoryPeriod;
 
         _previousState = [];
+        _isTagged = [];
     }
 
     public void Update(long currentTick)
@@ -105,13 +107,14 @@ public class NodeEngine : IUpdatable
         {
             n.Update(currentTick);
 
-            if (n.State != _previousState[n.Id])
+            if (n.State != _previousState[n.Id] || n.IsTagged != _isTagged[n.Id])
             {
                 var update = new NodeStateUpdate(n.Id, n.State, n.IsTagged, currentTick);
                 _sequencePlotViewModel.AppendNodeStateUpdate(update);
                 _graphPlotViewModel.AppendStateUpdate(update);
 
                 _previousState[n.Id] = n.State;
+                _isTagged[n.Id] = n.IsTagged;
             }
         });
     }
@@ -120,8 +123,6 @@ public class NodeEngine : IUpdatable
     {
         _graph!.Nodes.ForEach(n => n.Reset());
         _graph!.Nodes[TargetNodeId].IsTagged = true;
-
-        _previousState = new NodeState[_graph!.Nodes.Count];
 
         SetDeltaExcitatoryForAllNodes(_deltaExcitatory);
         SetDeltaInhibitoryForAllNodes(_deltaInhibitory);
@@ -152,6 +153,10 @@ public class NodeEngine : IUpdatable
     private void ReceiveNewGraphMessage(NewGraphMessage message)
     {
         _graph = message.Value;
+
+        _previousState = new NodeState[_graph!.Nodes.Count];
+        _isTagged = new bool[_graph.Nodes.Count];
+
         ResetComponent();
     }
 }

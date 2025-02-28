@@ -31,8 +31,6 @@
         <Style Selector="TextBlock.Header2">
             <Setter Property="FontSize">18</Setter>
         </Style>
-
-
     </Window.Styles>
 
     <Design.DataContext>

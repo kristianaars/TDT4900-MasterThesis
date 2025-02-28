@@ -59,4 +59,10 @@ public partial class SequencePlotViewModel : ObservableRecipient, IRecipient<New
     {
         SequencePlotView.EnableDataUpdate = value;
     }
+
+    public void Reset()
+    {
+        NodeStateUpdateHistory.Clear();
+        SequencePlotView.ResetView();
+    }
 }
