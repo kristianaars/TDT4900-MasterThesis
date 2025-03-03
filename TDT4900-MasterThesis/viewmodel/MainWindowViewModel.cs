@@ -8,6 +8,7 @@ using TDT4900_MasterThesis.factory;
 using TDT4900_MasterThesis.host;
 using TDT4900_MasterThesis.message;
 using TDT4900_MasterThesis.model.graph;
+using TDT4900_MasterThesis.service;
 
 namespace TDT4900_MasterThesis.viewmodel;
 
@@ -151,6 +152,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         _nodeEngine.TargetNodeId = TargetNodeId;
         WeakReferenceMessenger.Default.Send(new NewGraphMessage(graph));
+
+        new PersistenceService(new GraphSerializerService()).SaveGraph(graph, "");
     }
 
     [RelayCommand]
@@ -171,7 +174,6 @@ public partial class MainWindowViewModel : ObservableObject
         lock (SimulationEngine.UpdateLock)
         {
             _simulationEngine.Reset();
-            _graphPlotViewModel.Reset();
             _sequencePlotViewModel.Reset();
         }
     }

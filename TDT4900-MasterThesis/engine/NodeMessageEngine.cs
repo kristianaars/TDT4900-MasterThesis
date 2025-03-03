@@ -73,10 +73,6 @@ public class NodeMessageEngine : IUpdatable
         var target = _graph!.Nodes[0];
         _graph.Nodes.ForEach(node => node.DisinhibitNode());
 
-        // Solution is found, no need to perform a new wave
-        if (target.IsTagged)
-            return;
-
         QueueProcessMessage(
             new ProcessMessage(
                 atTick,

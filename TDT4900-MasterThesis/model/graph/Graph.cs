@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using TDT4900_MasterThesis.helpers;
 using TDT4900_MasterThesis.model.simulation;
 
@@ -13,6 +14,7 @@ public class Graph(Node[] nodes, Edge[] edges)
     private readonly Node[] _nodes = nodes;
 
     public List<Node> Nodes => _nodes.ToList();
+
     public List<Edge> Edges => GetAllEdges();
 
     private static int[,] BuildAdjacencyMatrix(Node[] nodes, Edge[] edges)

@@ -27,11 +27,14 @@ public class GraphPlotView : AvaPlot, IDrawable
         get => _drawBuffer.Count == 0;
     }
 
+    public bool EnableDataUpdate { get; set; }
+
     public GraphPlotView()
     {
         Plot.Grid.IsVisible = false;
         Plot.Axes.Left.TickLabelStyle.IsVisible = false;
         Margin = new Thickness(0);
+        EnableDataUpdate = true;
 
         SizeChanged += (sender, args) => MaintainAspectRatio();
         Loaded += (sender, args) => MaintainAspectRatio();
@@ -40,6 +43,9 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public void AppendStateHistory(NodeStateUpdate update)
     {
+        if (!EnableDataUpdate)
+            return;
+
         lock (_stateHistoryQueueLock)
         {
             _unprocessedStateHistoryQueue.Enqueue(update);

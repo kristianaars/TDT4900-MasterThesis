@@ -7,14 +7,19 @@ using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.viewmodel;
 
-public class GraphPlotViewModel : ObservableRecipient, IRecipient<NewGraphMessage>
+public partial class GraphPlotViewModel : ObservableRecipient, IRecipient<NewGraphMessage>
 {
     public GraphPlotView GraphPlotView;
+
+    [ObservableProperty]
+    private bool _enableDataUpdate;
 
     public GraphPlotViewModel(GraphPlotView graphPlotView)
     {
         GraphPlotView = graphPlotView;
         IsActive = true;
+
+        EnableDataUpdate = graphPlotView.EnableDataUpdate;
     }
 
     public void AppendStateUpdate(NodeStateUpdate nodeStateUpdate)
@@ -36,8 +41,8 @@ public class GraphPlotViewModel : ObservableRecipient, IRecipient<NewGraphMessag
         }
     }
 
-    public void Reset()
+    partial void OnEnableDataUpdateChanged(bool value)
     {
-        //GraphPlotView.ResetView();
+        GraphPlotView.EnableDataUpdate = value;
     }
 }

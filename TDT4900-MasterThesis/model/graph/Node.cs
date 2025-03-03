@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Serilog;
 using TDT4900_MasterThesis.model.simulation;
 
@@ -10,11 +11,16 @@ public class Node : MIConvexHull.IVertex
     public int Id { get; init; }
 
     public int X { get; set; }
+
     public int Y { get; set; }
+
+    [JsonIgnore]
     public double[] Position => [X, Y];
 
+    [JsonIgnore]
     public Node[] Neighbours = [];
 
+    [JsonIgnore]
     public Node[] AllNodes = [];
 
     private Random _random = new Random();
@@ -22,26 +28,38 @@ public class Node : MIConvexHull.IVertex
     /// <summary>
     /// Tau is the processing time, e.g. how long a message takes to process before sending it to the next node.
     /// </summary>
+    [JsonIgnore]
     public int Tau => IsTagged ? TauPlus : TauZero;
 
     /// <summary>
     /// Marks if the node is tagged or not. Tagged nodes have a shorter processing time <see cref="Tau"/>.
     /// </summary>
+    [JsonIgnore]
     public bool IsTagged { get; set; }
 
     /// <summary>
     /// Current state of the node
     /// </summary>
+    [JsonIgnore]
     public NodeState State { get; set; }
 
     private int _refractoryCounter;
     private long _taggedExcitationWindow;
     private long _taggedInhibitionWindow;
 
+    [JsonIgnore]
     public int DeltaExcitatory { get; set; }
+
+    [JsonIgnore]
     public int DeltaInhibitory { get; set; }
+
+    [JsonIgnore]
     public int TauZero { get; set; }
+
+    [JsonIgnore]
     public int TauPlus { get; set; }
+
+    [JsonIgnore]
     public int RefractoryPeriod { get; set; }
 
     public Node(int id)
@@ -134,12 +152,7 @@ public class Node : MIConvexHull.IVertex
 
         if (_taggedInhibitionWindow == 0)
         {
-            Log.Information($"This node was inhibited a long time ago {Id}");
             _taggedExcitationWindow = 0;
-        }
-        else
-        {
-            Log.Information($"Node {Id} has {_taggedInhibitionWindow} inhibition window left");
         }
 
         switch (State)
