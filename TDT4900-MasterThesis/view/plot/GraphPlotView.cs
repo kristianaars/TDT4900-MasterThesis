@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Media;
 using ScottPlot;
@@ -5,10 +6,10 @@ using ScottPlot.Avalonia;
 using ScottPlot.Hatches;
 using ScottPlot.Plottables;
 using Serilog;
-using TDT4900_MasterThesis.constants;
-using TDT4900_MasterThesis.model;
-using TDT4900_MasterThesis.model.graph;
-using TDT4900_MasterThesis.model.simulation;
+using TDT4900_MasterThesis.Constants;
+using TDT4900_MasterThesis.Model;
+using TDT4900_MasterThesis.Model.Db;
+using TDT4900_MasterThesis.Model.Graph;
 using Color = ScottPlot.Color;
 
 namespace TDT4900_MasterThesis.view.plot;
@@ -19,8 +20,8 @@ public class GraphPlotView : AvaPlot, IDrawable
     private List<Ellipse> _nodes = new();
 
     private readonly Lock _stateHistoryQueueLock = new();
-    private Queue<NodeStateUpdate> _unprocessedStateHistoryQueue = new();
-    private Queue<NodeStateUpdate> _drawBuffer = new();
+    private Queue<NodeEvent> _unprocessedNodeEventsQueue = new();
+    private Queue<NodeEvent> _drawBuffer = new();
 
     public bool IsReadyToDraw
     {
@@ -41,28 +42,28 @@ public class GraphPlotView : AvaPlot, IDrawable
         MaintainAspectRatio();
     }
 
-    public void AppendStateHistory(NodeStateUpdate update)
+    public void AppendNodeEvent(NodeEvent nodeEvent)
     {
         if (!EnableDataUpdate)
             return;
 
         lock (_stateHistoryQueueLock)
         {
-            _unprocessedStateHistoryQueue.Enqueue(update);
+            _unprocessedNodeEventsQueue.Enqueue(nodeEvent);
         }
     }
 
     public void Init(Graph graph)
     {
-        lock (_unprocessedStateHistoryQueue)
+        lock (_unprocessedNodeEventsQueue)
         {
-            _unprocessedStateHistoryQueue.Clear();
+            _unprocessedNodeEventsQueue.Clear();
             _drawBuffer.Clear();
         }
 
         Plot.Clear();
 
-        var edges = graph!.Edges;
+        var edges = graph.Edges;
         var nodes = graph.Nodes;
 
         _edges.Clear();
@@ -71,8 +72,8 @@ public class GraphPlotView : AvaPlot, IDrawable
         // Draw edges
         foreach (var e in edges)
         {
-            var start = e.Source.Id;
-            var end = e.Target.Id;
+            var start = e.Source.NodeId;
+            var end = e.Target.NodeId;
 
             double x1 = nodes[start].X,
                 y1 = nodes[start].Y;
@@ -82,7 +83,7 @@ public class GraphPlotView : AvaPlot, IDrawable
             var line = Plot.Add.Line(x1, y1, x2, y2);
             line.LineWidth = 2;
             line.LineColor = PlotColors.DarkGray;
-            _edges!.Add(line);
+            _edges.Add(line);
         }
 
         // Draw nodes
@@ -90,11 +91,11 @@ public class GraphPlotView : AvaPlot, IDrawable
         {
             var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 16);
 
-            node.FillColor = GetStateFillColor(n.State);
-            node.LineColor = GetStateBorderColor(n.State);
+            node.FillColor = GetStateFillColor(EventType.Neutral);
+            node.LineColor = GetStateBorderColor(EventType.Neutral);
             node.LineWidth = 4;
 
-            var text = Plot.Add.Text($"{n.Id}", n.X, n.Y);
+            var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
             text.LabelFontSize = 12;
             text.OffsetY = 2;
             text.LabelFontColor = PlotColors.Black;
@@ -107,37 +108,70 @@ public class GraphPlotView : AvaPlot, IDrawable
         MaintainAspectRatio();
     }
 
+    /// <summary>
+    /// Draw fills the draw buffer with the unprocessed node events and invalidates the visual to trigger <see cref="Render"/>
+    /// </summary>
     public void Draw()
     {
         lock (_stateHistoryQueueLock)
         {
             if (!IsReadyToDraw)
                 return;
-            _drawBuffer = new Queue<NodeStateUpdate>(_unprocessedStateHistoryQueue!);
-            _unprocessedStateHistoryQueue.Clear();
+            _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEventsQueue!);
+            _unprocessedNodeEventsQueue.Clear();
         }
 
         InvalidateVisual();
     }
 
-    private Color GetStateFillColor(NodeState state) =>
-        state switch
+    public override void Render(DrawingContext context)
+    {
+        while (_drawBuffer.Count != 0)
         {
-            NodeState.Neutral => PlotColors.White,
-            NodeState.Refractory => PlotColors.LightGray,
-            NodeState.Processing => PlotColors.Green,
-            NodeState.Inhibited => PlotColors.DarkRed,
-            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+            var update = _drawBuffer.Dequeue();
+            var nodeComp = _nodes[update.NodeId];
+            var eventType = update.EventType!;
+
+            if (eventType == EventType.Tagged)
+            {
+                nodeComp.FillHatch = new Striped();
+                nodeComp.FillHatchColor = PlotColors.LightBlue.Darken(0.2);
+                nodeComp.LineWidth = 4;
+            }
+            else
+            {
+                nodeComp.FillColor = GetStateFillColor(eventType);
+                nodeComp.LineColor = GetStateBorderColor(eventType);
+            }
+        }
+
+        base.Render(context);
+    }
+
+    private Color GetStateFillColor(EventType eventType) =>
+        eventType switch
+        {
+            EventType.Neutral => PlotColors.White,
+            EventType.Refractory => PlotColors.LightGray,
+            EventType.Processing => PlotColors.Green,
+            EventType.Inhibited => PlotColors.DarkRed,
+            EventType.Tagged => throw new InvalidEnumArgumentException(
+                "Tagged does not contain a fill color"
+            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null),
         };
 
-    private Color GetStateBorderColor(NodeState state) =>
-        state switch
+    private Color GetStateBorderColor(EventType eventType) =>
+        eventType switch
         {
-            NodeState.Neutral => PlotColors.DarkGray,
-            NodeState.Refractory => PlotColors.DarkGray,
-            NodeState.Processing => PlotColors.GreenBorder,
-            NodeState.Inhibited => PlotColors.DarkRedBorder,
-            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+            EventType.Neutral => PlotColors.DarkGray,
+            EventType.Refractory => PlotColors.DarkGray,
+            EventType.Processing => PlotColors.GreenBorder,
+            EventType.Inhibited => PlotColors.DarkRedBorder,
+            EventType.Tagged => throw new InvalidEnumArgumentException(
+                "Tagged does not contain a border color"
+            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null),
         };
 
     private void MaintainAspectRatio()
@@ -176,58 +210,5 @@ public class GraphPlotView : AvaPlot, IDrawable
         plot.Axes.Bottom.Max = xCenter + newXSpan / 2;
         plot.Axes.Left.Min = yCenter - newYSpan / 2;
         plot.Axes.Left.Max = yCenter + newYSpan / 2;
-    }
-
-    public override void Render(DrawingContext context)
-    {
-        while (_drawBuffer.Count != 0)
-        {
-            var update = _drawBuffer.Dequeue();
-            var node = _nodes![update.NodeId];
-
-            node.FillColor = GetStateFillColor(update.State);
-            node.LineColor = GetStateBorderColor(update.State);
-
-            if (update.IsTagged)
-            {
-                if (update.State == NodeState.Neutral)
-                {
-                    node.FillColor = PlotColors.LightBlue;
-                }
-
-                node.FillHatch = new Striped();
-                node.FillHatchColor = PlotColors.LightBlue.Darken(0.2);
-
-                node.LineWidth = 4;
-                node.LineColor = PlotColors.BlueLightBorder;
-            }
-            else
-            {
-                node.FillHatch = null;
-                node.LineWidth = 2;
-            }
-        }
-
-        base.Render(context);
-    }
-
-    /// <summary>
-    /// Resets the historical data of the graph. Initialized when a new graph is sat
-    /// </summary>
-    public void ResetView()
-    {
-        _unprocessedStateHistoryQueue = new Queue<NodeStateUpdate>();
-        _drawBuffer = new Queue<NodeStateUpdate>();
-
-        MarkAllNodesAsNeutral();
-    }
-
-    private void MarkAllNodesAsNeutral()
-    {
-        var nodeCount = _nodes.Count;
-        for (int n = 0; n < nodeCount; n++)
-        {
-            AppendStateHistory(new NodeStateUpdate(n, NodeState.Neutral, false, 0));
-        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using Serilog;
 using TDT4900_MasterThesis;
-using TDT4900_MasterThesis.host;
+using TDT4900_MasterThesis.Host;
 
 // Configure logging
 using var log = new LoggerConfiguration()

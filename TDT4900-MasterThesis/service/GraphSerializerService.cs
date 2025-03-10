@@ -1,16 +1,16 @@
 using System.Text.Json;
-using TDT4900_MasterThesis.model.graph;
+using TDT4900_MasterThesis.Model.Graph;
 
 namespace TDT4900_MasterThesis.service;
 
 public class GraphSerializerService
 {
-    public string SerializeGraph(Graph graph)
+    public string SerializeGraph(SimulationGraph simulationGraph)
     {
         var graphDto = new GraphDto()
         {
-            Nodes = graph.Nodes.ToArray(),
-            Edges = graph
+            Nodes = simulationGraph.Nodes.ToArray(),
+            Edges = simulationGraph
                 .Edges.Select(e => new EdgeDto
                 {
                     Target = e.Target.Id,
@@ -23,19 +23,19 @@ public class GraphSerializerService
         return JsonSerializer.Serialize(graphDto);
     }
 
-    public Graph DeserializeGraph(string json)
+    public SimulationGraph DeserializeGraph(string json)
     {
         var graphDto = JsonSerializer.Deserialize<GraphDto>(json);
         var nodes = graphDto!.Nodes;
         var edges = graphDto
-            .Edges.Select(e => new Edge(nodes[e.Source], nodes[e.Target], e.Weight))
+            .Edges.Select(e => new SimulationEdge(nodes[e.Source], nodes[e.Target], e.Weight))
             .ToArray();
-        return new Graph(nodes, edges);
+        return new SimulationGraph(nodes, edges);
     }
 
     class GraphDto
     {
-        public Node[] Nodes { get; set; }
+        public SimulationNode[] Nodes { get; set; }
         public EdgeDto[] Edges { get; set; }
     }
 

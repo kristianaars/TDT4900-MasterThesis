@@ -1,20 +1,18 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using TDT4900_MasterThesis.engine;
-using TDT4900_MasterThesis.message;
-using TDT4900_MasterThesis.model;
+using TDT4900_MasterThesis.Engine;
+using TDT4900_MasterThesis.Handler;
+using TDT4900_MasterThesis.Message;
+using TDT4900_MasterThesis.Model;
+using TDT4900_MasterThesis.Model.Db;
+using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.view.plot;
 
 namespace TDT4900_MasterThesis.viewmodel;
 
-public partial class SequencePlotViewModel : ObservableRecipient, IRecipient<NewGraphMessage>
+public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
 {
     public SequencePlotView SequencePlotView;
-
-    /// <summary>
-    /// Contains the complete history of node state updates
-    /// </summary>
-    public List<NodeStateUpdate> NodeStateUpdateHistory;
 
     [ObservableProperty]
     private bool _enableAutoScroll = true;
@@ -25,30 +23,10 @@ public partial class SequencePlotViewModel : ObservableRecipient, IRecipient<New
     public SequencePlotViewModel(SequencePlotView sequencePlotView)
     {
         SequencePlotView = sequencePlotView;
-        IsActive = true;
-
-        NodeStateUpdateHistory = [];
     }
 
-    public void AppendNodeStateUpdate(NodeStateUpdate update)
-    {
-        if (NodeStateUpdateHistory.Count > 0 && update.Tick < NodeStateUpdateHistory[^1].Tick)
-            throw new Exception(
-                $"Node state update is not in order. Last tick: {NodeStateUpdateHistory[^1].Tick}, current tick: {update.Tick}"
-            );
-
-        NodeStateUpdateHistory.Add(update);
-        SequencePlotView.AppendStateUpdate(update);
-    }
-
-    public void Receive(NewGraphMessage message)
-    {
-        lock (SimulationEngine.UpdateLock)
-        {
-            var graph = message.Value;
-            SequencePlotView.InitGraph(graph);
-        }
-    }
+    [Obsolete("Use ConsumeEvent instead")]
+    public void AppendNodeStateUpdate(NodeStateUpdate update) { }
 
     partial void OnEnableAutoScrollChanged(bool value)
     {
@@ -62,7 +40,11 @@ public partial class SequencePlotViewModel : ObservableRecipient, IRecipient<New
 
     public void Reset()
     {
-        NodeStateUpdateHistory.Clear();
         SequencePlotView.ResetView();
+    }
+
+    public void ConsumeEvent(NodeEvent nodeEvent)
+    {
+        SequencePlotView.AppendNodeEvent(nodeEvent);
     }
 }

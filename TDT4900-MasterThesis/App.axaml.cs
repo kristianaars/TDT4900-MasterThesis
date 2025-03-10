@@ -7,10 +7,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
-using TDT4900_MasterThesis.engine;
-using TDT4900_MasterThesis.factory;
-using TDT4900_MasterThesis.host;
-using TDT4900_MasterThesis.model.graph;
+using TDT4900_MasterThesis.Engine;
+using TDT4900_MasterThesis.Factory;
+using TDT4900_MasterThesis.Host;
+using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.view;
 using TDT4900_MasterThesis.view.plot;
 
@@ -31,7 +31,7 @@ public class App : Application
 
             desktop.Exit += (sender, args) =>
             {
-                Host!.StopAsync();
+                //Host!.StopAsync();
                 Environment.Exit(0);
             };
         }
@@ -47,13 +47,13 @@ public class App : Application
         Console.CancelKeyPress += async (sender, e) =>
         {
             e.Cancel = true; // Prevent immediate shutdown
-            await Host!.StopAsync();
+            //await Host!.StopAsync();
             Environment.Exit(0);
         };
 
         // Start the application host for background services
 
-        Task.Run(() => Host.Start());
+        //Task.Run(() => Host.Start());
 
         base.OnFrameworkInitializationCompleted();
     }

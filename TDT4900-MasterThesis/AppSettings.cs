@@ -3,8 +3,13 @@ namespace TDT4900_MasterThesis;
 public class AppSettings
 {
     public readonly string WindowTitle = "TDT4900 Master Thesis - Simulation";
-    public readonly int DefaultWindowWidth = 1000;
-    public readonly int DefaultWindowHeight = 1000;
+    public readonly int DefaultWindowWidth = 1450;
+    public readonly int DefaultWindowHeight = 800;
+
+    /// <summary>
+    /// Name/path of the local database file
+    /// </summary>
+    public readonly string DbPath = "./data.sqlite";
 
     public readonly SimulationSettings Simulation = new();
 

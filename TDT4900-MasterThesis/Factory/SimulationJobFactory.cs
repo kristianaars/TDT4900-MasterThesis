@@ -1,0 +1,44 @@
+using AutoMapper;
+using TDT4900_MasterThesis.Algorithm;
+using TDT4900_MasterThesis.Algorithm.Alpha;
+using TDT4900_MasterThesis.Algorithm.Alpha.Component;
+using TDT4900_MasterThesis.Model;
+using TDT4900_MasterThesis.Model.Db;
+
+namespace TDT4900_MasterThesis.Factory;
+
+public class SimulationJobFactory(IMapper mapper)
+{
+    public SimulationJob GetSimulationJob(Simulation simulation)
+    {
+        IAlgorithm algorithm;
+        var algorithmSpec = simulation.AlgorithmSpec;
+
+        switch (algorithmSpec.AlgorithmType)
+        {
+            case AlgorithmType.Alpha:
+                var graph = mapper.Map<AlphaGraph>(simulation.Graph!);
+                var startNode = graph.Nodes.Find(n => n.NodeId == simulation.StartNode!.NodeId)!;
+                var targetNode = graph.Nodes.Find(n => n.NodeId == simulation.TargetNode!.NodeId)!;
+
+                algorithm = new AlphaAlgorithm()
+                {
+                    Graph = graph,
+                    StartNode = startNode,
+                    TargetNode = targetNode,
+                    AlgorithmSpec =
+                        algorithmSpec as AlphaAlgorithmSpec
+                        ?? throw new InvalidOperationException(
+                            "AlgorithmSpec is not of type AlphaAlgorithmSpec."
+                        ),
+                };
+                break;
+            default:
+                throw new NotImplementedException(
+                    $"Algorithm type {algorithmSpec.AlgorithmType} is not implemented."
+                );
+        }
+
+        return new SimulationJob() { Algorithm = algorithm, Simulation = simulation };
+    }
+}
