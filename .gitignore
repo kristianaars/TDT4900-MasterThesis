@@ -1,3 +1,6 @@
 .idea
 bin
 obj
+data.db
+data.sqlite
+*.user
