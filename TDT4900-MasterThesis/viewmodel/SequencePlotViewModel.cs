@@ -38,9 +38,9 @@ public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
         SequencePlotView.EnableDataUpdate = value;
     }
 
-    public void Reset()
+    public void InitializeGraph(Graph graph)
     {
-        SequencePlotView.ResetView();
+        SequencePlotView.InitializeGraph(graph);
     }
 
     public void ConsumeEvent(NodeEvent nodeEvent)

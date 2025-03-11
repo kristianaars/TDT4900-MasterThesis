@@ -1,4 +1,3 @@
-using GLib;
 using TDT4900_MasterThesis.Algorithm.Alpha.Component;
 using TDT4900_MasterThesis.Model.Graph;
 using Log = Serilog.Log;
@@ -21,7 +20,7 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
     {
         if (_messageQueue.Count == 0)
         {
-            BeginNewWave(currentTick, currentTick + 5);
+            BeginNewWave(currentTick, currentTick);
         }
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)

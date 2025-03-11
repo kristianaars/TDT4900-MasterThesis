@@ -239,7 +239,6 @@ public partial class MainWindowViewModel : ObservableObject
         lock (SimulationEngine.UpdateLock)
         {
             _simulationEngine.Reset();
-            _sequencePlotViewModel.Reset();
         }
     }
 }

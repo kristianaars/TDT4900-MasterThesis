@@ -41,9 +41,4 @@ public class AlphaAlgorithm : BaseAlgorithm
         if (StartNode.IsTagged)
             IsFinished = true;
     }
-
-    public override void ResetComponent()
-    {
-        throw new NotImplementedException();
-    }
 }

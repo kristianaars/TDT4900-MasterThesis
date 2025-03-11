@@ -242,7 +242,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         _latestTick = currentTick;
     }
 
-    public void InitGraph(SimulationGraph g)
+    public void InitializeGraph(Graph g)
     {
         Plot.Clear();
 
@@ -250,7 +250,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         List<(string name, double[] edges)> ranges = g
             .Nodes.Select(n =>
             {
-                return ($"Node {n.Id}", new double[] { 0, 0 });
+                return ($"Node {n.NodeId}", new double[] { 0, 0 });
             })
             .ToList();
         _bars = Plot.Add.StackedRanges(ranges, horizontal: true);
@@ -267,29 +267,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         Plot.Axes.Rules.Add(
             new LockedVertical(Plot.Axes.Left, Plot.Axes.Left.Min, Plot.Axes.Left.Max)
         );
-    }
-
-    /// <summary>
-    /// Reset method implemented by <see cref="IUpdatable"/> to reset simulation related data
-    /// </summary>
-    public void ResetComponent()
-    {
-        _latestTick = 0;
-    }
-
-    /// <summary>
-    /// Reset the view-related data to its initial state
-    /// </summary>
-    public void ResetView()
-    {
-        foreach (var b in _bars)
-        {
-            b.Bars.Clear();
-        }
-
-        Plot.Remove<LinePlot>();
-
-        ArrayHelper.FillArray(_isNeutral, true);
     }
 
     private Color GetStateFillColor(EventType eventType) =>

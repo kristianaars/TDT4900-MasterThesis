@@ -41,6 +41,6 @@ public partial class GraphPlotViewModel : ObservableObject, IEventConsumer
 
     public void InitializeGraph(Graph graph)
     {
-        GraphPlotView.Init(graph);
+        GraphPlotView.InitializeGraph(graph);
     }
 }

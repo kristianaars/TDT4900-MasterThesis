@@ -53,7 +53,7 @@ public class GraphPlotView : AvaPlot, IDrawable
         }
     }
 
-    public void Init(Graph graph)
+    public void InitializeGraph(Graph graph)
     {
         lock (_unprocessedNodeEventsQueue)
         {

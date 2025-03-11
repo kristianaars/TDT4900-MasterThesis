@@ -17,5 +17,4 @@ public abstract class BaseAlgorithm : BaseEventProducer, IAlgorithm
 
     public abstract void Initialize();
     public abstract void Update(long currentTick);
-    public abstract void ResetComponent();
 }

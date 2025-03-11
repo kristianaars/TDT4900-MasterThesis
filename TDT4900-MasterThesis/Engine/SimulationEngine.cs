@@ -27,12 +27,10 @@ public class SimulationEngine
     /// </summary>
     public static readonly Lock UpdateLock = new();
 
-    public readonly List<IUpdatable> UpdatableComponents;
     public readonly List<IDrawable> DrawableComponents;
 
     public SimulationEngine(
         AppSettings appSettings,
-        IEnumerable<IUpdatable> updatableComponents,
         IEnumerable<IDrawable> drawableComponents,
         GraphPlotViewModel? graphPlotViewModel,
         SequencePlotViewModel? sequencePlotViewModel
@@ -43,7 +41,6 @@ public class SimulationEngine
         TargetFps = appSettings.Simulation.TargetFps;
         TargetTps = appSettings.Simulation.TargetTps;
 
-        UpdatableComponents = updatableComponents.ToList();
         DrawableComponents = drawableComponents.ToList();
     }
 
@@ -69,11 +66,12 @@ public class SimulationEngine
         var algorithm = simulationJob.Algorithm;
         algorithm.EventHandler = new EventHandler()
         {
-            Consumers = [algorithm, _graphPlotViewModel],
+            Consumers = [algorithm, _graphPlotViewModel, _sequencePlotViewModel],
         };
         algorithm.Initialize();
 
         _graphPlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
+        _sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
 
         _stopwatch = Stopwatch.StartNew();
 
@@ -149,7 +147,7 @@ public class SimulationEngine
             if (MainWindowViewModel != null)
                 MainWindowViewModel.CurrentTick = currentTick;
 
-            UpdatableComponents.ForEach(c => c.Update(currentTick));
+            _sequencePlotViewModel?.SequencePlotView.Update(currentTick);
             _tickCounter++;
         }
     }
@@ -190,7 +188,6 @@ public class SimulationEngine
         {
             _currentTick = 0;
             Play();
-            UpdatableComponents.ForEach(c => c.ResetComponent());
         }
     }
 }

@@ -17,11 +17,11 @@ public class AlphaGraph
     /// </summary>
     public void Initialize(AlphaAlgorithmSpec algorithmSpec)
     {
-        // Fix edges after mapping. Caused by a degree of over-engineering...
+        // Map actual nodes to edges after mapping.
         Edges.ForEach(e =>
         {
-            e.Target = Nodes.Find(n => Equals(n, e.Target))!;
-            e.Source = Nodes.Find(n => Equals(n, e.Source))!;
+            e.Target = Nodes.Find(n => Equals(n.NodeId, e.TargetId))!;
+            e.Source = Nodes.Find(n => Equals(n.NodeId, e.SourceId))!;
         });
 
         _adjecencyMatrix = BuildAdjecencyMatrix();
