@@ -1,37 +1,25 @@
-using System.Collections;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace TDT4900_MasterThesis.view.controls;
+namespace TDT4900_MasterThesis.View.Controls;
 
-public partial class LabeledComboBox : UserControl
+public partial class LabeledTextBox : UserControl
 {
     public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        LabeledTextBox,
         string
     >(nameof(Label));
 
     public static readonly StyledProperty<string> DescriptionProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        LabeledTextBox,
         string
     >(nameof(Description));
 
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        LabeledTextBox,
         string
     >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
-
-    public static readonly StyledProperty<IEnumerable<object>?> ItemsSourceProperty =
-        AvaloniaProperty.Register<LabeledComboBox, IEnumerable<object>?>(
-            nameof(ItemsSource),
-            defaultBindingMode: Avalonia.Data.BindingMode.OneWay
-        );
-
-    public static readonly StyledProperty<object> SelectedItemProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
-        object
-    >(nameof(ItemsSource), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public string Label
     {
@@ -51,19 +39,7 @@ public partial class LabeledComboBox : UserControl
         set => SetValue(TextProperty, value);
     }
 
-    public IEnumerable<object>? ItemsSource
-    {
-        get => GetValue(ItemsSourceProperty);
-        set => SetValue(ItemsSourceProperty, value);
-    }
-
-    public object SelectedItem
-    {
-        get => GetValue(SelectedItemProperty);
-        set => SetValue(SelectedItemProperty, value);
-    }
-
-    public LabeledComboBox()
+    public LabeledTextBox()
     {
         InitializeComponent();
     }

@@ -1,7 +1,7 @@
 using Avalonia.Controls;
-using TDT4900_MasterThesis.viewmodel;
+using TDT4900_MasterThesis.ViewModel;
 
-namespace TDT4900_MasterThesis.view;
+namespace TDT4900_MasterThesis.View;
 
 public partial class MainWindow : Window
 {
@@ -9,7 +9,8 @@ public partial class MainWindow : Window
         AppSettings appSettings,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
-        MainWindowViewModel mainWindowViewModel
+        MainWindowViewModel mainWindowViewModel,
+        SimulationStatsViewModel simulationStatsViewModel
     )
     {
         InitializeComponent();
@@ -25,5 +26,7 @@ public partial class MainWindow : Window
 
         NodeSequencePlotContainer.Child = sequencePlotViewModel.SequencePlotView;
         NodeSequencePlotContainer.Parent!.DataContext = sequencePlotViewModel;
+
+        SimulationBatchStatsContainer.DataContext = simulationStatsViewModel;
     }
 }

@@ -7,9 +7,10 @@ using Serilog;
 using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.view;
-using TDT4900_MasterThesis.view.plot;
-using TDT4900_MasterThesis.viewmodel;
+using TDT4900_MasterThesis.Service;
+using TDT4900_MasterThesis.View;
+using TDT4900_MasterThesis.View.Plot;
+using TDT4900_MasterThesis.ViewModel;
 
 namespace TDT4900_MasterThesis.Host;
 
@@ -49,6 +50,7 @@ public class ApplicationHostBuilder
 
         _services.AddSingleton<SimulationBatchEngine>();
         _services.AddSingleton<SimulationEngine>();
+        _services.AddSingleton<SimulationService>();
 
         //_services.AddHostedService<SimulationHost>();
         return this;
@@ -60,6 +62,7 @@ public class ApplicationHostBuilder
         _services.AddSingleton<GraphPlotViewModel>();
         _services.AddSingleton<SequencePlotViewModel>();
         _services.AddSingleton<MainWindowViewModel>();
+        _services.AddSingleton<SimulationStatsViewModel>();
 
         // Views
         _services.AddSingleton<MainWindow>();

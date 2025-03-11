@@ -1,4 +1,4 @@
-namespace TDT4900_MasterThesis.viewmodel.Component;
+namespace TDT4900_MasterThesis.ViewModel.Component;
 
 public class ComboBoxItemModel<T> : IEquatable<ComboBoxItemModel<T>>
 {

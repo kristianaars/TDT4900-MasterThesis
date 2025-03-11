@@ -16,22 +16,34 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
     /// </summary>
     private readonly PriorityQueue<AlphaNodeMessage, long> _messageQueue = new();
 
+    /// <summary>
+    /// Queue which holds all messages currently being "processed". A processed message should be added to the queue
+    /// if the sender is not inhibited in the meantime.
+    /// </summary>
+    private readonly PriorityQueue<AlphaProcessingMessage, long> _processingQueue = new();
+
     public void Update(long currentTick)
     {
-        if (_messageQueue.Count == 0)
+        if (_messageQueue.Count + _processingQueue.Count == 0)
         {
-            BeginNewWave(currentTick, currentTick);
+            Graph.Nodes.ForEach(node => node.DisinhibitNode(currentTick));
+            BeginNewWave(currentTick, currentTick + 5);
+        }
+
+        while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
+        {
+            var message = _processingQueue.Dequeue().SendMessage;
+            var sender = message.Sender;
+
+            _messageQueue.Enqueue(message, message.ReceiveAt);
+
+            // Begin refraction if sender exists (It does not exist if the message is a "start" message)
+            sender?.BeginRefraction(currentTick);
         }
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)
         {
-            var message = _messageQueue.Dequeue();
-            var sender = message.Sender;
-
-            // Begin refraction if sender exists (It does not exist if the message is a "start" message)
-            sender?.BeginRefraction(currentTick);
-
-            ExecuteNodeMessage(message);
+            ExecuteNodeMessage(_messageQueue.Dequeue());
         }
     }
 
@@ -44,7 +56,7 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
         var receiver = nodeMessage.Receiver;
         var currentTick = nodeMessage.ReceiveAt;
 
-        IEnumerable<AlphaNodeMessage> newMessages = nodeMessage.Type switch
+        IEnumerable<AlphaProcessingMessage> newMessages = nodeMessage.Type switch
         {
             AlphaNodeMessage.MessageType.Excitatory => receiver.Excite(currentTick),
             AlphaNodeMessage.MessageType.Inhibitory => receiver.Inhibit(currentTick),
@@ -54,7 +66,7 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
         QueueMessages(newMessages!);
     }
 
-    public void QueueMessages(IEnumerable<AlphaNodeMessage> messages)
+    public void QueueMessages(IEnumerable<AlphaProcessingMessage> messages)
     {
         foreach (var message in messages)
         {
@@ -62,24 +74,26 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
         }
     }
 
-    public void QueueMessage(AlphaNodeMessage message)
+    public void QueueMessage(AlphaProcessingMessage message)
     {
-        Log.Information("Queuing the following message: {message}", message);
-        _messageQueue.Enqueue(message, message.ReceiveAt);
+        _processingQueue.Enqueue(message, message.ReceiveAt);
     }
 
     public void BeginNewWave(long currentTick, long atTick)
     {
-        Graph.Nodes.ForEach(node => node.DisinhibitNode(currentTick));
-
         QueueMessage(
-            new AlphaNodeMessage()
+            new AlphaProcessingMessage()
             {
-                Type = AlphaNodeMessage.MessageType.Excitatory,
+                SentAt = currentTick,
                 ReceiveAt = atTick,
-                SentAt = atTick,
-                Receiver = StartNode,
-                Sender = null,
+                SendMessage = new AlphaNodeMessage()
+                {
+                    Type = AlphaNodeMessage.MessageType.Excitatory,
+                    ReceiveAt = atTick,
+                    SentAt = atTick,
+                    Receiver = StartNode,
+                    Sender = null,
+                },
             }
         );
     }

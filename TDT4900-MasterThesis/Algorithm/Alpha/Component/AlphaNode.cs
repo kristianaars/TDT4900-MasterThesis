@@ -112,7 +112,7 @@ public class AlphaNode : BaseEventProducer
     /// </summary>
     /// <param name="currentTick"></param>
     /// <returns></returns>
-    public AlphaNodeMessage[] Excite(long currentTick)
+    public AlphaProcessingMessage[] Excite(long currentTick)
     {
         switch (State)
         {
@@ -150,7 +150,7 @@ public class AlphaNode : BaseEventProducer
     /// <param name="currentTick"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public AlphaNodeMessage[] Inhibit(long currentTick)
+    public AlphaProcessingMessage[] Inhibit(long currentTick)
     {
         if (IsTagged)
             return NoAction();
@@ -197,17 +197,26 @@ public class AlphaNode : BaseEventProducer
     /// Generates exitatory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    private IEnumerable<AlphaNodeMessage> NeighbourExcitatoryMessageBurst(long currentTick)
+    private IEnumerable<AlphaProcessingMessage> NeighbourExcitatoryMessageBurst(long currentTick)
     {
-        var sendAt = currentTick + Tau;
+        var processingTime = Tau;
+        var executionTime = DeltaExcitatory;
 
-        return Neighbours.Select(n => new AlphaNodeMessage
+        var processAt = currentTick + processingTime;
+        var executeAt = processAt + executionTime;
+
+        return Neighbours.Select(n => new AlphaProcessingMessage()
         {
-            Type = AlphaNodeMessage.MessageType.Excitatory,
-            Sender = this,
-            Receiver = n,
-            SentAt = sendAt,
-            ReceiveAt = sendAt + DeltaExcitatory,
+            ReceiveAt = processAt,
+            SentAt = currentTick,
+            SendMessage = new AlphaNodeMessage
+            {
+                Type = AlphaNodeMessage.MessageType.Excitatory,
+                Sender = this,
+                Receiver = n,
+                SentAt = processAt,
+                ReceiveAt = executeAt,
+            },
         });
     }
 
@@ -215,17 +224,26 @@ public class AlphaNode : BaseEventProducer
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    public IEnumerable<AlphaNodeMessage> GlobalInhibitoryMessageBurst(long currentTick)
+    public IEnumerable<AlphaProcessingMessage> GlobalInhibitoryMessageBurst(long currentTick)
     {
-        var sendAt = currentTick + Tau;
+        var processingTime = Tau;
+        var executionTime = DeltaInhibitory;
 
-        return AllNodes.Select(n => new AlphaNodeMessage()
+        var processAt = currentTick + processingTime;
+        var executeAt = processAt + executionTime;
+
+        return AllNodes.Select(n => new AlphaProcessingMessage()
         {
-            Type = AlphaNodeMessage.MessageType.Inhibitory,
-            Sender = this,
-            Receiver = n,
-            SentAt = sendAt,
-            ReceiveAt = sendAt + DeltaInhibitory,
+            ReceiveAt = processAt,
+            SentAt = currentTick,
+            SendMessage = new AlphaNodeMessage
+            {
+                Type = AlphaNodeMessage.MessageType.Inhibitory,
+                Sender = this,
+                Receiver = n,
+                SentAt = processAt,
+                ReceiveAt = executeAt,
+            },
         });
     }
 
@@ -251,7 +269,7 @@ public class AlphaNode : BaseEventProducer
     /// Return empty message array, to be used when no action is needed
     /// </summary>
     /// <returns></returns>
-    private AlphaNodeMessage[] NoAction() => [];
+    private AlphaProcessingMessage[] NoAction() => [];
 
     /// <summary>
     /// Disinhibit a inhibitied node. Function will be ignored if node is not inhibited.

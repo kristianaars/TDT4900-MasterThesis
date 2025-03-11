@@ -35,6 +35,8 @@ public class AlphaGraph
             n.DeltaExcitatory = algorithmSpec.DeltaTExcitatory;
             n.DeltaInhibitory = algorithmSpec.DeltaTInhibitory;
             n.TauZero = algorithmSpec.TauZero;
+            n.TauPlus = algorithmSpec.TauPlus;
+            n.Tau = n.TauZero;
         });
     }
 

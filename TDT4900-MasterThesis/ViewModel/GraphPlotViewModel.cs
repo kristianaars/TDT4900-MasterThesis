@@ -6,9 +6,9 @@ using TDT4900_MasterThesis.Message;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.View.Plot;
 
-namespace TDT4900_MasterThesis.viewmodel;
+namespace TDT4900_MasterThesis.ViewModel;
 
 public partial class GraphPlotViewModel : ObservableObject, IEventConsumer
 {

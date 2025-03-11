@@ -1,7 +1,7 @@
 using ScottPlot;
 using SkiaSharp;
 
-namespace TDT4900_MasterThesis.view.plot.generator;
+namespace TDT4900_MasterThesis.View.Plot.Generator;
 
 public class IntegerTickGenerator : ITickGenerator
 {

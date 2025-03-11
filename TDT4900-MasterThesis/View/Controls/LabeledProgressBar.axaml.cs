@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace TDT4900_MasterThesis.view.controls;
+namespace TDT4900_MasterThesis.View.Controls;
 
 public partial class LabeledProgressBar : UserControl
 {
@@ -21,11 +21,21 @@ public partial class LabeledProgressBar : UserControl
         string
     >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
-    public static readonly StyledProperty<int> PercentProperty = AvaloniaProperty.Register<
+    public static readonly StyledProperty<int> ValueProperty = AvaloniaProperty.Register<
         LabeledProgressBar,
         int
-    >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+    >(nameof(Value), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    public static readonly StyledProperty<int> MaximumProperty = AvaloniaProperty.Register<
+        LabeledProgressBar,
+        int
+    >(nameof(Maximum), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
+    public static readonly StyledProperty<string> ProgressTextFormatProperty =
+        AvaloniaProperty.Register<LabeledProgressBar, string>(
+            nameof(ProgressTextFormat),
+            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay
+        );
     public string Label
     {
         get => GetValue(LabelProperty);
@@ -44,10 +54,22 @@ public partial class LabeledProgressBar : UserControl
         set => SetValue(TextProperty, value);
     }
 
-    public int Percent
+    public int Value
     {
-        get => GetValue(PercentProperty);
-        set => SetValue(PercentProperty, value);
+        get => GetValue(ValueProperty);
+        set => SetValue(ValueProperty, value);
+    }
+
+    public object Maximum
+    {
+        get => GetValue(MaximumProperty);
+        set => SetValue(MaximumProperty, value);
+    }
+
+    public string ProgressTextFormat
+    {
+        get => GetValue(ProgressTextFormatProperty);
+        set => SetValue(ProgressTextFormatProperty, value);
     }
 
     public LabeledProgressBar()

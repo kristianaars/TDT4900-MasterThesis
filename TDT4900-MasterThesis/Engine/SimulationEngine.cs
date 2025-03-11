@@ -3,7 +3,7 @@ using Avalonia.Threading;
 using Serilog;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.viewmodel;
+using TDT4900_MasterThesis.ViewModel;
 using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Engine;
@@ -12,6 +12,8 @@ public class SimulationEngine
 {
     private readonly GraphPlotViewModel? _graphPlotViewModel;
     private readonly SequencePlotViewModel? _sequencePlotViewModel;
+    private readonly SimulationStatsViewModel? _simulationStatsViewModel;
+
     private long _currentTick;
 
     private int _frameCounter = 0;
@@ -20,24 +22,22 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
-    private Stopwatch _stopwatch;
-
-    /// <summary>
-    /// Lock to prevent multiple threads from updating the simulation data at the same time
-    /// </summary>
-    public static readonly Lock UpdateLock = new();
+    private Stopwatch? _stopwatch;
 
     public readonly List<IDrawable> DrawableComponents;
 
     public SimulationEngine(
         AppSettings appSettings,
         IEnumerable<IDrawable> drawableComponents,
+        SimulationStatsViewModel? simulationStatsViewModel,
         GraphPlotViewModel? graphPlotViewModel,
         SequencePlotViewModel? sequencePlotViewModel
     )
     {
         _graphPlotViewModel = graphPlotViewModel;
         _sequencePlotViewModel = sequencePlotViewModel;
+        _simulationStatsViewModel = simulationStatsViewModel;
+
         TargetFps = appSettings.Simulation.TargetFps;
         TargetTps = appSettings.Simulation.TargetTps;
 
@@ -55,8 +55,6 @@ public class SimulationEngine
     public int TargetFps;
 
     private bool _isRunning = false;
-
-    public MainWindowViewModel? MainWindowViewModel { get; set; }
 
     public async Task RunSimulationJobAsync(
         SimulationJob simulationJob,
@@ -85,10 +83,8 @@ public class SimulationEngine
         double nextRender = _stopwatch.ElapsedMilliseconds;
         double nextStatUpdate = _stopwatch.ElapsedMilliseconds + statUpdate;
 
-        if (MainWindowViewModel != null)
-        {
-            MainWindowViewModel.SimulationState = "Running";
-        }
+        if (_simulationStatsViewModel != null)
+            _simulationStatsViewModel.SimulationState = "Running";
 
         while (!algorithm.IsFinished && !stoppingToken.IsCancellationRequested)
         {
@@ -115,10 +111,10 @@ public class SimulationEngine
                 _fps = (int)(_frameCounter / (statUpdate / 1000.0));
                 _tps = (int)(_tickCounter / (statUpdate / 1000.0));
 
-                if (MainWindowViewModel != null)
+                if (_simulationStatsViewModel != null)
                 {
-                    MainWindowViewModel.Tps = _tps;
-                    MainWindowViewModel.Fps = _fps;
+                    _simulationStatsViewModel.Tps = _tps;
+                    _simulationStatsViewModel.Fps = _fps;
                 }
 
                 _tickCounter = _frameCounter = 0;
@@ -132,8 +128,8 @@ public class SimulationEngine
                 );
         }
 
-        if (MainWindowViewModel != null)
-            MainWindowViewModel.SimulationState = "Stopped";
+        if (_simulationStatsViewModel != null)
+            _simulationStatsViewModel.SimulationState = "Stopped";
 
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
 
@@ -142,14 +138,11 @@ public class SimulationEngine
 
     private void Update(long currentTick)
     {
-        lock (UpdateLock)
-        {
-            if (MainWindowViewModel != null)
-                MainWindowViewModel.CurrentTick = currentTick;
+        if (_simulationStatsViewModel != null)
+            _simulationStatsViewModel.CurrentTick = currentTick;
 
-            _sequencePlotViewModel?.SequencePlotView.Update(currentTick);
-            _tickCounter++;
-        }
+        _sequencePlotViewModel?.SequencePlotView.Update(currentTick);
+        _tickCounter++;
     }
 
     private void Render()
@@ -168,26 +161,23 @@ public class SimulationEngine
 
     public void Pause()
     {
-        if (MainWindowViewModel != null)
-            MainWindowViewModel.SimulationState = "Paused";
+        if (_simulationStatsViewModel != null)
+            _simulationStatsViewModel.SimulationState = "Paused";
 
-        _stopwatch.Stop();
+        _stopwatch?.Stop();
     }
 
-    public void Play()
+    public void Resume()
     {
-        if (MainWindowViewModel != null)
-            MainWindowViewModel.SimulationState = "Running";
+        if (_simulationStatsViewModel != null)
+            _simulationStatsViewModel.SimulationState = "Running";
 
-        _stopwatch.Start();
+        _stopwatch?.Start();
     }
 
     public void Reset()
     {
-        lock (UpdateLock)
-        {
-            _currentTick = 0;
-            Play();
-        }
+        _currentTick = 0;
+        Resume();
     }
 }

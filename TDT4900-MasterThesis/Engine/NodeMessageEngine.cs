@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.Messaging;
 using TDT4900_MasterThesis.Message;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis.Engine;
 

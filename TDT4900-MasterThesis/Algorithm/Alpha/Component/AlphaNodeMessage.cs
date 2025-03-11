@@ -2,11 +2,11 @@ namespace TDT4900_MasterThesis.Algorithm.Alpha.Component;
 
 public class AlphaNodeMessage
 {
-    public required MessageType Type { get; set; }
-    public AlphaNode? Sender { get; set; }
-    public required AlphaNode Receiver { get; set; }
+    public required MessageType Type { get; init; }
+    public AlphaNode? Sender { get; init; }
+    public required AlphaNode Receiver { get; init; }
     public required long SentAt { get; set; }
-    public required long ReceiveAt { get; set; }
+    public required long ReceiveAt { get; init; }
 
     public override string ToString()
     {

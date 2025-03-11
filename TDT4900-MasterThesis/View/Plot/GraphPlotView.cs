@@ -5,22 +5,20 @@ using ScottPlot;
 using ScottPlot.Avalonia;
 using ScottPlot.Hatches;
 using ScottPlot.Plottables;
-using Serilog;
 using TDT4900_MasterThesis.Constants;
-using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
 using Color = ScottPlot.Color;
 
-namespace TDT4900_MasterThesis.view.plot;
+namespace TDT4900_MasterThesis.View.Plot;
 
 public class GraphPlotView : AvaPlot, IDrawable
 {
     private List<LinePlot> _edges = new();
     private List<Ellipse> _nodes = new();
 
-    private readonly Lock _stateHistoryQueueLock = new();
-    private Queue<NodeEvent> _unprocessedNodeEventsQueue = new();
+    private readonly Lock _nodeEventsLock = new();
+    private readonly Queue<NodeEvent> _unprocessedNodeEventsQueue = new();
     private Queue<NodeEvent> _drawBuffer = new();
 
     public bool IsReadyToDraw
@@ -47,7 +45,7 @@ public class GraphPlotView : AvaPlot, IDrawable
         if (!EnableDataUpdate)
             return;
 
-        lock (_stateHistoryQueueLock)
+        lock (_nodeEventsLock)
         {
             _unprocessedNodeEventsQueue.Enqueue(nodeEvent);
         }
@@ -113,10 +111,11 @@ public class GraphPlotView : AvaPlot, IDrawable
     /// </summary>
     public void Draw()
     {
-        lock (_stateHistoryQueueLock)
+        if (!IsReadyToDraw)
+            return;
+
+        lock (_nodeEventsLock)
         {
-            if (!IsReadyToDraw)
-                return;
             _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEventsQueue!);
             _unprocessedNodeEventsQueue.Clear();
         }

@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="TDT4900_MasterThesis.view.controls.LabeledTextField"
+    x:Class="TDT4900_MasterThesis.View.Controls.LabeledTextBox"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel Spacing="4">
@@ -14,11 +14,14 @@
             FontSize="10"
             Foreground="#757575"
             Text="{Binding Description, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-        <TextBlock
+        <TextBox
+            Height="24"
             HorizontalAlignment="Stretch"
-            FontSize="12"
+            VerticalContentAlignment="Center"
+            BorderBrush="#757575"
+            BorderThickness="1"
+            CornerRadius="8"
             Foreground="#1C1C1C"
-            Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}" />
-
+            Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
     </StackPanel>
 </UserControl>

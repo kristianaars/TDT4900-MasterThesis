@@ -1,7 +1,7 @@
 using System.Text.Json;
 using TDT4900_MasterThesis.Model.Graph;
 
-namespace TDT4900_MasterThesis.service;
+namespace TDT4900_MasterThesis.Service;
 
 public class GraphSerializerService
 {

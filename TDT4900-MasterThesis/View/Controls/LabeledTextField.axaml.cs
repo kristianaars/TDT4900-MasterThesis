@@ -2,22 +2,22 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace TDT4900_MasterThesis.view.controls;
+namespace TDT4900_MasterThesis.View.Controls;
 
-public partial class LabeledTextBox : UserControl
+public partial class LabeledTextField : UserControl
 {
     public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<
-        LabeledTextBox,
+        LabeledTextField,
         string
     >(nameof(Label));
 
     public static readonly StyledProperty<string> DescriptionProperty = AvaloniaProperty.Register<
-        LabeledTextBox,
+        LabeledTextField,
         string
     >(nameof(Description));
 
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<
-        LabeledTextBox,
+        LabeledTextField,
         string
     >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
@@ -39,7 +39,7 @@ public partial class LabeledTextBox : UserControl
         set => SetValue(TextProperty, value);
     }
 
-    public LabeledTextBox()
+    public LabeledTextField()
     {
         InitializeComponent();
     }

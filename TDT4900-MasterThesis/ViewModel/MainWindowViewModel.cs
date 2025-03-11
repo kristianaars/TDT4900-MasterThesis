@@ -11,19 +11,18 @@ using TDT4900_MasterThesis.Host;
 using TDT4900_MasterThesis.Message;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.service;
-using TDT4900_MasterThesis.viewmodel.Component;
+using TDT4900_MasterThesis.Service;
+using TDT4900_MasterThesis.ViewModel.Component;
 
-namespace TDT4900_MasterThesis.viewmodel;
+namespace TDT4900_MasterThesis.ViewModel;
 
 public partial class MainWindowViewModel : ObservableObject
 {
     private NodeEngine _nodeEngine;
 
-    private SimulationEngine _simulationEngine;
     private SequencePlotViewModel _sequencePlotViewModel;
     private GraphPlotViewModel _graphPlotViewModel;
-    private SimulationBatchEngine _simulationBatchEngine;
+    private SimulationService _simulationService;
 
     private AppSettings _appSettings;
 
@@ -89,19 +88,17 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(
         AppSettings appSettings,
-        SimulationEngine simulationEngine,
         NodeEngine nodeEngine,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
-        SimulationBatchEngine simulationBatchEngine
+        SimulationService simulationService
     )
     {
         _appSettings = appSettings;
-        _simulationEngine = simulationEngine;
         _nodeEngine = nodeEngine;
         _graphPlotViewModel = graphPlotViewModel;
         _sequencePlotViewModel = sequencePlotViewModel;
-        _simulationBatchEngine = simulationBatchEngine;
+        _simulationService = simulationService;
 
         _graphSettingsNodeCount = _appSettings.Simulation.GraphNodeCount;
         _graphSettingsEdgeCount = _appSettings.Simulation.GraphEdgeCount;
@@ -118,8 +115,6 @@ public partial class MainWindowViewModel : ObservableObject
         _tauZero = _nodeEngine.TauZero;
         _refractoryPeriod = _nodeEngine.RefractoryPeriod;
 
-        _simulationEngine.MainWindowViewModel = this;
-
         AlgorithmOptions = Enum.GetValues<AlgorithmType>()
             .Select(e => new ComboBoxItemModel<AlgorithmType>()
             {
@@ -132,8 +127,8 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void ApplySimulationConfiguration()
     {
-        _simulationEngine.TargetTps = TargetTps;
-        _simulationEngine.TargetFps = TargetFps;
+        _simulationService.SetTargetFps(TargetFps);
+        _simulationService.SetTargetTps(TargetTps);
     }
 
     [RelayCommand]
@@ -221,24 +216,18 @@ public partial class MainWindowViewModel : ObservableObject
             ],
         };
 
-        await _simulationBatchEngine.RunSimulationBatchAsync(
-            simulationBatch,
-            CancellationToken.None
-        );
+        await _simulationService.RunSimulationBatchAsync(simulationBatch, CancellationToken.None);
     }
 
     [RelayCommand]
     private void PauseSimulation()
     {
-        _simulationEngine.Pause();
+        _simulationService.PauseSimulation();
     }
 
     [RelayCommand]
-    private void ResetSimulation()
+    private void ResumeSimulation()
     {
-        lock (SimulationEngine.UpdateLock)
-        {
-            _simulationEngine.Reset();
-        }
+        _simulationService.ResumeSimulation();
     }
 }

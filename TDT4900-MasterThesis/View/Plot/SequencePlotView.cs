@@ -9,11 +9,11 @@ using TDT4900_MasterThesis.Constants;
 using TDT4900_MasterThesis.Helper;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.view.plot.generator;
+using TDT4900_MasterThesis.View.Plot.Generator;
 using Color = ScottPlot.Color;
 using Colors = ScottPlot.Colors;
 
-namespace TDT4900_MasterThesis.view.plot;
+namespace TDT4900_MasterThesis.View.Plot;
 
 public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 {
@@ -21,10 +21,10 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public bool EnableDataUpdate { get; set; } = true;
 
-    private readonly Lock _stateHistoryQueueLock = new();
     private readonly Queue<NodeEvent> _unprocessedNodeEvents;
     private Queue<NodeEvent> _drawBuffer;
 
+    private readonly Lock _nodeEventsLock = new();
     private readonly Queue<NodeMessage> _unprocessedNodeMessagesQueue;
     private Queue<NodeMessage> _drawBufferMessages;
 
@@ -73,11 +73,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
     {
         if (!EnableDataUpdate)
             return;
-
-        lock (_stateHistoryQueueLock)
-        {
-            _unprocessedNodeEvents.Enqueue(nodeEvent);
-        }
+        _unprocessedNodeEvents.Enqueue(nodeEvent);
     }
 
     public void AppendNodeMessage(NodeMessage message)
@@ -85,10 +81,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         if (!EnableDataUpdate)
             return;
 
-        lock (_stateHistoryQueueLock)
-        {
+        lock (_nodeEventsLock)
             _unprocessedNodeMessagesQueue.Enqueue(message);
-        }
     }
 
     private void PlotNewBar(int nodeId, EventType eventType, long atTick, bool isTagged)
@@ -160,11 +154,11 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public void Draw()
     {
-        lock (_stateHistoryQueueLock)
-        {
-            if (!IsReadyToDraw)
-                return;
+        if (!IsReadyToDraw)
+            return;
 
+        lock (_nodeEventsLock)
+        {
             _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEvents);
             _unprocessedNodeEvents.Clear();
 
@@ -244,6 +238,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public void InitializeGraph(Graph g)
     {
+        _unprocessedNodeEvents.Clear();
+        _drawBuffer.Clear();
         Plot.Clear();
 
         // Add bars to plot

@@ -2,6 +2,7 @@ using Serilog;
 using TDT4900_MasterThesis.Factory;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
+using TDT4900_MasterThesis.ViewModel;
 
 namespace TDT4900_MasterThesis.Engine;
 
@@ -15,7 +16,8 @@ public interface ISimulationBatchEngine
 
 public class SimulationBatchEngine(
     SimulationJobFactory simulationJobFactory,
-    SimulationEngine simulationEngine
+    SimulationEngine simulationEngine,
+    SimulationStatsViewModel simulationStatsViewModel
 ) : ISimulationBatchEngine
 {
     /// <summary>
@@ -30,27 +32,32 @@ public class SimulationBatchEngine(
     {
         var simulationJobs = new Queue<SimulationJob>();
 
-        var numberOfSimulations = simulationBatch.Simulations.Count;
+        var batchSize = simulationBatch.Simulations.Count;
 
         foreach (var simulation in simulationBatch.Simulations)
         {
             simulationJobs.Enqueue(simulationJobFactory.GetSimulationJob(simulation));
         }
 
+        simulationStatsViewModel.SimulationBatchId = simulationBatch.Id;
+        simulationStatsViewModel.SimulationBatchSize = batchSize;
+        simulationStatsViewModel.GraphType = "TODO";
+
         while (simulationJobs.Count > 0)
         {
-            var currentSimulationNumber = numberOfSimulations - simulationJobs.Count + 1;
+            var currentSimulationNumber = batchSize - simulationJobs.Count + 1;
 
             var simulationJob = simulationJobs.Dequeue();
 
             Log.Information(
                 "Running simulation {CurrentSimulationNumber}/{NumberOfSimulations} with id {simulationId}",
                 currentSimulationNumber,
-                numberOfSimulations,
+                batchSize,
                 simulationJob.Simulation.Id
             );
 
             await simulationEngine.RunSimulationJobAsync(simulationJob, cancellationToken);
+            simulationStatsViewModel.CompletedSimulations = currentSimulationNumber;
         }
     }
 }

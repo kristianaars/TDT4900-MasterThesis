@@ -1,11 +1,11 @@
 <Window
-    x:Class="TDT4900_MasterThesis.view.MainWindow"
+    x:Class="TDT4900_MasterThesis.View.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:TDT4900_MasterThesis.view.controls"
+    xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="clr-namespace:TDT4900_MasterThesis.viewmodel;assembly=TDT4900-MasterThesis"
+    xmlns:vm="clr-namespace:TDT4900_MasterThesis.ViewModel;assembly=TDT4900-MasterThesis"
     MinWidth="1200"
     d:DesignHeight="450"
     d:DesignWidth="850"
@@ -37,7 +37,7 @@
         </Style>
 
         <Style Selector="controls|LabeledTextField">
-            <Setter Property="Width" Value="160" />
+            <Setter Property="Width" Value="210" />
         </Style>
     </Window.Styles>
 
@@ -122,7 +122,8 @@
                 <Border Name="NodeSequencePlotContainer" Grid.Row="1" />
             </Grid>
 
-            <Grid Column="3" RowDefinitions="Auto Auto">
+            <!--  Simulation Batch Stats  -->
+            <Grid Column="3" RowDefinitions="Auto Auto Auto">
 
                 <TextBlock
                     Grid.Column="0"
@@ -132,12 +133,20 @@
                     Simulation Batch
                 </TextBlock>
 
-                <StackPanel Grid.Row="1" Spacing="16">
+                <StackPanel
+                    x:Name="SimulationBatchStatsContainer"
+                    Grid.Row="1"
+                    Spacing="16">
+
+                    <Design.DataContext>
+                        <vm:SimulationStatsViewModel />
+                    </Design.DataContext>
+
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:LabeledTextField
                             Description="Simulation Batch ID"
                             Label="ID"
-                            Text="TODO" />
+                            Text="{Binding SimulationBatchId}" />
                         <controls:LabeledTextField
                             Description="Either running, paused or stopped"
                             Label="State"
@@ -148,19 +157,23 @@
                         <controls:LabeledTextField
                             Description="Simulation algorithm"
                             Label="Algorithm"
-                            Text="TODO" />
+                            Text="{Binding AlgorithmType}" />
 
                         <controls:LabeledTextField
                             Description="Graph generator algorithm"
                             Label="Graph Type"
-                            Text="TODO" />
+                            Text="{Binding GraphType}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:LabeledTextField
-                            Description="Current/Total"
-                            Label="Simulation #"
-                            Text="TODO" />
+                        <controls:LabeledTextField Description="Current/Total" Label="Simulation #">
+                            <controls:LabeledTextField.Text>
+                                <MultiBinding StringFormat="{}{0}/{1}">
+                                    <Binding Path="CompletedSimulations" />
+                                    <Binding Path="SimulationBatchSize" />
+                                </MultiBinding>
+                            </controls:LabeledTextField.Text>
+                        </controls:LabeledTextField>
 
                         <controls:LabeledTextField
                             Description="Current tick in the simulation"
@@ -175,24 +188,31 @@
                             Text="{Binding Tps}" />
 
                         <controls:LabeledTextField
-                            Description="If solution will be persisted"
-                            Label="Save Solution"
-                            Text="TODO" />
+                            Description="Current framerate"
+                            Label="FPS"
+                            Text="{Binding Fps}" />
                     </StackPanel>
 
                     <controls:LabeledProgressBar
                         Description="Progress of current batch"
                         Label="Progress"
-                        Percent="50" />
+                        Maximum="{Binding SimulationBatchSize}"
+                        ProgressTextFormat="{}{0}/{3} Simulations Complete ({1:0}%)"
+                        Value="{Binding CompletedSimulations}" />
+                </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Command="{Binding PlaySimulationCommand}">Play</Button>
-                        <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
-                        <Button Command="{Binding ResetSimulationCommand}">Reset</Button>
-                    </StackPanel>
+                <StackPanel
+                    Grid.Row="2"
+                    Margin="0,16,0,0"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Button Command="{Binding PlaySimulationCommand}">Play</Button>
+                    <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
+                    <Button Command="{Binding ResetSimulationCommand}">Reset</Button>
                 </StackPanel>
 
             </Grid>
+
         </Grid>
 
         <Grid

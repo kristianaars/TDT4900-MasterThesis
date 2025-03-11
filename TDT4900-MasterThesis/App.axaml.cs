@@ -11,8 +11,8 @@ using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
 using TDT4900_MasterThesis.Host;
 using TDT4900_MasterThesis.Model.Graph;
-using TDT4900_MasterThesis.view;
-using TDT4900_MasterThesis.view.plot;
+using TDT4900_MasterThesis.View;
+using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis;
 
