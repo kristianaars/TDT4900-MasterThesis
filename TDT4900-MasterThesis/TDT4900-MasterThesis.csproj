@@ -56,6 +56,10 @@
         <DependentUpon>LabeledComboBox.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="View\NeighbourGraphConfigurationControl.axaml.cs">
+        <DependentUpon>NeighbourGraphConfigurationControl.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
 </Project>

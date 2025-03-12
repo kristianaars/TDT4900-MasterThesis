@@ -33,5 +33,6 @@ public class SimulationPersistenceService
     public async Task UpdateSimulationRangeAsync(ICollection<Simulation> simulations)
     {
         await _simulationRepository.UpdateRangeAsync(simulations);
+        await Task.Delay(2000);
     }
 }

@@ -40,7 +40,7 @@ public class SimulationRepository : IBaseRepository<Simulation>
     {
         await using var dbContext = GetNewDbContext();
         dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-        dbContext.Simulations.UpdateRange(simulations.ToList());
+        dbContext.UpdateRange(simulations);
         await SaveChanges(dbContext);
     }
 

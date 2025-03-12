@@ -11,6 +11,7 @@ public class SimulationService(
 {
     public async Task RunSimulationBatchAsync(
         int batchSize,
+        bool persist,
         GraphSpec graphSpec,
         AlgorithmSpec algorithmSpec,
         CancellationToken cancellationToken
@@ -18,6 +19,7 @@ public class SimulationService(
     {
         var simulationBatch = new SimulationBatch()
         {
+            PersistSimulations = persist,
             Simulations = Enumerable
                 .Range(0, batchSize)
                 .Select(_ => new Simulation

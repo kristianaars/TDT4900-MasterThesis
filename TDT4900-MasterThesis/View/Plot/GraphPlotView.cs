@@ -107,6 +107,9 @@ public class GraphPlotView : AvaPlot, IDrawable
 
         Plot.Axes.AutoScale();
         MaintainAspectRatio();
+
+        if (IsReadyToDraw)
+            Refresh();
     }
 
     /// <summary>

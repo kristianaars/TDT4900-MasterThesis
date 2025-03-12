@@ -80,6 +80,7 @@ public class ApplicationHostBuilder
         _services.AddSingleton<MainWindowViewModel>();
         _services.AddSingleton<SimulationStatsViewModel>();
         _services.AddSingleton<AlphaAlgorithmConfigurationViewModel>();
+        _services.AddSingleton<NeighbourGraphConfigurationViewModel>();
 
         // Views
         _services.AddSingleton<MainWindow>();

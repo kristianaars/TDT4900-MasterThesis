@@ -51,6 +51,7 @@
         ColumnDefinitions="*"
         RowDefinitions="*,Auto">
 
+        <!--  Top Row (Plots and simulation stats)  -->
         <Grid Margin="0,0,0,32" ColumnDefinitions="*,Auto,*, Auto">
             <Grid
                 Grid.Column="0"
@@ -149,7 +150,7 @@
                             Label="ID"
                             Text="{Binding SimulationBatchId}" />
                         <controls:LabeledTextField
-                            Description="Either running, paused or stopped"
+                            Description="Status of the simulation engine"
                             Label="State"
                             Text="{Binding SimulationState}" />
                     </StackPanel>
@@ -209,13 +210,19 @@
                     Spacing="8">
                     <Button Command="{Binding PlaySimulationCommand}">Play</Button>
                     <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
-                    <Button Command="{Binding ResetSimulationCommand}">Reset</Button>
+                    <Button
+                        Background="DarkRed"
+                        Command="{Binding RunSimulationBatchCancelCommand}"
+                        Foreground="White">
+                        Stop Simulation Batch
+                    </Button>
                 </StackPanel>
 
             </Grid>
 
         </Grid>
 
+        <!--  Simulation Batch settings row  -->
         <Grid
             Grid.Row="1"
             MinWidth="1200"
@@ -257,32 +264,17 @@
                 <StackPanel Spacing="8">
                     <TextBlock Classes="Header2">Graph Settings</TextBlock>
 
-                    <controls:LabeledComboBox Description="Algorithm to generate random graph" Label="Graph Generator" />
+                    <controls:LabeledComboBox
+                        Description="Algorithm to generate random graph"
+                        ItemsSource="{Binding GraphOptions}"
+                        Label="Graph Generator"
+                        SelectedItem="{Binding SelectedGraphOption}" />
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:LabeledTextBox
-                            Description="Number of nodes"
-                            Label="Nodes"
-                            Text="{Binding GraphSettingsNodeCount, Mode=TwoWay}" />
-                        <controls:LabeledTextBox
-                            Description="Neighbourhood radius"
-                            Label="Radius"
-                            Text="TODO" />
-                    </StackPanel>
+                    <Grid IsVisible="{Binding SelectedGraphOption, ConverterParameter=Neighbourhood, Converter={StaticResource EnumToVisibilityConverter}}">
+                        <view:NeighbourGraphConfigurationControl DataContext="{Binding NeighbourGraphConfigurationViewModel}" />
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:LabeledTextBox
-                            Description="Distance between nodes"
-                            Label="Distance"
-                            Text="{Binding GraphSettingsNodeCount, Mode=TwoWay}" />
-
-                        <controls:LabeledTextBox
-                            Description="Noise in distance"
-                            Label="Noise"
-                            Text="TODO" />
-                    </StackPanel>
-
-                    <Button Command="{Binding GenerateNewGraphCommand}">Show Example Graph</Button>
+                    <Button Command="{Binding ShowExampleGraphCommand}">Show Example Graph</Button>
                 </StackPanel>
 
             </StackPanel>
@@ -300,13 +292,16 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:LabeledTextBox
                             Description="Number of simulations to run"
-                            Label="Simulation Count"
-                            Text="{Binding GraphSettingsNodeCount, Mode=TwoWay}" />
+                            Label="Batch Size"
+                            Text="{Binding SimulationBatchSize, Mode=TwoWay}" />
                     </StackPanel>
 
-                    <ToggleSwitch OffContent="Solutions are not saved" OnContent="Solutions are saved" />
+                    <ToggleSwitch
+                        IsChecked="{Binding PersistSimulationBatch}"
+                        OffContent="Solutions are not saved"
+                        OnContent="Solutions are saved" />
 
-                    <Button Command="{Binding ApplyGraphConfigurationCommand}">
+                    <Button Command="{Binding RunSimulationBatchCommand}">
                         Run Simulation Batch
                     </Button>
                 </StackPanel>
@@ -335,7 +330,7 @@
                             Text="{Binding TargetTps, Mode=TwoWay}" />
                     </StackPanel>
 
-                    <Button Command="{Binding ApplyGraphConfigurationCommand}">Apply</Button>
+                    <Button Command="{Binding ApplySimulationConfigurationCommand}">Apply</Button>
                 </StackPanel>
 
             </StackPanel>

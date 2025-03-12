@@ -46,7 +46,20 @@ public class SimulationBatchEngine(
         simulationStatsViewModel.SimulationBatchId = simulationBatch.Id;
         simulationStatsViewModel.SimulationBatchSize = batchSize;
 
-        await simulationPersistenceService.SaveSimulationBatchAsync(simulationBatch);
+        Log.Information(
+            "Starting simulation batch with id {simulationBatchId} and {batchSize} simulations",
+            simulationBatch.Id,
+            batchSize
+        );
+        Log.Information(
+            "Persistence is {persist} for this simulation batch",
+            simulationBatch.PersistSimulations
+        );
+
+        if (simulationBatch.PersistSimulations)
+        {
+            await simulationPersistenceService.SaveSimulationBatchAsync(simulationBatch);
+        }
 
         var unsavedSimulations = new List<Simulation>();
 
@@ -80,7 +93,10 @@ public class SimulationBatchEngine(
             unsavedSimulations.Add(simulation);
 
             // Persist the simulations to database every 25 simulations
-            if (currentSimulationNumber % 25 == 0)
+            if (
+                simulationBatch.PersistSimulations
+                && (currentSimulationNumber % 25 == 0 || simulationQueue.Count == 0)
+            )
             {
                 Log.Information(
                     "Persisting {unsavedSimulations} simulations to db...",
@@ -99,12 +115,10 @@ public class SimulationBatchEngine(
         }
 
         Log.Information(
-            "Persisting {unsavedSimulations} simulations to db...",
-            unsavedSimulations.Count
+            "Simulation batch with id {simulationBatchId} completed",
+            simulationBatch.Id
         );
-        simulationStatsViewModel.SimulationState = "Persisting data...";
 
-        await simulationPersistenceService.UpdateSimulationRangeAsync(unsavedSimulations);
-        Log.Information("Data is persisted to db");
+        simulationStatsViewModel.SimulationState = "Batch completed";
     }
 }

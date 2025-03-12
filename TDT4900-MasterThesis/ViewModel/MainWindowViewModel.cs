@@ -1,16 +1,9 @@
-using System.ComponentModel.DataAnnotations;
-using Avalonia.Controls;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using TDT4900_MasterThesis.Algorithm;
 using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
-using TDT4900_MasterThesis.Host;
-using TDT4900_MasterThesis.Message;
 using TDT4900_MasterThesis.Model.Db;
-using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.Service;
 using TDT4900_MasterThesis.ViewModel.Component;
 
@@ -27,44 +20,22 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private AlphaAlgorithmConfigurationViewModel _alphaAlgorithmConfigurationViewModel;
 
+    [ObservableProperty]
+    private NeighbourGraphConfigurationViewModel _neighbourGraphConfigurationViewModel;
+
     private AppSettings _appSettings;
-
-    #region Graph Settings Properties
-    [ObservableProperty]
-    private int _graphSettingsNodeCount;
-
-    [ObservableProperty]
-    private int _graphSettingsEdgeCount;
-    #endregion
-
-    #region Simulation Configuration Properties
-    [ObservableProperty]
-    private int _sourceNodeId;
-
-    [ObservableProperty]
-    private int _targetNodeId;
 
     [ObservableProperty]
     private int _targetTps;
 
     [ObservableProperty]
     private int _targetFps;
-    #endregion
-
-
-    # region Simulation Control Properties
-    [ObservableProperty]
-    private long _currentTick;
 
     [ObservableProperty]
-    private int _fps;
+    private int _simulationBatchSize;
 
     [ObservableProperty]
-    private int _tps;
-
-    [ObservableProperty]
-    private string _simulationState = "Stopped";
-    #endregion
+    private bool _persistSimulationBatch;
 
     [ObservableProperty]
     private IEnumerable<ComboBoxItemModel<AlgorithmType>> _algorithmOptions;
@@ -72,13 +43,20 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private ComboBoxItemModel<AlgorithmType> _selectedAlgorithmOption;
 
+    [ObservableProperty]
+    private IEnumerable<ComboBoxItemModel<GraphType>> _graphOptions;
+
+    [ObservableProperty]
+    private ComboBoxItemModel<GraphType> _selectedGraphOption;
+
     public MainWindowViewModel(
         AppSettings appSettings,
         NodeEngine nodeEngine,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
         SimulationService simulationService,
-        AlphaAlgorithmConfigurationViewModel alphaAlgorithmConfigurationViewModel
+        AlphaAlgorithmConfigurationViewModel alphaAlgorithmConfigurationViewModel,
+        NeighbourGraphConfigurationViewModel neighbourGraphConfigurationViewModel
     )
     {
         _appSettings = appSettings;
@@ -87,16 +65,12 @@ public partial class MainWindowViewModel : ObservableObject
         _sequencePlotViewModel = sequencePlotViewModel;
         _simulationService = simulationService;
         _alphaAlgorithmConfigurationViewModel = alphaAlgorithmConfigurationViewModel;
-
-        _graphSettingsNodeCount = _appSettings.Simulation.GraphNodeCount;
-        _graphSettingsEdgeCount = _appSettings.Simulation.GraphEdgeCount;
-
-        _sourceNodeId = 0;
-        _targetNodeId = 0;
+        _neighbourGraphConfigurationViewModel = neighbourGraphConfigurationViewModel;
 
         _targetTps = _appSettings.Simulation.TargetTps;
         _targetFps = _appSettings.Simulation.TargetFps;
 
+        // Initialize algorithm options
         AlgorithmOptions = Enum.GetValues<AlgorithmType>()
             .Select(e => new ComboBoxItemModel<AlgorithmType>()
             {
@@ -104,6 +78,30 @@ public partial class MainWindowViewModel : ObservableObject
                 DisplayName = e.ToString(),
             });
         SelectedAlgorithmOption = AlgorithmOptions.First();
+
+        // Initialize graph options
+        GraphOptions = Enum.GetValues<GraphType>()
+            .Select(e => new ComboBoxItemModel<GraphType>()
+            {
+                Value = e,
+                DisplayName = e.ToString(),
+            });
+        SelectedGraphOption = GraphOptions.First();
+    }
+
+    [RelayCommand]
+    private void ShowExampleGraph()
+    {
+        var graph = new GraphFactory().CreateGraph(
+            new NeighboringGraphSpec()
+            {
+                NodeCount = NeighbourGraphConfigurationViewModel.NodeCount,
+                Distance = NeighbourGraphConfigurationViewModel.Distance,
+                Radius = NeighbourGraphConfigurationViewModel.Radius,
+                Noise = NeighbourGraphConfigurationViewModel.Noise,
+            }
+        );
+        _graphPlotViewModel.InitializeGraph(graph);
     }
 
     [RelayCommand]
@@ -113,16 +111,17 @@ public partial class MainWindowViewModel : ObservableObject
         _simulationService.SetTargetTps(TargetTps);
     }
 
-    [RelayCommand]
-    private async Task PlaySimulation() =>
+    [RelayCommand(IncludeCancelCommand = true)]
+    private async Task RunSimulationBatchAsync(CancellationToken cancellationToken) =>
         await _simulationService.RunSimulationBatchAsync(
-            200,
+            SimulationBatchSize,
+            PersistSimulationBatch,
             new NeighboringGraphSpec()
             {
-                NodeCount = 1000,
-                Distance = 70,
-                Radius = 100,
-                Noise = 20,
+                NodeCount = NeighbourGraphConfigurationViewModel.NodeCount,
+                Distance = NeighbourGraphConfigurationViewModel.Distance,
+                Radius = NeighbourGraphConfigurationViewModel.Radius,
+                Noise = NeighbourGraphConfigurationViewModel.Noise,
             },
             new AlphaAlgorithmSpec()
             {
@@ -133,7 +132,7 @@ public partial class MainWindowViewModel : ObservableObject
                 TauPlus = AlphaAlgorithmConfigurationViewModel.TauPlus,
                 TauZero = AlphaAlgorithmConfigurationViewModel.TauZero,
             },
-            CancellationToken.None
+            cancellationToken
         );
 
     [RelayCommand]
@@ -143,8 +142,14 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ResumeSimulation()
+    private void PlaySimulation()
     {
         _simulationService.ResumeSimulation();
+    }
+
+    [RelayCommand]
+    private void StopSimulation()
+    {
+        throw new NotImplementedException();
     }
 }
