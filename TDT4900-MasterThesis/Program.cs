@@ -12,7 +12,7 @@ Log.Logger = log;
 
 bool useGui = true;
 
-var hostBuilder = new ApplicationHostBuilder().AddSimulationHost();
+var hostBuilder = new ApplicationHostBuilder().AddSimulationHost().UseDbPersistence();
 
 if (useGui)
 {

@@ -5,6 +5,11 @@ public class ComboBoxItemModel<T> : IEquatable<ComboBoxItemModel<T>>
     public T Value { get; set; }
     public string DisplayName { get; set; }
 
+    public override string ToString()
+    {
+        return DisplayName;
+    }
+
     public bool Equals(ComboBoxItemModel<T>? other)
     {
         if (other is null)

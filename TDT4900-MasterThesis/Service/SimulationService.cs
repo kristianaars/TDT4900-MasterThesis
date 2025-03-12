@@ -5,14 +5,29 @@ namespace TDT4900_MasterThesis.Service;
 
 public class SimulationService(
     SimulationBatchEngine simulationBatchEngine,
-    SimulationEngine simulationEngine
+    SimulationEngine simulationEngine,
+    SimulationPersistenceService persistenceService
 )
 {
     public async Task RunSimulationBatchAsync(
-        SimulationBatch simulationBatch,
+        int batchSize,
+        GraphSpec graphSpec,
+        AlgorithmSpec algorithmSpec,
         CancellationToken cancellationToken
     )
     {
+        var simulationBatch = new SimulationBatch()
+        {
+            Simulations = Enumerable
+                .Range(0, batchSize)
+                .Select(_ => new Simulation
+                {
+                    GraphSpec = graphSpec,
+                    AlgorithmSpec = algorithmSpec,
+                })
+                .ToList(),
+        };
+
         await simulationBatchEngine.RunSimulationBatchAsync(simulationBatch, cancellationToken);
     }
 

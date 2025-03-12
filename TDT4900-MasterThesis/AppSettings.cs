@@ -9,7 +9,8 @@ public class AppSettings
     /// <summary>
     /// Name/path of the local database file
     /// </summary>
-    public readonly string DbPath = "./data.sqlite";
+    public readonly string DbPath =
+        "/Users/kristianaars/Library/Mobile Documents/com~apple~CloudDocs/Master/data.sqlite";
 
     public readonly SimulationSettings Simulation = new();
 
@@ -20,13 +21,13 @@ public class AppSettings
 
         /// <summary>
         /// Target Frames per second for simulation
-        /// </summary>
-        public readonly int TargetFps = 60;
+        /// </summary>NodeEvent
+        public readonly int TargetFps = 1;
 
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 40;
+        public readonly int TargetTps = 500000;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)

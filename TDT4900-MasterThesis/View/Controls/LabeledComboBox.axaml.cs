@@ -8,28 +8,28 @@ namespace TDT4900_MasterThesis.View.Controls;
 public partial class LabeledComboBox : UserControl
 {
     public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        View.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Label));
 
     public static readonly StyledProperty<string> DescriptionProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        View.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Description));
 
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        View.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<IEnumerable<object>?> ItemsSourceProperty =
-        AvaloniaProperty.Register<LabeledComboBox, IEnumerable<object>?>(
+        AvaloniaProperty.Register<View.AlphaAlgorithmConfigurationControl, IEnumerable<object>?>(
             nameof(ItemsSource),
             defaultBindingMode: Avalonia.Data.BindingMode.OneWay
         );
 
     public static readonly StyledProperty<object> SelectedItemProperty = AvaloniaProperty.Register<
-        LabeledComboBox,
+        View.AlphaAlgorithmConfigurationControl,
         object
     >(nameof(ItemsSource), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 

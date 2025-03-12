@@ -30,14 +30,19 @@ public class AlphaAlgorithm : BaseAlgorithm
         TargetNode.TagNode(0);
     }
 
+    /// <summary>
+    /// Update-loop for the algorithm. This will be executed on every tick.
+    /// </summary>
+    /// <param name="currentTick"></param>
     public override void Update(long currentTick)
     {
-        // Update all nodes in the graph
+        // Update nodes in the graph
         Graph.Nodes.ForEach(n => n.Update(currentTick));
 
         // Update the message engine to process node-messages
         _messageEngine!.Update(currentTick);
 
+        // Algorithm is complete when StartNode is tagged
         if (StartNode.IsTagged)
             IsFinished = true;
     }

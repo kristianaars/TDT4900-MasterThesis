@@ -15,14 +15,14 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "AlgorithmSpecs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    AlgorithmType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", maxLength: 21, nullable: false),
-                    DeltaTExcitatory = table.Column<int>(type: "INTEGER", nullable: true),
-                    DeltaTInhibitory = table.Column<int>(type: "INTEGER", nullable: true),
-                    RefractoryPeriod = table.Column<int>(type: "INTEGER", nullable: true),
-                    TauPlus = table.Column<int>(type: "INTEGER", nullable: true),
-                    TauZero = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AlgorithmType = table.Column<int>(type: "integer", nullable: false),
+                    Discriminator = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
+                    DeltaTExcitatory = table.Column<int>(type: "integer", nullable: true),
+                    DeltaTInhibitory = table.Column<int>(type: "integer", nullable: true),
+                    RefractoryPeriod = table.Column<int>(type: "integer", nullable: true),
+                    TauPlus = table.Column<int>(type: "integer", nullable: true),
+                    TauZero = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -33,7 +33,7 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Graphs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -41,10 +41,26 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GraphSpecs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NodeCount = table.Column<int>(type: "integer", nullable: false),
+                    Discriminator = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
+                    Radius = table.Column<double>(type: "double precision", nullable: true),
+                    Distance = table.Column<double>(type: "double precision", nullable: true),
+                    Noise = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GraphSpecs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SimulationBatches",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,10 +71,10 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Edge",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SourceId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    TargetId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    GraphId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SourceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TargetId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GraphId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -71,30 +87,30 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "NodeEvent",
+                name: "NodeEvents",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    NodeId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Tick = table.Column<long>(type: "INTEGER", nullable: false),
-                    EventType = table.Column<int>(type: "INTEGER", nullable: false),
-                    SimulationId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NodeId = table.Column<int>(type: "integer", nullable: false),
+                    Tick = table.Column<long>(type: "bigint", nullable: false),
+                    EventType = table.Column<int>(type: "integer", nullable: false),
+                    SimulationId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_NodeEvent", x => x.Id);
+                    table.PrimaryKey("PK_NodeEvents", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Nodes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    NodeId = table.Column<int>(type: "INTEGER", nullable: false),
-                    X = table.Column<int>(type: "INTEGER", nullable: false),
-                    Y = table.Column<int>(type: "INTEGER", nullable: false),
-                    GraphId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    SimulationId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NodeId = table.Column<int>(type: "integer", nullable: false),
+                    X = table.Column<int>(type: "integer", nullable: false),
+                    Y = table.Column<int>(type: "integer", nullable: false),
+                    GraphId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SimulationId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -110,12 +126,13 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Simulations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    GraphId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    AlgorithmSpecId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    StartNodeId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    TargetNodeId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SimulationBatchId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    GraphId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AlgorithmSpecId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GraphSpecId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StartNodeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    TargetNodeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SimulationBatchId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -127,23 +144,26 @@ namespace TDT4900_MasterThesis.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "FK_Simulations_GraphSpecs_GraphSpecId",
+                        column: x => x.GraphSpecId,
+                        principalTable: "GraphSpecs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Simulations_Graphs_GraphId",
                         column: x => x.GraphId,
                         principalTable: "Graphs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Simulations_Nodes_StartNodeId",
                         column: x => x.StartNodeId,
                         principalTable: "Nodes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Simulations_Nodes_TargetNodeId",
                         column: x => x.TargetNodeId,
                         principalTable: "Nodes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Simulations_SimulationBatches_SimulationBatchId",
                         column: x => x.SimulationBatchId,
@@ -167,8 +187,8 @@ namespace TDT4900_MasterThesis.Migrations
                 column: "TargetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_NodeEvent_SimulationId",
-                table: "NodeEvent",
+                name: "IX_NodeEvents_SimulationId",
+                table: "NodeEvents",
                 column: "SimulationId");
 
             migrationBuilder.CreateIndex(
@@ -190,6 +210,11 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "IX_Simulations_GraphId",
                 table: "Simulations",
                 column: "GraphId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Simulations_GraphSpecId",
+                table: "Simulations",
+                column: "GraphSpecId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Simulations_SimulationBatchId",
@@ -223,8 +248,8 @@ namespace TDT4900_MasterThesis.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_NodeEvent_Simulations_SimulationId",
-                table: "NodeEvent",
+                name: "FK_NodeEvents_Simulations_SimulationId",
+                table: "NodeEvents",
                 column: "SimulationId",
                 principalTable: "Simulations",
                 principalColumn: "Id");
@@ -260,7 +285,7 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Edge");
 
             migrationBuilder.DropTable(
-                name: "NodeEvent");
+                name: "NodeEvents");
 
             migrationBuilder.DropTable(
                 name: "Graphs");
@@ -273,6 +298,9 @@ namespace TDT4900_MasterThesis.Migrations
 
             migrationBuilder.DropTable(
                 name: "AlgorithmSpecs");
+
+            migrationBuilder.DropTable(
+                name: "GraphSpecs");
 
             migrationBuilder.DropTable(
                 name: "SimulationBatches");

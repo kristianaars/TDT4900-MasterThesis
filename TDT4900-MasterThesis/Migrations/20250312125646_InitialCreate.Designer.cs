@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TDT4900_MasterThesis.Context;
 
 #nullable disable
@@ -11,28 +12,32 @@ using TDT4900_MasterThesis.Context;
 namespace TDT4900_MasterThesis.Migrations
 {
     [DbContext(typeof(SimulationDbContext))]
-    [Migration("20250311121142_InitialCreate")]
+    [Migration("20250312125646_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.AlgorithmSpec", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("AlgorithmType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(21)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(21)");
 
                     b.HasKey("Id");
 
@@ -47,16 +52,16 @@ namespace TDT4900_MasterThesis.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("GraphId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("SourceId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("TargetId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -73,33 +78,56 @@ namespace TDT4900_MasterThesis.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.ToTable("Graphs");
                 });
 
+            modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.GraphSpec", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<int>("NodeCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GraphSpecs");
+
+                    b.HasDiscriminator().HasValue("GraphSpec");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.Node", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("GraphId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("NodeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("SimulationId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("X")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Y")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -114,53 +142,58 @@ namespace TDT4900_MasterThesis.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("EventType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("NodeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("SimulationId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<long>("Tick")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SimulationId");
 
-                    b.ToTable("NodeEvent");
+                    b.ToTable("NodeEvents");
                 });
 
             modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.Simulation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("AlgorithmSpecId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("GraphId")
-                        .HasColumnType("TEXT");
+                    b.Property<Guid?>("GraphId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GraphSpecId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("SimulationBatchId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("StartNodeId")
-                        .HasColumnType("TEXT");
+                    b.Property<Guid?>("StartNodeId")
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("TargetNodeId")
-                        .HasColumnType("TEXT");
+                    b.Property<Guid?>("TargetNodeId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AlgorithmSpecId");
 
                     b.HasIndex("GraphId");
+
+                    b.HasIndex("GraphSpecId");
 
                     b.HasIndex("SimulationBatchId");
 
@@ -175,7 +208,7 @@ namespace TDT4900_MasterThesis.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -187,21 +220,37 @@ namespace TDT4900_MasterThesis.Migrations
                     b.HasBaseType("TDT4900_MasterThesis.Model.Db.AlgorithmSpec");
 
                     b.Property<int>("DeltaTExcitatory")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DeltaTInhibitory")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RefractoryPeriod")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TauPlus")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TauZero")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("AlphaAlgorithmSpec");
+                });
+
+            modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.NeighboringGraphSpec", b =>
+                {
+                    b.HasBaseType("TDT4900_MasterThesis.Model.Db.GraphSpec");
+
+                    b.Property<double>("Distance")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Noise")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Radius")
+                        .HasColumnType("double precision");
+
+                    b.HasDiscriminator().HasValue("NeighboringGraphSpec");
                 });
 
             modelBuilder.Entity("TDT4900_MasterThesis.Model.Db.Edge", b =>
@@ -255,7 +304,11 @@ namespace TDT4900_MasterThesis.Migrations
 
                     b.HasOne("TDT4900_MasterThesis.Model.Db.Graph", "Graph")
                         .WithMany()
-                        .HasForeignKey("GraphId")
+                        .HasForeignKey("GraphId");
+
+                    b.HasOne("TDT4900_MasterThesis.Model.Db.GraphSpec", "GraphSpec")
+                        .WithMany()
+                        .HasForeignKey("GraphSpecId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -265,19 +318,17 @@ namespace TDT4900_MasterThesis.Migrations
 
                     b.HasOne("TDT4900_MasterThesis.Model.Db.Node", "StartNode")
                         .WithMany()
-                        .HasForeignKey("StartNodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("StartNodeId");
 
                     b.HasOne("TDT4900_MasterThesis.Model.Db.Node", "TargetNode")
                         .WithMany()
-                        .HasForeignKey("TargetNodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TargetNodeId");
 
                     b.Navigation("AlgorithmSpec");
 
                     b.Navigation("Graph");
+
+                    b.Navigation("GraphSpec");
 
                     b.Navigation("StartNode");
 

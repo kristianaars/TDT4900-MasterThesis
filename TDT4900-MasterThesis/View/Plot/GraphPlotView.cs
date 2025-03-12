@@ -53,6 +53,9 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public void InitializeGraph(Graph graph)
     {
+        if (!EnableDataUpdate)
+            return;
+
         lock (_unprocessedNodeEventsQueue)
         {
             _unprocessedNodeEventsQueue.Clear();
@@ -125,6 +128,9 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public override void Render(DrawingContext context)
     {
+        if (!EnableDataUpdate)
+            return;
+
         while (_drawBuffer.Count != 0)
         {
             var update = _drawBuffer.Dequeue();

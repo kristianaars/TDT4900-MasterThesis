@@ -5,21 +5,23 @@ namespace TDT4900_MasterThesis.Model.Db;
 
 public class Simulation : BaseModel
 {
-    [Required]
     public Graph? Graph { get; set; }
 
     [Required]
     public AlgorithmSpec AlgorithmSpec { get; set; }
 
+    public Guid AlgorithmSpecId { get; set; }
+
     [Required]
+    public GraphSpec GraphSpec { get; set; }
+
+    public Guid GraphSpecId { get; set; }
+
     public Node? StartNode { get; set; }
 
-    [Required]
     public Node? TargetNode { get; set; }
 
-    [Required]
     public List<Node>? TaggedNodes { get; set; }
 
-    [Required]
-    public List<NodeEvent>? NodeEvents { get; set; }
+    //public List<NodeEvent>? NodeEvents { get; set; }
 }

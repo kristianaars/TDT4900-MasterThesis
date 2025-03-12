@@ -1,0 +1,46 @@
+<UserControl
+    x:Class="TDT4900_MasterThesis.View.AlphaAlgorithmConfigurationControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:component="clr-namespace:TDT4900_MasterThesis.ViewModel.Component"
+    xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
+    HorizontalAlignment="Stretch">
+    <StackPanel HorizontalAlignment="Stretch" Spacing="4">
+        <Design.DataContext>
+            <component:AlphaAlgorithmConfigurationViewModel />
+        </Design.DataContext>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Excitatory message travel time"
+                Label="Δt-excitatory"
+                Text="{Binding DeltaExcitatory}" />
+            <controls:LabeledTextBox
+                Description="Inhibitory message travel time"
+                Label="Δt-inhibitory"
+                Text="{Binding DeltaInhibitory}" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Node processing time"
+                Label="𝜏-zero"
+                Text="{Binding TauZero}" />
+
+            <controls:LabeledTextBox
+                Description="Tagged node processing time"
+                Label="𝜏-plus"
+                Text="{Binding TauPlus}" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Node refractory period"
+                Label="ρ-zero"
+                Text="{Binding RefractoryPeriod}" />
+        </StackPanel>
+    </StackPanel>
+
+
+
+</UserControl>

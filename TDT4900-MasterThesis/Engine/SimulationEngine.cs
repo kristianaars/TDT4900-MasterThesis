@@ -132,8 +132,6 @@ public class SimulationEngine
             _simulationStatsViewModel.SimulationState = "Stopped";
 
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
-
-        simulationJob.Simulation.NodeEvents = algorithm.EventHistory;
     }
 
     private void Update(long currentTick)

@@ -24,6 +24,9 @@ public partial class MainWindowViewModel : ObservableObject
     private GraphPlotViewModel _graphPlotViewModel;
     private SimulationService _simulationService;
 
+    [ObservableProperty]
+    private AlphaAlgorithmConfigurationViewModel _alphaAlgorithmConfigurationViewModel;
+
     private AppSettings _appSettings;
 
     #region Graph Settings Properties
@@ -48,23 +51,6 @@ public partial class MainWindowViewModel : ObservableObject
     private int _targetFps;
     #endregion
 
-    #region Node Configuration Properties
-    [ObservableProperty]
-    private int _deltaExcitatory;
-
-    [ObservableProperty]
-    private int _deltaInhibitory;
-
-    [ObservableProperty]
-    private int _tauPlus;
-
-    [ObservableProperty]
-    private int _tauZero;
-
-    [ObservableProperty]
-    private int _refractoryPeriod;
-
-    #endregion
 
     # region Simulation Control Properties
     [ObservableProperty]
@@ -91,7 +77,8 @@ public partial class MainWindowViewModel : ObservableObject
         NodeEngine nodeEngine,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
-        SimulationService simulationService
+        SimulationService simulationService,
+        AlphaAlgorithmConfigurationViewModel alphaAlgorithmConfigurationViewModel
     )
     {
         _appSettings = appSettings;
@@ -99,6 +86,7 @@ public partial class MainWindowViewModel : ObservableObject
         _graphPlotViewModel = graphPlotViewModel;
         _sequencePlotViewModel = sequencePlotViewModel;
         _simulationService = simulationService;
+        _alphaAlgorithmConfigurationViewModel = alphaAlgorithmConfigurationViewModel;
 
         _graphSettingsNodeCount = _appSettings.Simulation.GraphNodeCount;
         _graphSettingsEdgeCount = _appSettings.Simulation.GraphEdgeCount;
@@ -108,12 +96,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         _targetTps = _appSettings.Simulation.TargetTps;
         _targetFps = _appSettings.Simulation.TargetFps;
-
-        _deltaExcitatory = _nodeEngine.DeltaExcitatory;
-        _deltaInhibitory = _nodeEngine.DeltaInhibitory;
-        _tauPlus = _nodeEngine.TauPlus;
-        _tauZero = _nodeEngine.TauZero;
-        _refractoryPeriod = _nodeEngine.RefractoryPeriod;
 
         AlgorithmOptions = Enum.GetValues<AlgorithmType>()
             .Select(e => new ComboBoxItemModel<AlgorithmType>()
@@ -132,92 +114,27 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ApplyGraphConfiguration()
-    {
-        _nodeEngine.DeltaExcitatory = DeltaExcitatory;
-        _nodeEngine.DeltaInhibitory = DeltaInhibitory;
-        _nodeEngine.TauZero = TauZero;
-        _nodeEngine.TauPlus = TauPlus;
-        _nodeEngine.RefractoryPeriod = RefractoryPeriod;
-    }
-
-    [RelayCommand]
-    private void GenerateNewGraph()
-    {
-        /*
-        var nodeCount = GraphSettingsNodeCount;
-        var edgeCount = GraphSettingsEdgeCount;
-
-        var f = new RandomGraphFactory(nodeCount, edgeCount);
-
-        Graph graph = f.GetGraph();
-        */
-
-        var nodeCount = GraphSettingsNodeCount;
-        var nodeSpacing = 70;
-        var nodeRadius = 100;
-        var noise = 20;
-
-        var f = new NeighbouringGraphFactory(nodeCount, nodeSpacing, nodeRadius, noise);
-        var graph = f.GetGraph();
-
-        if (TargetNodeId >= nodeCount || TargetNodeId == 0)
-        {
-            TargetNodeId = new Random().Next(1, graph.Nodes.Count);
-        }
-
-        _nodeEngine.TargetNodeId = TargetNodeId;
-        //WeakReferenceMessenger.Default.Send(new NewGraphMessage(graph));
-
-        //new PersistenceService(new GraphSerializerService()).SaveGraph(graph, "");
-    }
-
-    [RelayCommand]
-    private async Task PlaySimulation()
-    {
-        var f = new NeighbouringGraphFactory(45, 70, 100, 20);
-        var graph = f.GetGraph();
-
-        var algSpec = new AlphaAlgorithmSpec()
-        {
-            AlgorithmType = AlgorithmType.Alpha,
-            DeltaTExcitatory = DeltaExcitatory,
-            DeltaTInhibitory = DeltaInhibitory,
-            RefractoryPeriod = RefractoryPeriod,
-            TauPlus = TauPlus,
-            TauZero = TauZero,
-        };
-
-        var simulationBatch = new SimulationBatch()
-        {
-            Simulations =
-            [
-                new()
-                {
-                    Graph = graph,
-                    AlgorithmSpec = algSpec,
-                    StartNode = graph.Nodes[0],
-                    TargetNode = graph.Nodes[5],
-                },
-                new()
-                {
-                    Graph = graph,
-                    AlgorithmSpec = algSpec,
-                    StartNode = graph.Nodes[0],
-                    TargetNode = graph.Nodes[5],
-                },
-                new()
-                {
-                    Graph = graph,
-                    AlgorithmSpec = algSpec,
-                    StartNode = graph.Nodes[0],
-                    TargetNode = graph.Nodes[5],
-                },
-            ],
-        };
-
-        await _simulationService.RunSimulationBatchAsync(simulationBatch, CancellationToken.None);
-    }
+    private async Task PlaySimulation() =>
+        await _simulationService.RunSimulationBatchAsync(
+            200,
+            new NeighboringGraphSpec()
+            {
+                NodeCount = 1000,
+                Distance = 70,
+                Radius = 100,
+                Noise = 20,
+            },
+            new AlphaAlgorithmSpec()
+            {
+                AlgorithmType = AlgorithmType.Alpha,
+                DeltaTExcitatory = AlphaAlgorithmConfigurationViewModel.DeltaExcitatory,
+                DeltaTInhibitory = AlphaAlgorithmConfigurationViewModel.DeltaInhibitory,
+                RefractoryPeriod = AlphaAlgorithmConfigurationViewModel.RefractoryPeriod,
+                TauPlus = AlphaAlgorithmConfigurationViewModel.TauPlus,
+                TauZero = AlphaAlgorithmConfigurationViewModel.TauZero,
+            },
+            CancellationToken.None
+        );
 
     [RelayCommand]
     private void PauseSimulation()
