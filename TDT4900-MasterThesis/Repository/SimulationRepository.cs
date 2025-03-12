@@ -36,23 +36,29 @@ public class SimulationRepository : IBaseRepository<Simulation>
         SaveChanges(dbContext);
     }
 
-    public async Task UpdateRangeAsync(ICollection<Simulation> simulations)
+    public async Task UpdateRangeAsync(
+        ICollection<Simulation> simulations,
+        CancellationToken? cancellationToken = null
+    )
     {
         await using var dbContext = GetNewDbContext();
         dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-        dbContext.UpdateRange(simulations);
-        await SaveChanges(dbContext);
+        dbContext.Simulations.UpdateRange(simulations);
+        await SaveChangesAsync(dbContext, cancellationToken);
     }
 
-    private async Task SaveChangesAsync(SimulationDbContext dbContext)
+    private void SaveChanges(SimulationDbContext dbContext)
     {
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
         dbContext.ChangeTracker.Clear();
     }
 
-    private async Task SaveChanges(SimulationDbContext dbContext)
+    private async Task SaveChangesAsync(
+        SimulationDbContext dbContext,
+        CancellationToken? cancellationToken = null
+    )
     {
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken ?? CancellationToken.None);
         dbContext.ChangeTracker.Clear();
     }
 }

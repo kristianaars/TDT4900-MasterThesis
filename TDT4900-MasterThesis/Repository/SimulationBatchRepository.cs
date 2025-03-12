@@ -14,10 +14,16 @@ public class SimulationBatchRepository() : IBaseRepository<SimulationBatch>
         await GetNewDbContext().SimulationBatches.FindAsync(id)
         ?? throw new KeyNotFoundException($"Simulation Batch with id {id} not found");
 
-    public async Task InsertAsync(SimulationBatch simulationBatch)
+    public async Task InsertAsync(
+        SimulationBatch simulationBatch,
+        CancellationToken? cancellationToken = null
+    )
     {
         await using var dbContext = GetNewDbContext();
-        await dbContext.SimulationBatches.AddAsync(simulationBatch);
+        await dbContext.SimulationBatches.AddAsync(
+            simulationBatch,
+            cancellationToken ?? CancellationToken.None
+        );
         SaveChanges(dbContext);
     }
 

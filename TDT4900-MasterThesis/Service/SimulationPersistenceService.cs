@@ -19,9 +19,12 @@ public class SimulationPersistenceService
         _simulationRepository = simulationRepository;
     }
 
-    public async Task<SimulationBatch> SaveSimulationBatchAsync(SimulationBatch simulationBatch)
+    public async Task<SimulationBatch> SaveSimulationBatchAsync(
+        SimulationBatch simulationBatch,
+        CancellationToken? cancellationToken = null
+    )
     {
-        await _simulationBatchRepository.InsertAsync(simulationBatch);
+        await _simulationBatchRepository.InsertAsync(simulationBatch, cancellationToken);
         return simulationBatch;
     }
 
@@ -30,9 +33,12 @@ public class SimulationPersistenceService
         _simulationRepository.Update(simulation);
     }
 
-    public async Task UpdateSimulationRangeAsync(ICollection<Simulation> simulations)
+    public async Task UpdateSimulationRangeAsync(
+        ICollection<Simulation> simulations,
+        CancellationToken? cancellationToken = null
+    )
     {
-        await _simulationRepository.UpdateRangeAsync(simulations);
-        await Task.Delay(2000);
+        await _simulationRepository.UpdateRangeAsync(simulations, cancellationToken);
+        await Task.Delay(500, cancellationToken ?? CancellationToken.None);
     }
 }

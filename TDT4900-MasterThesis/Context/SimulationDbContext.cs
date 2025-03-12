@@ -1,3 +1,4 @@
+using System.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TDT4900_MasterThesis.Model;
@@ -24,6 +25,8 @@ public class SimulationDbContext : DbContext
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
-        options.UseNpgsql($"Host=localhost;Database=tdt4900;Username=postgres;Password=postgres");
+        options
+            .UseNpgsql($"Host=localhost;Database=tdt4900;Username=postgres;Password=postgres")
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     }
 }

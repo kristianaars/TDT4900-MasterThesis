@@ -58,12 +58,15 @@ public class SimulationBatchEngine(
 
         if (simulationBatch.PersistSimulations)
         {
-            await simulationPersistenceService.SaveSimulationBatchAsync(simulationBatch);
+            await simulationPersistenceService.SaveSimulationBatchAsync(
+                simulationBatch,
+                cancellationToken
+            );
         }
 
         var unsavedSimulations = new List<Simulation>();
 
-        while (simulationQueue.Count > 0)
+        while (simulationQueue.Count > 0 && !cancellationToken.IsCancellationRequested)
         {
             var currentSimulationNumber = batchSize - simulationQueue.Count + 1;
 
@@ -105,7 +108,10 @@ public class SimulationBatchEngine(
 
                 simulationStatsViewModel.SimulationState = "Persisting data...";
 
-                await simulationPersistenceService.UpdateSimulationRangeAsync(unsavedSimulations);
+                await simulationPersistenceService.UpdateSimulationRangeAsync(
+                    unsavedSimulations,
+                    cancellationToken
+                );
                 unsavedSimulations.Clear();
 
                 Log.Information("Simulations were persisted to db");
