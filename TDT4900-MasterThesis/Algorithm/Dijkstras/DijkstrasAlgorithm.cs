@@ -1,16 +1,16 @@
-using NetTopologySuite.Utilities;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
-using TDT4900_MasterThesis.Model.Db;
-using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
+using TDT4900_MasterThesis.Handler;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras;
 
-public class DijkstrasAlgorithm : IAlgorithm
+public class DijkstrasAlgorithm : BaseEventProducer, IAlgorithm
 {
     public required DijkstraGraph Graph { init; get; }
     public required DijkstraNode StartNode { init; get; }
     public required DijkstraNode TargetNode { init; get; }
+
+    public bool IsFinished { get; set; }
 
     private DijkstrasForwardPassEngine? _forwardPassEngine;
     private DijkstrasBacktrackEngine? _backtrackEngine;
@@ -27,15 +27,6 @@ public class DijkstrasAlgorithm : IAlgorithm
             IsFinished = true;
     }
 
-    public EventHandler? EventHandler { get; set; }
-
-    public void PostEvent(NodeEvent nodeEvent)
-    {
-        EventHandler?.PostEvent(nodeEvent);
-    }
-
-    public bool IsFinished { get; set; }
-
     public void Initialize()
     {
         _forwardPassEngine = new DijkstrasForwardPassEngine()
@@ -43,9 +34,14 @@ public class DijkstrasAlgorithm : IAlgorithm
             Graph = Graph,
             StartNode = StartNode,
             TargetNode = TargetNode,
+            EventHandler = EventHandler,
         };
 
-        _backtrackEngine = new DijkstrasBacktrackEngine() { TargetNode = TargetNode };
+        _backtrackEngine = new DijkstrasBacktrackEngine()
+        {
+            TargetNode = TargetNode,
+            EventHandler = EventHandler,
+        };
 
         Graph.Initialize();
         _forwardPassEngine.Initialize();

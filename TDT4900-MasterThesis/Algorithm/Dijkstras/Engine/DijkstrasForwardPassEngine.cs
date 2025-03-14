@@ -2,11 +2,10 @@ using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
-using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
 
-public class DijkstrasForwardPassEngine : IUpdatable, IEventProducer
+public class DijkstrasForwardPassEngine : BaseEventProducer, IUpdatable
 {
     public bool IsFinished { get; set; }
 
@@ -67,8 +66,4 @@ public class DijkstrasForwardPassEngine : IUpdatable, IEventProducer
     }
 
     private void EnqueueNode(DijkstraNode node) => _priorityQueue.Enqueue(node, node.Distance);
-
-    public EventHandler? EventHandler { get; set; }
-
-    public void PostEvent(NodeEvent nodeEvent) => EventHandler?.PostEvent(nodeEvent);
 }
