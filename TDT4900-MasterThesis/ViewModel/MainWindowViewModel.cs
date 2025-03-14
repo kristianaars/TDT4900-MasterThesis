@@ -123,7 +123,14 @@ public partial class MainWindowViewModel : ObservableObject
                 Radius = NeighbourGraphConfigurationViewModel.Radius,
                 Noise = NeighbourGraphConfigurationViewModel.Noise,
             },
-            new AlphaAlgorithmSpec()
+            BuildAlgorithmSpec(),
+            cancellationToken
+        );
+
+    private AlgorithmSpec BuildAlgorithmSpec() =>
+        SelectedAlgorithmOption.Value switch
+        {
+            AlgorithmType.Alpha => new AlphaAlgorithmSpec()
             {
                 AlgorithmType = AlgorithmType.Alpha,
                 DeltaTExcitatory = AlphaAlgorithmConfigurationViewModel.DeltaExcitatory,
@@ -132,8 +139,8 @@ public partial class MainWindowViewModel : ObservableObject
                 TauPlus = AlphaAlgorithmConfigurationViewModel.TauPlus,
                 TauZero = AlphaAlgorithmConfigurationViewModel.TauZero,
             },
-            cancellationToken
-        );
+            _ => new AlgorithmSpec() { AlgorithmType = SelectedAlgorithmOption.Value },
+        };
 
     [RelayCommand]
     private void PauseSimulation()

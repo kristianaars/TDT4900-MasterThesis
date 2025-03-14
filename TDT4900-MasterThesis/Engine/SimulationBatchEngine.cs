@@ -181,7 +181,7 @@ public class SimulationBatchEngine(
             Log.Information(
                 "{remainingTasks} persistence tasks remaining... ({remainingPercent})",
                 remainingTasks,
-                remainingTasks
+                remainingPercent
             );
 
             simulationStatsViewModel.SimulationState =

@@ -2,6 +2,8 @@ using AutoMapper;
 using TDT4900_MasterThesis.Algorithm;
 using TDT4900_MasterThesis.Algorithm.Alpha;
 using TDT4900_MasterThesis.Algorithm.Alpha.Component;
+using TDT4900_MasterThesis.Algorithm.Dijkstras;
+using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 
@@ -17,20 +19,40 @@ public class SimulationJobFactory(IMapper mapper)
         switch (algorithmSpec.AlgorithmType)
         {
             case AlgorithmType.Alpha:
-                var graph = mapper.Map<AlphaGraph>(simulation.Graph!);
-                var startNode = graph.Nodes.Find(n => n.NodeId == simulation.StartNode!.NodeId)!;
-                var targetNode = graph.Nodes.Find(n => n.NodeId == simulation.TargetNode!.NodeId)!;
+                var alphaGraph = mapper.Map<AlphaGraph>(simulation.Graph!);
+                var alphaStartNode = alphaGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.StartNode!.NodeId
+                )!;
+                var alphaTargetNode = alphaGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.TargetNode!.NodeId
+                )!;
 
                 algorithm = new AlphaAlgorithm()
                 {
-                    Graph = graph,
-                    StartNode = startNode,
-                    TargetNode = targetNode,
+                    Graph = alphaGraph,
+                    StartNode = alphaStartNode,
+                    TargetNode = alphaTargetNode,
                     AlgorithmSpec =
                         algorithmSpec as AlphaAlgorithmSpec
                         ?? throw new InvalidOperationException(
                             "AlgorithmSpec is not of type AlphaAlgorithmSpec."
                         ),
+                };
+                break;
+            case AlgorithmType.Dijkstras:
+                var dijkstraGraph = mapper.Map<DijkstraGraph>(simulation.Graph!);
+                var dijkstraStartNode = dijkstraGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.StartNode!.NodeId
+                )!;
+                var dijkstraTargetNode = dijkstraGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.TargetNode!.NodeId
+                )!;
+
+                algorithm = new DijkstrasAlgorithm()
+                {
+                    Graph = dijkstraGraph,
+                    StartNode = dijkstraStartNode,
+                    TargetNode = dijkstraTargetNode,
                 };
                 break;
             default:

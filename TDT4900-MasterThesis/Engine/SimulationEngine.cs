@@ -124,6 +124,7 @@ public class SimulationEngine
             }
 
             if (updateInterval != 0)
+            {
                 try
                 {
                     await Task.Delay(
@@ -132,6 +133,9 @@ public class SimulationEngine
                     );
                 }
                 catch (OperationCanceledException) { }
+            }
+
+            await Task.Yield();
         }
 
         if (_simulationStatsViewModel != null)
