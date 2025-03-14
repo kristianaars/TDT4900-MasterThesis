@@ -3,8 +3,14 @@ namespace TDT4900_MasterThesis;
 public class AppSettings
 {
     public readonly string WindowTitle = "TDT4900 Master Thesis - Simulation";
-    public readonly int DefaultWindowWidth = 1000;
-    public readonly int DefaultWindowHeight = 1000;
+    public readonly int DefaultWindowWidth = 1450;
+    public readonly int DefaultWindowHeight = 800;
+
+    /// <summary>
+    /// Name/path of the local database file
+    /// </summary>
+    public readonly string DbPath =
+        "/Users/kristianaars/Library/Mobile Documents/com~apple~CloudDocs/Master/data.sqlite";
 
     public readonly SimulationSettings Simulation = new();
 
@@ -15,13 +21,13 @@ public class AppSettings
 
         /// <summary>
         /// Target Frames per second for simulation
-        /// </summary>
-        public readonly int TargetFps = 60;
+        /// </summary>NodeEvent
+        public readonly int TargetFps = 30;
 
         /// <summary>
         /// Target ticks per second for simulation
         /// </summary>
-        public readonly int TargetTps = 40;
+        public readonly int TargetTps = 100;
 
         /// <summary>
         /// Target cooldown for nodes after activation (in ticks)

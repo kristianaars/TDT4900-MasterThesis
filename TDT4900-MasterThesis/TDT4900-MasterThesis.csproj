@@ -6,23 +6,29 @@
         <RootNamespace>TDT4900_MasterThesis</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="exception\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.2.3" />
-      <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
-      <PackageReference Include="Avalonia.FreeDesktop" Version="11.2.3" />
-      <PackageReference Include="Avalonia.Skia" Version="11.2.3" />
-      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+      <PackageReference Include="AutoMapper" Version="14.0.0" />
+      <PackageReference Include="Avalonia" Version="11.2.5" />
+      <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
+      <PackageReference Include="Avalonia.FreeDesktop" Version="11.2.5" />
+      <PackageReference Include="Avalonia.Skia" Version="11.2.5" />
+      <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.5" />
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+      <PackageReference Include="EFCore.BulkExtensions" Version="9.0.1" />
+      <PackageReference Include="EFCore.BulkExtensions.Sqlite" Version="9.0.1" />
       <PackageReference Include="GtkSharp" Version="3.24.24.95" />
       <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="OpenTK" Version="4.9.3" />
       <PackageReference Include="ScottPlot.Avalonia" Version="5.0.54" />
       <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
@@ -36,6 +42,22 @@
     <ItemGroup>
       <Compile Update="view\MainWindow.axaml.cs">
         <DependentUpon>PlotWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="view\controls\LabeledProgressBar.axaml.cs">
+        <DependentUpon>LabeledProgressBar.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="view\controls\LabeledComboBox.axaml.cs">
+        <DependentUpon>LabeledComboBox.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="View\AlphaAlgorithmConfigurationControl.axaml.cs">
+        <DependentUpon>LabeledComboBox.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="View\NeighbourGraphConfigurationControl.axaml.cs">
+        <DependentUpon>NeighbourGraphConfigurationControl.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

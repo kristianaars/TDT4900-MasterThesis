@@ -1,0 +1,41 @@
+<UserControl
+    x:Class="TDT4900_MasterThesis.View.Controls.LabeledProgressBar"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalAlignment="Stretch">
+
+    <StackPanel HorizontalAlignment="Stretch" Spacing="4">
+        <TextBlock
+            HorizontalAlignment="Left"
+            FontSize="14"
+            Foreground="#1C1C1C"
+            Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <TextBlock
+            Width="{Binding Width, RelativeSource={RelativeSource AncestorType=StackPanel}}"
+            HorizontalAlignment="Left"
+            FontSize="10"
+            Foreground="#757575"
+            Text="{Binding Description, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+        <StackPanel
+            HorizontalAlignment="Stretch"
+            Orientation="Horizontal"
+            Spacing="4">
+            <ProgressBar
+                Height="18"
+                HorizontalAlignment="Stretch"
+                Background="White"
+                BorderBrush="#727272"
+                BorderThickness="1"
+                CornerRadius="8"
+                FontSize="10"
+                Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Minimum="0"
+                ProgressTextFormat="{Binding ProgressTextFormat, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                ShowProgressText="True"
+                Value="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        </StackPanel>
+
+
+    </StackPanel>
+</UserControl>

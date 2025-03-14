@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using Serilog;
 using TDT4900_MasterThesis;
-using TDT4900_MasterThesis.host;
+using TDT4900_MasterThesis.Host;
 
 // Configure logging
 using var log = new LoggerConfiguration()
@@ -12,7 +12,7 @@ Log.Logger = log;
 
 bool useGui = true;
 
-var hostBuilder = new ApplicationHostBuilder().AddSimulationHost();
+var hostBuilder = new ApplicationHostBuilder().AddSimulationHost().UseDbPersistence();
 
 if (useGui)
 {

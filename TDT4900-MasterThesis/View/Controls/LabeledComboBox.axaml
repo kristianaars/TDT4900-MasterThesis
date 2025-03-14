@@ -1,0 +1,34 @@
+<UserControl
+    x:Class="TDT4900_MasterThesis.View.Controls.LabeledComboBox"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalAlignment="Stretch">
+    <StackPanel HorizontalAlignment="Stretch" Spacing="4">
+        <TextBlock
+            HorizontalAlignment="Left"
+            FontSize="14"
+            Foreground="#1C1C1C"
+            Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <TextBlock
+            Width="{Binding Width, RelativeSource={RelativeSource AncestorType=StackPanel}}"
+            HorizontalAlignment="Left"
+            FontSize="10"
+            Foreground="#757575"
+            Text="{Binding Description, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        <ComboBox
+            HorizontalAlignment="Stretch"
+            AutoScrollToSelectedItem="True"
+            CornerRadius="8"
+            Foreground="#1C1C1C"
+            ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            SelectedValueBinding="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl}}">
+
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock FontFamily="{Binding}" Text="{Binding DisplayName}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+    </StackPanel>
+</UserControl>

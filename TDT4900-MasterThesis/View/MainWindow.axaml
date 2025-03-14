@@ -1,0 +1,342 @@
+<Window
+    x:Class="TDT4900_MasterThesis.View.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:view="clr-namespace:TDT4900_MasterThesis.View"
+    xmlns:vm="clr-namespace:TDT4900_MasterThesis.ViewModel;assembly=TDT4900-MasterThesis"
+    MinWidth="1200"
+    d:DesignHeight="450"
+    d:DesignWidth="850"
+    mc:Ignorable="d">
+
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="#1C1C1C" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1C1C1C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="18 8" />
+        </Style>
+
+        <Style Selector="TextBlock.Header1">
+            <Setter Property="FontSize">22</Setter>
+        </Style>
+
+        <Style Selector="TextBlock.Header2">
+            <Setter Property="FontSize">18</Setter>
+        </Style>
+
+        <Style Selector="controls|LabeledTextBox">
+            <Setter Property="Width" Value="160" />
+        </Style>
+
+        <Style Selector="controls|LabeledTextField">
+            <Setter Property="Width" Value="210" />
+        </Style>
+    </Window.Styles>
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid
+        Margin="32"
+        ColumnDefinitions="*"
+        RowDefinitions="*,Auto">
+
+        <!--  Top Row (Plots and simulation stats)  -->
+        <Grid Margin="0,0,0,32" ColumnDefinitions="*,Auto,*, Auto">
+            <Grid
+                Grid.Column="0"
+                Margin="0,0,0,0"
+                RowDefinitions="Auto *">
+                <Grid Grid.Row="0" ColumnDefinitions="* Auto">
+                    <Design.DataContext>
+                        <vm:GraphPlotViewModel />
+                    </Design.DataContext>
+
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Classes="Header1">
+                        Graph Plot
+                    </TextBlock>
+
+                    <ToggleSwitch
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding EnableDataUpdate, Mode=TwoWay}"
+                        OffContent="Disabled"
+                        OnContent="Enabled" />
+                </Grid>
+                <Border Name="GraphPlotContainer" Grid.Row="1" />
+            </Grid>
+
+            <GridSplitter
+                Grid.Column="1"
+                Width="1"
+                Height="100"
+                MaxWidth="1"
+                VerticalAlignment="Center"
+                Background="LightGray"
+                ResizeDirection="Columns" />
+
+            <Grid
+                Grid.Column="2"
+                Margin="0,0,16,0"
+                RowDefinitions="Auto * Auto">
+
+                <Design.DataContext>
+                    <vm:SequencePlotViewModel />
+                </Design.DataContext>
+
+                <Grid Grid.ColumnDefinitions="*, Auto, Auto">
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Classes="Header1">
+                        Node Sequence Plot
+                    </TextBlock>
+
+                    <ToggleSwitch
+                        Grid.Column="1"
+                        Margin="0,0,4,0"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding EnableAutoScroll, Mode=TwoWay}"
+                        OffContent="Autoscroll Off"
+                        OnContent="Autoscroll On" />
+
+                    <ToggleSwitch
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding EnableDataUpdate, Mode=TwoWay}"
+                        OffContent="Disabled"
+                        OnContent="Enabled" />
+                </Grid>
+
+                <Border Name="NodeSequencePlotContainer" Grid.Row="1" />
+            </Grid>
+
+            <!--  Simulation Batch Stats  -->
+            <Grid Column="3" RowDefinitions="Auto Auto Auto">
+
+                <TextBlock
+                    Grid.Column="0"
+                    Margin="0,0,0,16"
+                    VerticalAlignment="Center"
+                    Classes="Header1">
+                    Simulation Batch
+                </TextBlock>
+
+                <StackPanel
+                    x:Name="SimulationBatchStatsContainer"
+                    Grid.Row="1"
+                    Spacing="16">
+
+                    <Design.DataContext>
+                        <vm:SimulationStatsViewModel />
+                    </Design.DataContext>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField
+                            Description="Simulation Batch ID"
+                            Label="ID"
+                            Text="{Binding SimulationBatchId}" />
+                        <controls:LabeledTextField
+                            Description="Status of the simulation engine"
+                            Label="State"
+                            Text="{Binding SimulationState}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField
+                            Description="Simulation algorithm"
+                            Label="Algorithm"
+                            Text="{Binding AlgorithmType}" />
+
+                        <controls:LabeledTextField
+                            Description="Graph generator algorithm"
+                            Label="Graph Type"
+                            Text="{Binding GraphType}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField Description="Current/Total" Label="Simulation #">
+                            <controls:LabeledTextField.Text>
+                                <MultiBinding StringFormat="{}{0}/{1}">
+                                    <Binding Path="CompletedSimulations" />
+                                    <Binding Path="SimulationBatchSize" />
+                                </MultiBinding>
+                            </controls:LabeledTextField.Text>
+                        </controls:LabeledTextField>
+
+                        <controls:LabeledTextField
+                            Description="Current tick in the simulation"
+                            Label="Current Tick"
+                            Text="{Binding CurrentTick}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextField
+                            Description="Current ticks per second"
+                            Label="TPS"
+                            Text="{Binding Tps}" />
+
+                        <controls:LabeledTextField
+                            Description="Current framerate"
+                            Label="FPS"
+                            Text="{Binding Fps}" />
+                    </StackPanel>
+
+                    <controls:LabeledProgressBar
+                        Description="Progress of current batch"
+                        Label="Progress"
+                        Maximum="{Binding SimulationBatchSize}"
+                        ProgressTextFormat="{}{0}/{3} Simulations Complete ({1:0}%)"
+                        Value="{Binding CompletedSimulations}" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Row="2"
+                    Margin="0,16,0,0"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Button Command="{Binding PlaySimulationCommand}">Play</Button>
+                    <Button Command="{Binding PauseSimulationCommand}">Pause</Button>
+                    <Button
+                        Background="DarkRed"
+                        Command="{Binding RunSimulationBatchCancelCommand}"
+                        Foreground="White">
+                        Stop Simulation Batch
+                    </Button>
+                </StackPanel>
+
+            </Grid>
+
+        </Grid>
+
+        <!--  Simulation Batch settings row  -->
+        <Grid
+            Grid.Row="1"
+            MinWidth="1200"
+            MaxWidth="1600"
+            ColumnDefinitions="*, *, *, *">
+
+            <!--  Column 1  -->
+            <StackPanel
+                Grid.Column="0"
+                MaxWidth="400"
+                Margin="0,0,16,0"
+                Spacing="16">
+
+                <!--  Algorithm Configuration  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Algorithm Configuration</TextBlock>
+
+                    <controls:LabeledComboBox
+                        Description="Algorithm to apply during simulation"
+                        ItemsSource="{Binding AlgorithmOptions}"
+                        Label="Algorithm"
+                        SelectedItem="{Binding SelectedAlgorithmOption}" />
+
+                    <Grid IsVisible="{Binding SelectedAlgorithmOption, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Alpha}">
+                        <view:AlphaAlgorithmConfigurationControl DataContext="{Binding AlphaAlgorithmConfigurationViewModel}" />
+                    </Grid>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--  Column 2  -->
+            <StackPanel
+                Grid.Column="1"
+                MaxWidth="400"
+                Margin="0,0,16,0"
+                Spacing="16">
+
+                <!--  Graph Settings  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Graph Settings</TextBlock>
+
+                    <controls:LabeledComboBox
+                        Description="Algorithm to generate random graph"
+                        ItemsSource="{Binding GraphOptions}"
+                        Label="Graph Generator"
+                        SelectedItem="{Binding SelectedGraphOption}" />
+
+                    <Grid IsVisible="{Binding SelectedGraphOption, ConverterParameter=Neighbourhood, Converter={StaticResource EnumToVisibilityConverter}}">
+                        <view:NeighbourGraphConfigurationControl DataContext="{Binding NeighbourGraphConfigurationViewModel}" />
+                    </Grid>
+
+                    <Button Command="{Binding ShowExampleGraphCommand}">Show Example Graph</Button>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--  Column 3  -->
+            <StackPanel
+                Grid.Column="2"
+                MaxWidth="400"
+                Spacing="16">
+
+                <!--  Node Configuration  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Simulation Batch Settings</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Description="Number of simulations to run"
+                            Label="Batch Size"
+                            Text="{Binding SimulationBatchSize, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <ToggleSwitch
+                        IsChecked="{Binding PersistSimulationBatch}"
+                        OffContent="Solutions are not saved"
+                        OnContent="Solutions are saved" />
+
+                    <Button Command="{Binding RunSimulationBatchCommand}">
+                        Run Simulation Batch
+                    </Button>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!--  Column 4  -->
+            <StackPanel
+                Grid.Column="3"
+                MaxWidth="400"
+                Spacing="16">
+
+                <!--  Visualization Settings  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="Header2">Visualization Settings</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Description="Target frame rate for plots"
+                            Label="Target FPS"
+                            Text="{Binding TargetFps, Mode=TwoWay}" />
+
+                        <controls:LabeledTextBox
+                            Description="Throttle TPS (0 is no throttle)"
+                            Label="Target TPS"
+                            Text="{Binding TargetTps, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <Button Command="{Binding ApplySimulationConfigurationCommand}">Apply</Button>
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+
+
+</Window>
