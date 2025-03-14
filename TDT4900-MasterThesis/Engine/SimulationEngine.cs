@@ -22,7 +22,9 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
-    private Stopwatch? _stopwatch;
+    private Stopwatch _stopwatch;
+    private double _nextStatUpdate = 0;
+    private double _nextRender = 0;
 
     public readonly List<IDrawable> DrawableComponents;
 
@@ -42,6 +44,8 @@ public class SimulationEngine
         TargetTps = appSettings.Simulation.TargetTps;
 
         DrawableComponents = drawableComponents.ToList();
+
+        _stopwatch = new Stopwatch();
     }
 
     /// <summary>
@@ -64,14 +68,14 @@ public class SimulationEngine
         var algorithm = simulationJob.Algorithm;
         algorithm.EventHandler = new EventHandler()
         {
-            Consumers = [algorithm, _graphPlotViewModel, _sequencePlotViewModel],
+            Consumers = [_graphPlotViewModel, _sequencePlotViewModel],
         };
         algorithm.Initialize();
 
         _graphPlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
         _sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
 
-        _stopwatch = Stopwatch.StartNew();
+        _stopwatch.Start();
 
         _currentTick = 0;
 
@@ -80,15 +84,13 @@ public class SimulationEngine
         var statUpdate = 1000.0;
 
         double nextUpdate = _stopwatch.ElapsedMilliseconds;
-        double nextRender = _stopwatch.ElapsedMilliseconds;
-        double nextStatUpdate = _stopwatch.ElapsedMilliseconds + statUpdate;
 
         if (_simulationStatsViewModel != null)
             _simulationStatsViewModel.SimulationState = "Running";
 
         while (!algorithm.IsFinished && !stoppingToken.IsCancellationRequested)
         {
-            updateInterval = 1000.0 / TargetTps;
+            updateInterval = TargetTps != 0 ? 1000.0 / TargetTps : 0;
             renderInterval = 1000.0 / TargetFps;
 
             double currentTime = _stopwatch.ElapsedMilliseconds;
@@ -100,13 +102,13 @@ public class SimulationEngine
                 nextUpdate += updateInterval;
             }
 
-            if (currentTime >= nextRender)
+            if (currentTime >= _nextRender)
             {
                 Render();
-                nextRender += renderInterval;
+                _nextRender += renderInterval;
             }
 
-            if (currentTime >= nextStatUpdate)
+            if (currentTime >= _nextStatUpdate)
             {
                 _fps = (int)(_frameCounter / (statUpdate / 1000.0));
                 _tps = (int)(_tickCounter / (statUpdate / 1000.0));
@@ -118,14 +120,18 @@ public class SimulationEngine
                 }
 
                 _tickCounter = _frameCounter = 0;
-                nextStatUpdate += statUpdate;
+                _nextStatUpdate += statUpdate;
             }
 
             if (updateInterval != 0)
-                await Task.Delay(
-                    (int)(Math.Min(updateInterval, renderInterval) / 4.0),
-                    stoppingToken
-                );
+                try
+                {
+                    await Task.Delay(
+                        (int)(Math.Min(updateInterval, renderInterval) / 4.0),
+                        stoppingToken
+                    );
+                }
+                catch (OperationCanceledException) { }
         }
 
         if (_simulationStatsViewModel != null)
@@ -162,7 +168,7 @@ public class SimulationEngine
         if (_simulationStatsViewModel != null)
             _simulationStatsViewModel.SimulationState = "Paused";
 
-        _stopwatch?.Stop();
+        _stopwatch.Stop();
     }
 
     public void Resume()
@@ -170,7 +176,7 @@ public class SimulationEngine
         if (_simulationStatsViewModel != null)
             _simulationStatsViewModel.SimulationState = "Running";
 
-        _stopwatch?.Start();
+        _stopwatch.Start();
     }
 
     public void Reset()

@@ -5,32 +5,24 @@ using TDT4900_MasterThesis.Repository;
 
 namespace TDT4900_MasterThesis.Service;
 
-public class SimulationPersistenceService
+public class SimulationPersistenceService(
+    SimulationBatchRepository simulationBatchRepository,
+    SimulationRepository simulationRepository,
+    GraphRepository graphRepository
+)
 {
-    private readonly SimulationBatchRepository _simulationBatchRepository;
-    private readonly SimulationRepository _simulationRepository;
-
-    public SimulationPersistenceService(
-        SimulationBatchRepository simulationBatchRepository,
-        SimulationRepository simulationRepository
-    )
-    {
-        _simulationBatchRepository = simulationBatchRepository;
-        _simulationRepository = simulationRepository;
-    }
-
     public async Task<SimulationBatch> SaveSimulationBatchAsync(
         SimulationBatch simulationBatch,
         CancellationToken? cancellationToken = null
     )
     {
-        await _simulationBatchRepository.InsertAsync(simulationBatch, cancellationToken);
+        await simulationBatchRepository.InsertAsync(simulationBatch, cancellationToken);
         return simulationBatch;
     }
 
     public void UpdateSimulation(Simulation simulation)
     {
-        _simulationRepository.Update(simulation);
+        simulationRepository.Update(simulation);
     }
 
     public async Task UpdateSimulationRangeAsync(
@@ -38,7 +30,24 @@ public class SimulationPersistenceService
         CancellationToken? cancellationToken = null
     )
     {
-        await _simulationRepository.UpdateRangeAsync(simulations, cancellationToken);
-        await Task.Delay(500, cancellationToken ?? CancellationToken.None);
+        await simulationRepository.UpdateRangeAsync(simulations, cancellationToken);
+    }
+
+    /// <summary>
+    /// Updates underlyying simulation data such as Graph using Insert instead of Update
+    /// This allows for more efficient data-insertion
+    /// </summary>
+    /// <param name="simulations"></param>
+    /// <param name="cancellationToken"></param>
+    public async Task UpdateSimulationRangeDataAsync(
+        ICollection<Simulation> simulations,
+        CancellationToken cancellationToken
+    )
+    {
+        // Insert graph data
+        await graphRepository.InsertRangeAsync(
+            simulations.Select(s => s.Graph!),
+            cancellationToken
+        );
     }
 }

@@ -12,10 +12,4 @@ public class AlphaEdge
 
     [SourceMember("Target.NodeId")]
     public int TargetId { get; set; }
-
-    [Ignore]
-    public AlphaNode Source { get; set; }
-
-    [Ignore]
-    public AlphaNode Target { get; set; }
 }

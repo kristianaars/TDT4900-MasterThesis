@@ -17,9 +17,9 @@ namespace TDT4900_MasterThesis.View.Plot;
 
 public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 {
-    public bool EnableAutoScroll { get; set; } = true;
+    public bool EnableAutoScroll { get; set; } = false;
 
-    public bool EnableDataUpdate { get; set; } = true;
+    public bool EnableDataUpdate { get; set; } = false;
 
     private readonly Queue<NodeEvent> _unprocessedNodeEvents;
     private Queue<NodeEvent> _drawBuffer;
@@ -154,9 +154,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public void Draw()
     {
-        if (!IsReadyToDraw)
-            return;
-
         lock (_nodeEventsLock)
         {
             _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEvents);
@@ -238,31 +235,34 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public void InitializeGraph(Graph g)
     {
-        _unprocessedNodeEvents.Clear();
-        _drawBuffer.Clear();
-        Plot.Clear();
+        lock (Plot.Sync)
+        {
+            _unprocessedNodeEvents.Clear();
+            _drawBuffer.Clear();
+            Plot.Clear();
 
-        // Add bars to plot
-        List<(string name, double[] edges)> ranges = g
-            .Nodes.Select(n =>
-            {
-                return ($"Node {n.NodeId}", new double[] { 0, 0 });
-            })
-            .ToList();
-        _bars = Plot.Add.StackedRanges(ranges, horizontal: true);
+            // Add bars to plot
+            List<(string name, double[] edges)> ranges = g
+                .Nodes.Select(n =>
+                {
+                    return ($"Node {n.NodeId}", new double[] { 0, 0 });
+                })
+                .ToList();
+            _bars = Plot.Add.StackedRanges(ranges, horizontal: true);
 
-        _isNeutral = new bool[g.Nodes.Count];
-        _nodeTagged = new bool[g.Nodes.Count];
+            _isNeutral = new bool[g.Nodes.Count];
+            _nodeTagged = new bool[g.Nodes.Count];
 
-        ArrayHelper.FillArray(_isNeutral, true);
-        ArrayHelper.FillArray(_nodeTagged, false);
+            ArrayHelper.FillArray(_isNeutral, true);
+            ArrayHelper.FillArray(_nodeTagged, false);
 
-        Plot.Axes.AutoScale();
+            Plot.Axes.AutoScale();
 
-        Plot.Axes.Rules.Clear();
-        Plot.Axes.Rules.Add(
-            new LockedVertical(Plot.Axes.Left, Plot.Axes.Left.Min, Plot.Axes.Left.Max)
-        );
+            Plot.Axes.Rules.Clear();
+            Plot.Axes.Rules.Add(
+                new LockedVertical(Plot.Axes.Left, Plot.Axes.Left.Min, Plot.Axes.Left.Max)
+            );
+        }
     }
 
     private Color GetStateFillColor(EventType eventType) =>

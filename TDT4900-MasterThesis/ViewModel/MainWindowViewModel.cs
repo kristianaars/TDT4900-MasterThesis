@@ -111,7 +111,7 @@ public partial class MainWindowViewModel : ObservableObject
         _simulationService.SetTargetTps(TargetTps);
     }
 
-    [RelayCommand(IncludeCancelCommand = true, AllowConcurrentExecutions = true)]
+    [RelayCommand(IncludeCancelCommand = true)]
     private async Task RunSimulationBatchAsync(CancellationToken cancellationToken) =>
         await _simulationService.RunSimulationBatchAsync(
             SimulationBatchSize,

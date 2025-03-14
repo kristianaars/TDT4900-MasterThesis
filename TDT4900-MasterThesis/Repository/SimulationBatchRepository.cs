@@ -4,10 +4,8 @@ using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Repository;
 
-public class SimulationBatchRepository() : IBaseRepository<SimulationBatch>
+public class SimulationBatchRepository() : BaseRepository
 {
-    private SimulationDbContext GetNewDbContext() => new();
-
     public IEnumerable<SimulationBatch> List() => GetNewDbContext().SimulationBatches;
 
     public async Task<SimulationBatch> GetByIdAsync(Guid id) =>
@@ -39,12 +37,5 @@ public class SimulationBatchRepository() : IBaseRepository<SimulationBatch>
         using var dbContext = GetNewDbContext();
         dbContext.SimulationBatches.Update(simulationBatch);
         SaveChanges(dbContext);
-    }
-
-    private void SaveChanges(SimulationDbContext dbContext)
-    {
-        dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-        dbContext.SaveChanges();
-        dbContext.ChangeTracker.Clear();
     }
 }

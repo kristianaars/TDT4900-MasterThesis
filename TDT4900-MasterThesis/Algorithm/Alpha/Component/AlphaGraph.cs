@@ -1,3 +1,4 @@
+using System.Collections;
 using AutoMapper;
 using TDT4900_MasterThesis.Helper;
 using TDT4900_MasterThesis.Model.Db;
@@ -9,6 +10,7 @@ public class AlphaGraph
 {
     public List<AlphaNode> Nodes { get; set; }
     public List<AlphaEdge> Edges { get; set; }
+    public bool IsDirected { get; set; }
 
     private AlphaEdge?[,]? _adjecencyMatrix;
 
@@ -17,19 +19,12 @@ public class AlphaGraph
     /// </summary>
     public void Initialize(AlphaAlgorithmSpec algorithmSpec)
     {
-        // Map actual nodes to edges after mapping.
-        Edges.ForEach(e =>
-        {
-            e.Target = Nodes.Find(n => Equals(n.NodeId, e.TargetId))!;
-            e.Source = Nodes.Find(n => Equals(n.NodeId, e.SourceId))!;
-        });
-
         _adjecencyMatrix = BuildAdjecencyMatrix();
 
         // Initialize all nodes
         Nodes.ForEach(n =>
         {
-            n.Neighbours = GetOutEdges(n).Select(e => e.Target).ToList()!;
+            n.Neighbours = GetOutNeighbours(n).ToList();
             n.AllNodes = Nodes;
             n.RefractoryPeriod = algorithmSpec.RefractoryPeriod;
             n.DeltaExcitatory = algorithmSpec.DeltaTExcitatory;
@@ -47,7 +42,11 @@ public class AlphaGraph
 
         Edges.ForEach(e =>
         {
-            matrix[e.Source.NodeId, e.Target.NodeId] = e;
+            matrix[e.SourceId, e.TargetId] = e;
+            if (!IsDirected)
+            {
+                matrix[e.TargetId, e.SourceId] = e;
+            }
         });
 
         return matrix;
@@ -65,6 +64,12 @@ public class AlphaGraph
         }
 
         return outEdges;
+    }
+
+    public IEnumerable<AlphaNode> GetOutNeighbours(AlphaNode node)
+    {
+        return GetOutEdges(node)
+            .Select(e => Nodes[e.TargetId == node.NodeId ? e.SourceId : e.TargetId]);
     }
 
     public IEnumerable<AlphaEdge> GetInEdges(AlphaNode node)

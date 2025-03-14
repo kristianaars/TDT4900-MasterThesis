@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,7 +15,8 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "AlgorithmSpecs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AlgorithmType = table.Column<int>(type: "integer", nullable: false),
                     Discriminator = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
                     DeltaTExcitatory = table.Column<int>(type: "integer", nullable: true),
@@ -33,7 +34,9 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Graphs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    IsDirected = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -44,7 +47,8 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "GraphSpecs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     NodeCount = table.Column<int>(type: "integer", nullable: false),
                     Discriminator = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
                     Radius = table.Column<double>(type: "double precision", nullable: true),
@@ -57,10 +61,26 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "NodeEvents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NodeId = table.Column<int>(type: "integer", nullable: false),
+                    Tick = table.Column<long>(type: "bigint", nullable: false),
+                    EventType = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NodeEvents", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SimulationBatches",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
                 },
                 constraints: table =>
                 {
@@ -71,10 +91,12 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Edge",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    SourceId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TargetId = table.Column<Guid>(type: "uuid", nullable: false),
-                    GraphId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SourceId = table.Column<int>(type: "integer", nullable: false),
+                    TargetId = table.Column<int>(type: "integer", nullable: false),
+                    IsDirected = table.Column<bool>(type: "boolean", nullable: false),
+                    GraphId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -87,30 +109,16 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "NodeEvents",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    NodeId = table.Column<int>(type: "integer", nullable: false),
-                    Tick = table.Column<long>(type: "bigint", nullable: false),
-                    EventType = table.Column<int>(type: "integer", nullable: false),
-                    SimulationId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_NodeEvents", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Nodes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     NodeId = table.Column<int>(type: "integer", nullable: false),
                     X = table.Column<int>(type: "integer", nullable: false),
                     Y = table.Column<int>(type: "integer", nullable: false),
-                    GraphId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SimulationId = table.Column<Guid>(type: "uuid", nullable: true)
+                    GraphId = table.Column<int>(type: "integer", nullable: true),
+                    SimulationId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -126,13 +134,14 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "Simulations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    GraphId = table.Column<Guid>(type: "uuid", nullable: true),
-                    AlgorithmSpecId = table.Column<Guid>(type: "uuid", nullable: false),
-                    GraphSpecId = table.Column<Guid>(type: "uuid", nullable: false),
-                    StartNodeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    TargetNodeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SimulationBatchId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    GraphId = table.Column<int>(type: "integer", nullable: true),
+                    AlgorithmSpecId = table.Column<int>(type: "integer", nullable: false),
+                    GraphSpecId = table.Column<int>(type: "integer", nullable: false),
+                    StartNodeId = table.Column<int>(type: "integer", nullable: true),
+                    TargetNodeId = table.Column<int>(type: "integer", nullable: true),
+                    SimulationBatchId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -185,11 +194,6 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "IX_Edge_TargetId",
                 table: "Edge",
                 column: "TargetId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_NodeEvents_SimulationId",
-                table: "NodeEvents",
-                column: "SimulationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Nodes_GraphId",
@@ -246,13 +250,6 @@ namespace TDT4900_MasterThesis.Migrations
                 principalTable: "Nodes",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_NodeEvents_Simulations_SimulationId",
-                table: "NodeEvents",
-                column: "SimulationId",
-                principalTable: "Simulations",
-                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Nodes_Simulations_SimulationId",

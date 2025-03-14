@@ -3,10 +3,11 @@ using TDT4900_MasterThesis.Algorithm;
 
 namespace TDT4900_MasterThesis.ViewModel;
 
-public partial class SimulationStatsViewModel : ObservableObject
+public partial class SimulationStatsViewModel(SequencePlotViewModel sequencePlotViewModel)
+    : ObservableObject
 {
     [ObservableProperty]
-    private Guid _simulationBatchId;
+    private int _simulationBatchId;
 
     [ObservableProperty]
     private string _simulationState;
@@ -31,4 +32,12 @@ public partial class SimulationStatsViewModel : ObservableObject
 
     [ObservableProperty]
     private string _graphType;
+
+    partial void OnFpsChanged(int value)
+    {
+        if (Fps < 10)
+        {
+            sequencePlotViewModel.EnableDataUpdate = false;
+        }
+    }
 }

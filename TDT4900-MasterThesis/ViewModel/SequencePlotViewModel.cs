@@ -15,10 +15,10 @@ public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
     public SequencePlotView SequencePlotView;
 
     [ObservableProperty]
-    private bool _enableAutoScroll = true;
+    private bool _enableAutoScroll = false;
 
     [ObservableProperty]
-    private bool _enableDataUpdate = true;
+    private bool _enableDataUpdate = false;
 
     public SequencePlotViewModel(SequencePlotView sequencePlotView)
     {

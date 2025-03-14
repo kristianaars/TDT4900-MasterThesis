@@ -4,10 +4,8 @@ using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Repository;
 
-public class SimulationRepository : IBaseRepository<Simulation>
+public class SimulationRepository : BaseRepository
 {
-    private SimulationDbContext GetNewDbContext() => new();
-
     public IEnumerable<Simulation> List() => GetNewDbContext().Simulations;
 
     public async Task<Simulation> GetByIdAsync(Guid id) =>
@@ -45,20 +43,5 @@ public class SimulationRepository : IBaseRepository<Simulation>
         dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
         dbContext.Simulations.UpdateRange(simulations);
         await SaveChangesAsync(dbContext, cancellationToken);
-    }
-
-    private void SaveChanges(SimulationDbContext dbContext)
-    {
-        dbContext.SaveChanges();
-        dbContext.ChangeTracker.Clear();
-    }
-
-    private async Task SaveChangesAsync(
-        SimulationDbContext dbContext,
-        CancellationToken? cancellationToken = null
-    )
-    {
-        await dbContext.SaveChangesAsync(cancellationToken ?? CancellationToken.None);
-        dbContext.ChangeTracker.Clear();
     }
 }

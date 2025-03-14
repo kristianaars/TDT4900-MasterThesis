@@ -33,7 +33,6 @@ public class GraphPlotView : AvaPlot, IDrawable
         Plot.Grid.IsVisible = false;
         Plot.Axes.Left.TickLabelStyle.IsVisible = false;
         Margin = new Thickness(0);
-        EnableDataUpdate = true;
 
         SizeChanged += (sender, args) => MaintainAspectRatio();
         Loaded += (sender, args) => MaintainAspectRatio();
@@ -53,63 +52,63 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public void InitializeGraph(Graph graph)
     {
-        if (!EnableDataUpdate)
-            return;
-
-        lock (_unprocessedNodeEventsQueue)
+        lock (Plot.Sync)
         {
-            _unprocessedNodeEventsQueue.Clear();
-            _drawBuffer.Clear();
+            lock (_unprocessedNodeEventsQueue)
+            {
+                _unprocessedNodeEventsQueue.Clear();
+                _drawBuffer.Clear();
+            }
+
+            Plot.Clear();
+
+            var edges = graph.Edges;
+            var nodes = graph.Nodes;
+
+            _edges.Clear();
+            _nodes.Clear();
+
+            // Draw edges
+            foreach (var e in edges)
+            {
+                var start = e.Source.NodeId;
+                var end = e.Target.NodeId;
+
+                double x1 = nodes[start].X,
+                    y1 = nodes[start].Y;
+                double x2 = nodes[end].X,
+                    y2 = nodes[end].Y;
+
+                var line = Plot.Add.Line(x1, y1, x2, y2);
+                line.LineWidth = 2;
+                line.LineColor = PlotColors.DarkGray;
+                _edges.Add(line);
+            }
+
+            // Draw nodes
+            foreach (var n in nodes)
+            {
+                var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 16);
+
+                node.FillColor = GetStateFillColor(EventType.Neutral);
+                node.LineColor = GetStateBorderColor(EventType.Neutral);
+                node.LineWidth = 4;
+
+                var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
+                text.LabelFontSize = 12;
+                text.OffsetY = 2;
+                text.LabelFontColor = PlotColors.Black;
+                text.Alignment = Alignment.MiddleCenter;
+
+                _nodes!.Add(node);
+            }
+
+            Plot.Axes.AutoScale();
+            MaintainAspectRatio();
+
+            if (IsReadyToDraw)
+                Refresh();
         }
-
-        Plot.Clear();
-
-        var edges = graph.Edges;
-        var nodes = graph.Nodes;
-
-        _edges.Clear();
-        _nodes.Clear();
-
-        // Draw edges
-        foreach (var e in edges)
-        {
-            var start = e.Source.NodeId;
-            var end = e.Target.NodeId;
-
-            double x1 = nodes[start].X,
-                y1 = nodes[start].Y;
-            double x2 = nodes[end].X,
-                y2 = nodes[end].Y;
-
-            var line = Plot.Add.Line(x1, y1, x2, y2);
-            line.LineWidth = 2;
-            line.LineColor = PlotColors.DarkGray;
-            _edges.Add(line);
-        }
-
-        // Draw nodes
-        foreach (var n in nodes)
-        {
-            var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 16);
-
-            node.FillColor = GetStateFillColor(EventType.Neutral);
-            node.LineColor = GetStateBorderColor(EventType.Neutral);
-            node.LineWidth = 4;
-
-            var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
-            text.LabelFontSize = 12;
-            text.OffsetY = 2;
-            text.LabelFontColor = PlotColors.Black;
-            text.Alignment = Alignment.MiddleCenter;
-
-            _nodes!.Add(node);
-        }
-
-        Plot.Axes.AutoScale();
-        MaintainAspectRatio();
-
-        if (IsReadyToDraw)
-            Refresh();
     }
 
     /// <summary>
@@ -131,9 +130,6 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public override void Render(DrawingContext context)
     {
-        if (!EnableDataUpdate)
-            return;
-
         while (_drawBuffer.Count != 0)
         {
             var update = _drawBuffer.Dequeue();

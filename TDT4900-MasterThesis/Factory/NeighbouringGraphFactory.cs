@@ -69,12 +69,16 @@ public class NeighbouringGraphFactory
                 if (distance <= _edgeRadius)
                 {
                     edges.Add(new Edge() { Source = nodes[i], Target = nodes[j] });
-                    edges.Add(new Edge() { Source = nodes[j], Target = nodes[i] });
                 }
             }
         }
 
-        var graph = new Graph() { Nodes = nodes, Edges = edges };
+        var graph = new Graph()
+        {
+            Nodes = nodes,
+            Edges = edges,
+            IsDirected = false,
+        };
 
         return graph;
     }

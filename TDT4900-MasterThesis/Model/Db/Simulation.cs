@@ -10,12 +10,8 @@ public class Simulation : BaseModel
     [Required]
     public AlgorithmSpec AlgorithmSpec { get; set; }
 
-    public Guid AlgorithmSpecId { get; set; }
-
     [Required]
     public GraphSpec GraphSpec { get; set; }
-
-    public Guid GraphSpecId { get; set; }
 
     public Node? StartNode { get; set; }
 

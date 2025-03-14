@@ -21,8 +21,8 @@ public class IntegerTickGenerator : ITickGenerator
 
         for (int i = min; i <= max; i += spacing)
         {
-            var tick = new Tick(i, i.ToString());
-            ticks.Add(tick);
+            //var tick = new Tick(i, i.ToString());
+            //ticks.Add(tick);
         }
 
         Ticks = ticks.ToArray();
