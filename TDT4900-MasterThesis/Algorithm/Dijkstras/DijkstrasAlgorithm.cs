@@ -1,21 +1,18 @@
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
-using TDT4900_MasterThesis.Handler;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras;
 
-public class DijkstrasAlgorithm : BaseEventProducer, IAlgorithm
+public class DijkstrasAlgorithm : BaseAlgorithm<DijkstraNode, DijkstraEdge, DijkstraGraph>
 {
-    public required DijkstraGraph Graph { init; get; }
-    public required DijkstraNode StartNode { init; get; }
-    public required DijkstraNode TargetNode { init; get; }
-
-    public bool IsFinished { get; set; }
+    public override required DijkstraGraph Graph { get; init; }
+    public override required DijkstraNode StartNode { get; init; }
+    public override required DijkstraNode TargetNode { get; init; }
 
     private DijkstrasForwardPassEngine? _forwardPassEngine;
     private DijkstrasBacktrackEngine? _backtrackEngine;
 
-    public void Update(long currentTick)
+    public override void Update(long currentTick)
     {
         //1. Perform forward pass
         if (!_forwardPassEngine!.IsFinished)
@@ -27,7 +24,7 @@ public class DijkstrasAlgorithm : BaseEventProducer, IAlgorithm
             IsFinished = true;
     }
 
-    public void Initialize()
+    public override void Initialize()
     {
         _forwardPassEngine = new DijkstrasForwardPassEngine()
         {

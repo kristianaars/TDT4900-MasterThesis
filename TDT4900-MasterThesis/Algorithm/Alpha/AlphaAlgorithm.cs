@@ -4,14 +4,15 @@ using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Algorithm.Alpha;
 
-public class AlphaAlgorithm : BaseAlgorithm
+public class AlphaAlgorithm : BaseAlgorithm<AlphaNode, AlphaEdge, AlphaGraph>
 {
     private AlphaAlgorithmMessageEngine? _messageEngine;
 
     public required AlphaAlgorithmSpec AlgorithmSpec { init; get; }
-    public required AlphaGraph Graph { init; get; }
-    public required AlphaNode StartNode { init; get; }
-    public required AlphaNode TargetNode { init; get; }
+
+    public override required AlphaGraph Graph { get; init; }
+    public override required AlphaNode StartNode { get; init; }
+    public override required AlphaNode TargetNode { get; init; }
 
     public override void Initialize()
     {

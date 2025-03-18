@@ -8,12 +8,14 @@ using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Engine;
 
-public class SimulationEngine
+public class SimulationEngine(
+    AppSettings appSettings,
+    IEnumerable<IDrawable> drawableComponents,
+    SimulationStatsViewModel? simulationStatsViewModel,
+    GraphPlotViewModel? graphPlotViewModel,
+    SequencePlotViewModel? sequencePlotViewModel
+)
 {
-    private readonly GraphPlotViewModel? _graphPlotViewModel;
-    private readonly SequencePlotViewModel? _sequencePlotViewModel;
-    private readonly SimulationStatsViewModel? _simulationStatsViewModel;
-
     private long _currentTick;
 
     private int _frameCounter = 0;
@@ -22,41 +24,21 @@ public class SimulationEngine
     private int _tickCounter = 0;
     private int _tps = 0;
 
-    private Stopwatch _stopwatch;
+    private readonly Stopwatch _stopwatch = new();
     private double _nextStatUpdate = 0;
     private double _nextRender = 0;
 
-    public readonly List<IDrawable> DrawableComponents;
-
-    public SimulationEngine(
-        AppSettings appSettings,
-        IEnumerable<IDrawable> drawableComponents,
-        SimulationStatsViewModel? simulationStatsViewModel,
-        GraphPlotViewModel? graphPlotViewModel,
-        SequencePlotViewModel? sequencePlotViewModel
-    )
-    {
-        _graphPlotViewModel = graphPlotViewModel;
-        _sequencePlotViewModel = sequencePlotViewModel;
-        _simulationStatsViewModel = simulationStatsViewModel;
-
-        TargetFps = appSettings.Simulation.TargetFps;
-        TargetTps = appSettings.Simulation.TargetTps;
-
-        DrawableComponents = drawableComponents.ToList();
-
-        _stopwatch = new Stopwatch();
-    }
+    private readonly List<IDrawable> _drawableComponents = drawableComponents.ToList();
 
     /// <summary>
     /// Target Ticks Per Second
     /// </summary>
-    public int TargetTps;
+    public int TargetTps = appSettings.Simulation.TargetTps;
 
     /// <summary>
     /// Target Frames Per Second
     /// </summary>
-    public int TargetFps;
+    public int TargetFps = appSettings.Simulation.TargetFps;
 
     private bool _isRunning = false;
 
@@ -68,12 +50,12 @@ public class SimulationEngine
         var algorithm = simulationJob.Algorithm;
         algorithm.EventHandler = new EventHandler()
         {
-            Consumers = [_graphPlotViewModel, _sequencePlotViewModel],
+            Consumers = [graphPlotViewModel, sequencePlotViewModel, algorithm],
         };
         algorithm.Initialize();
 
-        _graphPlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
-        _sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
+        graphPlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
+        sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
 
         _stopwatch.Start();
 
@@ -81,12 +63,12 @@ public class SimulationEngine
 
         double updateInterval;
         double renderInterval;
-        var statUpdate = 1000.0;
+        const double statUpdate = 1000.0;
 
         double nextUpdate = _stopwatch.ElapsedMilliseconds;
 
-        if (_simulationStatsViewModel != null)
-            _simulationStatsViewModel.SimulationState = "Running";
+        if (simulationStatsViewModel != null)
+            simulationStatsViewModel.SimulationState = "Running";
 
         while (!algorithm.IsFinished && !stoppingToken.IsCancellationRequested)
         {
@@ -113,10 +95,10 @@ public class SimulationEngine
                 _fps = (int)(_frameCounter / (statUpdate / 1000.0));
                 _tps = (int)(_tickCounter / (statUpdate / 1000.0));
 
-                if (_simulationStatsViewModel != null)
+                if (simulationStatsViewModel != null)
                 {
-                    _simulationStatsViewModel.Tps = _tps;
-                    _simulationStatsViewModel.Fps = _fps;
+                    simulationStatsViewModel.Tps = _tps;
+                    simulationStatsViewModel.Fps = _fps;
                 }
 
                 _tickCounter = _frameCounter = 0;
@@ -138,29 +120,26 @@ public class SimulationEngine
             await Task.Yield();
         }
 
-        if (_simulationStatsViewModel != null)
-            _simulationStatsViewModel.SimulationState = "Stopped";
-
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
     }
 
     private void Update(long currentTick)
     {
-        if (_simulationStatsViewModel != null)
-            _simulationStatsViewModel.CurrentTick = currentTick;
+        if (simulationStatsViewModel != null)
+            simulationStatsViewModel.CurrentTick = currentTick;
 
-        _sequencePlotViewModel?.SequencePlotView.Update(currentTick);
+        sequencePlotViewModel?.SequencePlotView.Update(currentTick);
         _tickCounter++;
     }
 
     private void Render()
     {
-        var readyToRender = DrawableComponents.All(c => c.IsReadyToDraw);
+        var readyToRender = _drawableComponents.All(c => c.IsReadyToDraw);
 
         if (!readyToRender)
             return;
 
-        DrawableComponents.ForEach(c =>
+        _drawableComponents.ForEach(c =>
         {
             Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Background);
         });
@@ -169,16 +148,16 @@ public class SimulationEngine
 
     public void Pause()
     {
-        if (_simulationStatsViewModel != null)
-            _simulationStatsViewModel.SimulationState = "Paused";
+        if (simulationStatsViewModel != null)
+            simulationStatsViewModel.SimulationState = "Paused";
 
         _stopwatch.Stop();
     }
 
     public void Resume()
     {
-        if (_simulationStatsViewModel != null)
-            _simulationStatsViewModel.SimulationState = "Running";
+        if (simulationStatsViewModel != null)
+            simulationStatsViewModel.SimulationState = "Running";
 
         _stopwatch.Start();
     }

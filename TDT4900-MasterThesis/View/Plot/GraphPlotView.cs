@@ -71,8 +71,8 @@ public class GraphPlotView : AvaPlot, IDrawable
             // Draw edges
             foreach (var e in edges)
             {
-                var start = e.Source.NodeId;
-                var end = e.Target.NodeId;
+                var start = e.SourceNodeId;
+                var end = e.TargetNodeId;
 
                 double x1 = nodes[start].X,
                     y1 = nodes[start].Y;

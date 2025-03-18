@@ -68,7 +68,13 @@ public class NeighbouringGraphFactory
                 double distance = Distance(nodes[i], nodes[j]);
                 if (distance <= _edgeRadius)
                 {
-                    edges.Add(new Edge() { Source = nodes[i], Target = nodes[j] });
+                    edges.Add(
+                        new Edge()
+                        {
+                            SourceNodeId = nodes[i].NodeId,
+                            TargetNodeId = nodes[j].NodeId,
+                        }
+                    );
                 }
             }
         }

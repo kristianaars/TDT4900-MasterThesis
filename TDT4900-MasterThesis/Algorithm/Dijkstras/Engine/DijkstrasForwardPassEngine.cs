@@ -19,8 +19,9 @@ public class DijkstrasForwardPassEngine : BaseEventProducer, IUpdatable
     {
         if (_priorityQueue.Count == 0)
         {
-            IsFinished = true;
-            return;
+            throw new Exception(
+                "Dijkstra's algorithm failed to find the shortest path. No path exists."
+            );
         }
 
         var node = _priorityQueue.Dequeue();

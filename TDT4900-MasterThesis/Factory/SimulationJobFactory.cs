@@ -11,10 +11,9 @@ namespace TDT4900_MasterThesis.Factory;
 
 public class SimulationJobFactory(IMapper mapper)
 {
-    public SimulationJob GetSimulationJob(Simulation simulation)
+    public SimulationJob GetSimulationJob(Simulation simulation, AlgorithmSpec algorithmSpec)
     {
         IAlgorithm algorithm;
-        var algorithmSpec = simulation.AlgorithmSpec;
 
         switch (algorithmSpec.AlgorithmType)
         {

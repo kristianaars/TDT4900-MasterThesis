@@ -44,4 +44,14 @@ public class SimulationRepository : BaseRepository
         dbContext.Simulations.UpdateRange(simulations);
         await SaveChangesAsync(dbContext, cancellationToken);
     }
+
+    public async Task InsertRangeAsync(
+        ICollection<Simulation> simulations,
+        CancellationToken? cancellationToken
+    )
+    {
+        await using var dbContext = GetNewDbContext();
+        dbContext.Simulations.UpdateRange(simulations);
+        await SaveChangesAsync(dbContext, cancellationToken);
+    }
 }

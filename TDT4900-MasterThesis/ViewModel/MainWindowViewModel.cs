@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     private SequencePlotViewModel _sequencePlotViewModel;
     private GraphPlotViewModel _graphPlotViewModel;
     private SimulationService _simulationService;
+    private SimulationBatchService _simulationBatchService;
 
     [ObservableProperty]
     private AlphaAlgorithmConfigurationViewModel _alphaAlgorithmConfigurationViewModel;
@@ -52,6 +53,7 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         AppSettings appSettings,
         NodeEngine nodeEngine,
+        SimulationBatchService simulationBatchService,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
         SimulationService simulationService,
@@ -66,6 +68,7 @@ public partial class MainWindowViewModel : ObservableObject
         _simulationService = simulationService;
         _alphaAlgorithmConfigurationViewModel = alphaAlgorithmConfigurationViewModel;
         _neighbourGraphConfigurationViewModel = neighbourGraphConfigurationViewModel;
+        _simulationBatchService = simulationBatchService;
 
         _targetTps = _appSettings.Simulation.TargetTps;
         _targetFps = _appSettings.Simulation.TargetFps;
@@ -113,7 +116,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     [RelayCommand(IncludeCancelCommand = true)]
     private async Task RunSimulationBatchAsync(CancellationToken cancellationToken) =>
-        await _simulationService.RunSimulationBatchAsync(
+        await _simulationBatchService.RunSimulationBatchAsync(
             SimulationBatchSize,
             PersistSimulationBatch,
             new NeighboringGraphSpec()

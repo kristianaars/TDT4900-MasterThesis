@@ -7,17 +7,15 @@ namespace TDT4900_MasterThesis.Service;
 
 public class SimulationPersistenceService(
     SimulationBatchRepository simulationBatchRepository,
-    SimulationRepository simulationRepository,
-    GraphRepository graphRepository
+    SimulationRepository simulationRepository
 )
 {
-    public async Task<SimulationBatch> SaveSimulationBatchAsync(
+    public async Task SaveSimulationBatchAsync(
         SimulationBatch simulationBatch,
         CancellationToken? cancellationToken = null
     )
     {
         await simulationBatchRepository.InsertAsync(simulationBatch, cancellationToken);
-        return simulationBatch;
     }
 
     public void UpdateSimulation(Simulation simulation)
@@ -33,21 +31,12 @@ public class SimulationPersistenceService(
         await simulationRepository.UpdateRangeAsync(simulations, cancellationToken);
     }
 
-    /// <summary>
-    /// Updates underlyying simulation data such as Graph using Insert instead of Update
-    /// This allows for more efficient data-insertion
-    /// </summary>
-    /// <param name="simulations"></param>
-    /// <param name="cancellationToken"></param>
-    public async Task UpdateSimulationRangeDataAsync(
+    public async Task InsertSimulationRangeAsync(
         ICollection<Simulation> simulations,
-        CancellationToken cancellationToken
+        SimulationBatch simulationBatch,
+        CancellationToken? cancellationToken = null
     )
     {
-        // Insert graph data
-        await graphRepository.InsertRangeAsync(
-            simulations.Select(s => s.Graph!),
-            cancellationToken
-        );
+        await simulationRepository.InsertRangeAsync(simulations, cancellationToken);
     }
 }

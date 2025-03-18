@@ -1,18 +1,16 @@
 using AutoMapper;
 using Serilog;
+using TDT4900_MasterThesis.Algorithm.Component;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
+using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Algorithm.Alpha.Component;
 
 [AutoMap(typeof(Node))]
-public class AlphaNode : BaseEventProducer
+public class AlphaNode : AlgorithmNode, IEventProducer
 {
-    public int NodeId { get; set; }
-    public int X { get; set; }
-    public int Y { get; set; }
-
     public List<AlphaNode> Neighbours { get; set; } = new();
     public List<AlphaNode> AllNodes { get; set; } = new();
 
@@ -20,11 +18,6 @@ public class AlphaNode : BaseEventProducer
     /// Tau is the processing time, e.g. how long a message takes to process before sending it to the next node.
     /// </summary>
     public int Tau { get; set; }
-
-    /// <summary>
-    /// Marks if the node is tagged or not. Tagged nodes have a shorter processing time <see cref="Tau"/>.
-    /// </summary>
-    public bool IsTagged { get; set; }
 
     /// <summary>
     /// Current state of the node
@@ -324,5 +317,12 @@ public class AlphaNode : BaseEventProducer
                 Tick = atTick,
             }
         );
+    }
+
+    public EventHandler? EventHandler { get; set; }
+
+    public void PostEvent(NodeEvent nodeEvent)
+    {
+        EventHandler?.PostEvent(nodeEvent);
     }
 }

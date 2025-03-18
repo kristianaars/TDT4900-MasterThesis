@@ -55,6 +55,7 @@ public class ApplicationHostBuilder
         _services.AddSingleton<SimulationBatchEngine>();
         _services.AddSingleton<SimulationEngine>();
         _services.AddSingleton<SimulationService>();
+        _services.AddSingleton<SimulationBatchService>();
 
         //_services.AddHostedService<SimulationHost>();
         return this;
