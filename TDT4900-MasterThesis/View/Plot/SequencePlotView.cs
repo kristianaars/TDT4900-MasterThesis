@@ -25,14 +25,12 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
     private Queue<NodeEvent> _drawBuffer;
 
     private readonly Lock _nodeEventsLock = new();
-    private readonly Queue<NodeMessage> _unprocessedNodeMessagesQueue;
-    private Queue<NodeMessage> _drawBufferMessages;
 
     private readonly int _tickWindow = 80;
     private readonly float _tickOffsetRightRatio = 0.05f;
     private int TickOffsetRight => (int)(_tickWindow * _tickOffsetRightRatio);
 
-    public bool IsReadyToDraw => _drawBuffer.Count + _drawBufferMessages.Count == 0;
+    public bool IsReadyToDraw => _drawBuffer.Count == 0;
 
     private BarPlot[] _bars;
     private bool[] _isNeutral;
@@ -64,9 +62,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         _unprocessedNodeEvents = [];
         _drawBuffer = [];
         _nodeTagged = [];
-
-        _unprocessedNodeMessagesQueue = [];
-        _drawBufferMessages = [];
     }
 
     public void AppendNodeEvent(NodeEvent nodeEvent)
@@ -74,15 +69,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         if (!EnableDataUpdate)
             return;
         _unprocessedNodeEvents.Enqueue(nodeEvent);
-    }
-
-    public void AppendNodeMessage(NodeMessage message)
-    {
-        if (!EnableDataUpdate)
-            return;
-
-        lock (_nodeEventsLock)
-            _unprocessedNodeMessagesQueue.Enqueue(message);
     }
 
     private void PlotNewBar(int nodeId, EventType eventType, long atTick, bool isTagged)
@@ -104,6 +90,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
             );
     }
 
+    /*
     private void PlotNodeMessage(NodeMessage message)
     {
         var source = message.Sender;
@@ -137,7 +124,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         verticaEndLine.LineWidth = 2;
         verticaEndLine.LineColor = endLineColor;
     }
-
+*/
     private void MarkNodeAsTagged(long atTick, int nodeId)
     {
         var yCenter = _bars[nodeId].Bars[^1].Rect.VerticalCenter;
@@ -158,9 +145,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         {
             _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEvents);
             _unprocessedNodeEvents.Clear();
-
-            _drawBufferMessages = new Queue<NodeMessage>(_unprocessedNodeMessagesQueue);
-            _unprocessedNodeMessagesQueue.Clear();
         }
 
         InvalidateVisual();
@@ -192,13 +176,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
                 MarkNodeAsTagged(updateTick, nodeId);
                 _nodeTagged[nodeId] = true;
             }
-        }
-
-        // Draw new node-messages
-        while (_drawBufferMessages.Count != 0)
-        {
-            var message = _drawBufferMessages.Dequeue();
-            PlotNodeMessage(message);
         }
 
         // Update active bars to latest tick

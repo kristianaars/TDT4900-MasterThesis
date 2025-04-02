@@ -1,13 +1,14 @@
 <UserControl
-    x:Class="TDT4900_MasterThesis.View.NeighbourGraphConfigurationControl"
+    x:Class="TDT4900_MasterThesis.View.ConfigurationControl.SquareGridHierarchicalGraphConfigurationControl"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:configuration="clr-namespace:TDT4900_MasterThesis.ViewModel.Configuration"
     xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
     xmlns:vm="clr-namespace:TDT4900_MasterThesis.ViewModel"
     HorizontalAlignment="Stretch">
     <StackPanel HorizontalAlignment="Stretch" Spacing="4">
         <Design.DataContext>
-            <vm:NeighbourGraphConfigurationViewModel />
+            <configuration:SquareGridHierarchicalGraphConfigurationViewModel />
         </Design.DataContext>
 
         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -17,10 +18,9 @@
                 Text="{Binding NodeCount}" />
 
             <controls:LabeledTextBox
-                Description="Neighbourhood radius"
-                Label="Radius"
-                Text="{Binding Radius}" />
-
+                Description="Number of hierarchical levels"
+                Label="Levels"
+                Text="{Binding HierarchicalLevels}" />
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -34,6 +34,14 @@
                 Label="Noise"
                 Text="{Binding Noise}" />
         </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Size of the base grid"
+                Label="Base Grid Size"
+                Text="{Binding BaseGridSize}" />
+        </StackPanel>
+
 
     </StackPanel>
 

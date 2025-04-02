@@ -1,5 +1,3 @@
-using EFCore.BulkExtensions;
-using TDT4900_MasterThesis.Context;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Repository;
 

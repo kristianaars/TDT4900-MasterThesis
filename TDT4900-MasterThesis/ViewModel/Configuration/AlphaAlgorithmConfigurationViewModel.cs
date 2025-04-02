@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace TDT4900_MasterThesis.ViewModel.Component;
+namespace TDT4900_MasterThesis.ViewModel.Configuration;
 
 public partial class AlphaAlgorithmConfigurationViewModel(AppSettings appSettings)
     : ObservableObject

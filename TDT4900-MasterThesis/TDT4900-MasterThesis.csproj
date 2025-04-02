@@ -52,12 +52,20 @@
         <DependentUpon>LabeledComboBox.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="View\AlphaAlgorithmConfigurationControl.axaml.cs">
-        <DependentUpon>LabeledComboBox.axaml</DependentUpon>
+      <Compile Update="View\ConfigurationControl\RadiusNeighbourGraphConfigurationControl.axaml.cs">
+        <DependentUpon>RadiusNeighbourGraphConfigurationControl.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="View\NeighbourGraphConfigurationControl.axaml.cs">
-        <DependentUpon>NeighbourGraphConfigurationControl.axaml</DependentUpon>
+      <Compile Update="View\ConfigurationControl\SquareGridHierarchicalGraphConfigurationControl.axaml.cs">
+        <DependentUpon>SquareGridHierarchicalGraphConfigurationControl.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="View\ConfigurationControl\AlphaAlgorithmConfigurationControl.axaml.cs">
+        <DependentUpon>AlphaAlgorithmConfigurationControl.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="View\ConfigurationControl\StratiumAlgorithmConfigurationControl.axaml.cs">
+        <DependentUpon>StriatumAlgorithmConfigurationControl.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

@@ -1,13 +1,14 @@
 <UserControl
-    x:Class="TDT4900_MasterThesis.View.AlphaAlgorithmConfigurationControl"
+    x:Class="TDT4900_MasterThesis.View.ConfigurationControl.StratiumAlgorithmConfigurationControl"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:component="clr-namespace:TDT4900_MasterThesis.ViewModel.Component"
+    xmlns:configuration="clr-namespace:TDT4900_MasterThesis.ViewModel.Configuration"
     xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
     HorizontalAlignment="Stretch">
     <StackPanel HorizontalAlignment="Stretch" Spacing="4">
         <Design.DataContext>
-            <component:AlphaAlgorithmConfigurationViewModel />
+            <configuration:StratiumAlgorithmConfigurationViewModel />
         </Design.DataContext>
 
         <StackPanel Orientation="Horizontal" Spacing="8">

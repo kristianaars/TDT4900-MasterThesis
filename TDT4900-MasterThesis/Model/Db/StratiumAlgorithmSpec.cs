@@ -2,11 +2,11 @@ using TDT4900_MasterThesis.Algorithm;
 
 namespace TDT4900_MasterThesis.Model.Db;
 
-public class AlphaAlgorithmSpec : AlgorithmSpec
+public class StratiumAlgorithmSpec : AlgorithmSpec
 {
-    public AlphaAlgorithmSpec()
+    public StratiumAlgorithmSpec()
     {
-        AlgorithmType = AlgorithmType.Alpha;
+        AlgorithmType = AlgorithmType.Stratium;
     }
 
     public int DeltaTExcitatory { get; set; }

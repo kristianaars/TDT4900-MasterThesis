@@ -1,11 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace TDT4900_MasterThesis.View;
+namespace TDT4900_MasterThesis.View.ConfigurationControl;
 
-public partial class AlphaAlgorithmConfigurationControl : UserControl
+public partial class RadiusNeighbourGraphConfigurationControl : UserControl
 {
-    public AlphaAlgorithmConfigurationControl()
+    public RadiusNeighbourGraphConfigurationControl()
     {
         InitializeComponent();
     }

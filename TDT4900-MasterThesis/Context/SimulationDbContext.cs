@@ -1,7 +1,4 @@
-using System.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Context;
@@ -14,7 +11,7 @@ public class SimulationDbContext : DbContext
     public DbSet<SimulationBatch> SimulationBatches { get; set; }
 
     public DbSet<GraphSpec> GraphSpecs { get; set; }
-    public DbSet<NeighboringGraphSpec> NeighboringGraphSpecs { get; set; }
+    public DbSet<RadiusNeighboringGraphSpec> NeighboringGraphSpecs { get; set; }
 
     public DbSet<AlgorithmSpec> AlgorithmSpecs { get; set; }
     public DbSet<AlphaAlgorithmSpec> AlphaAlgorithmSpecs { get; set; }

@@ -9,6 +9,11 @@ public class AlgorithmNode : IEquatable<AlgorithmNode>
     public int NodeId { get; set; }
 
     /// <summary>
+    /// Current state of the node
+    /// </summary>
+    public NodeState State { get; set; }
+
+    /// <summary>
     /// Marks if the node is tagged or not. A node is tagged if it is on a shortest path.
     /// </summary>
     public bool IsTagged { get; set; }

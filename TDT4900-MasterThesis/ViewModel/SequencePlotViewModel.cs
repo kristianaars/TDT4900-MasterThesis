@@ -1,9 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
-using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Handler;
-using TDT4900_MasterThesis.Message;
-using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.View.Plot;
@@ -24,9 +20,6 @@ public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
     {
         SequencePlotView = sequencePlotView;
     }
-
-    [Obsolete("Use ConsumeEvent instead")]
-    public void AppendNodeStateUpdate(NodeStateUpdate update) { }
 
     partial void OnEnableAutoScrollChanged(bool value)
     {

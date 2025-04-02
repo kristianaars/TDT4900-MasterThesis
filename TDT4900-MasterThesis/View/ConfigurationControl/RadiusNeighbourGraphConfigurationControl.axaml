@@ -1,0 +1,43 @@
+<UserControl
+    x:Class="TDT4900_MasterThesis.View.ConfigurationControl.RadiusNeighbourGraphConfigurationControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:configuration="clr-namespace:TDT4900_MasterThesis.ViewModel.Configuration"
+    xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
+    xmlns:vm="clr-namespace:TDT4900_MasterThesis.ViewModel"
+    HorizontalAlignment="Stretch">
+    <StackPanel HorizontalAlignment="Stretch" Spacing="4">
+        <Design.DataContext>
+            <configuration:RadiusNeighbourGraphConfigurationViewModel />
+        </Design.DataContext>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Nodes in the graph"
+                Label="Node Count"
+                Text="{Binding NodeCount}" />
+
+            <controls:LabeledTextBox
+                Description="Neighbourhood radius"
+                Label="Radius"
+                Text="{Binding Radius}" />
+
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:LabeledTextBox
+                Description="Distance between nodes"
+                Label="Distance"
+                Text="{Binding Distance}" />
+
+            <controls:LabeledTextBox
+                Description="Noise in distance"
+                Label="Noise"
+                Text="{Binding Noise}" />
+        </StackPanel>
+
+    </StackPanel>
+
+
+
+</UserControl>

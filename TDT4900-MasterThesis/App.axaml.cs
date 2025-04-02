@@ -4,15 +4,8 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Core;
-using TDT4900_MasterThesis.Engine;
-using TDT4900_MasterThesis.Factory;
-using TDT4900_MasterThesis.Host;
-using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.View;
-using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis;
 

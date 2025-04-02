@@ -1,13 +1,14 @@
-using TDT4900_MasterThesis.Algorithm.Alpha.Component;
+using TDT4900_MasterThesis.Algorithm.Stratium.Component;
+using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Model.Graph;
 
-namespace TDT4900_MasterThesis.Algorithm.Alpha.Engine;
+namespace TDT4900_MasterThesis.Algorithm.Stratium.Engine;
 
-public class AlphaAlgorithmMessageEngine : IUpdatable
+public class StratiumAlgorithmMessageEngine : IUpdatable
 {
-    public required AlphaGraph Graph { init; get; }
-    public required AlphaNode TargetNode { init; get; }
-    public required AlphaNode StartNode { init; get; }
+    public required StratiumGraph Graph { init; get; }
+    public required StratiumNode TargetNode { init; get; }
+    public required StratiumNode StartNode { init; get; }
 
     public bool IsFinished = false;
 
@@ -15,13 +16,13 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
     /// Queue which holds all processed messages ready to be executed at a specific tick.
     /// Structure is (message, executionTick) where executionTick is the tick at which the message is to be executed
     /// </summary>
-    private readonly PriorityQueue<AlphaNodeMessage, long> _messageQueue = new();
+    private readonly PriorityQueue<StratiumNodeMessage, long> _messageQueue = new();
 
     /// <summary>
     /// Queue which holds all messages currently being "processed". A processed message should be added to the queue
     /// if the sender is not inhibited in the meantime.
     /// </summary>
-    private readonly PriorityQueue<AlphaProcessingMessage, long> _processingQueue = new();
+    private readonly PriorityQueue<StratiumProcessingMessage, long> _processingQueue = new();
 
     public void Update(long currentTick)
     {
@@ -56,22 +57,22 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
     /// Executes the message and queues successive messages as a result of the message
     /// </summary>
     /// <param name="nodeMessage">Message to execute</param>
-    private void ExecuteNodeMessage(AlphaNodeMessage nodeMessage)
+    private void ExecuteNodeMessage(StratiumNodeMessage nodeMessage)
     {
         var receiver = nodeMessage.Receiver;
         var currentTick = nodeMessage.ReceiveAt;
 
-        IEnumerable<AlphaProcessingMessage> newMessages = nodeMessage.Type switch
+        IEnumerable<StratiumProcessingMessage> newMessages = nodeMessage.Type switch
         {
-            AlphaNodeMessage.MessageType.Excitatory => receiver.Excite(currentTick),
-            AlphaNodeMessage.MessageType.Inhibitory => receiver.Inhibit(currentTick),
+            StratiumNodeMessage.MessageType.Excitatory => receiver.Excite(currentTick),
+            StratiumNodeMessage.MessageType.Inhibitory => receiver.Inhibit(currentTick),
             _ => throw new ArgumentOutOfRangeException(),
         };
 
         QueueMessages(newMessages!);
     }
 
-    public void QueueMessages(IEnumerable<AlphaProcessingMessage> messages)
+    public void QueueMessages(IEnumerable<StratiumProcessingMessage> messages)
     {
         foreach (var message in messages)
         {
@@ -79,7 +80,7 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
         }
     }
 
-    public void QueueMessage(AlphaProcessingMessage message)
+    public void QueueMessage(StratiumProcessingMessage message)
     {
         _processingQueue.Enqueue(message, message.ReceiveAt);
     }
@@ -87,13 +88,13 @@ public class AlphaAlgorithmMessageEngine : IUpdatable
     public void BeginNewWave(long currentTick, long atTick)
     {
         QueueMessage(
-            new AlphaProcessingMessage()
+            new StratiumProcessingMessage()
             {
                 SentAt = currentTick,
                 ReceiveAt = atTick,
-                SendMessage = new AlphaNodeMessage()
+                SendMessage = new StratiumNodeMessage()
                 {
-                    Type = AlphaNodeMessage.MessageType.Excitatory,
+                    Type = StratiumNodeMessage.MessageType.Excitatory,
                     ReceiveAt = atTick,
                     SentAt = atTick,
                     Receiver = StartNode,

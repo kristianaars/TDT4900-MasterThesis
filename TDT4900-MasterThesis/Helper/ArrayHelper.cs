@@ -16,7 +16,10 @@ public class ArrayHelper
         }
     }
 
-    public static void FillArray(bool[] array, bool value)
+    /// <summary>
+    /// Fills the array with the given value.
+    /// </summary>
+    public static void FillArray<T>(T[] array, T value)
     {
         for (int i = 0; i < array.Length; i++)
         {

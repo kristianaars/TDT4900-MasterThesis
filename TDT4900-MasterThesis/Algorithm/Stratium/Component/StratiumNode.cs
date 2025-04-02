@@ -2,16 +2,15 @@ using AutoMapper;
 using TDT4900_MasterThesis.Algorithm.Component;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
-using TDT4900_MasterThesis.Model.Graph;
 using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
-namespace TDT4900_MasterThesis.Algorithm.Alpha.Component;
+namespace TDT4900_MasterThesis.Algorithm.Stratium.Component;
 
 [AutoMap(typeof(Node))]
-public class AlphaNode : AlgorithmNode, IEventProducer
+public class StratiumNode : AlgorithmNode, IEventProducer
 {
-    public List<AlphaNode> Neighbours { get; set; } = new();
-    public List<AlphaNode> AllNodes { get; set; } = new();
+    public List<StratiumNode> Neighbours { get; set; } = new();
+    public List<StratiumNode> AllNodes { get; set; } = new();
 
     /// <summary>
     /// Tau is the processing time, e.g. how long a message takes to process before sending it to the next node.
@@ -99,7 +98,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// </summary>
     /// <param name="currentTick"></param>
     /// <returns></returns>
-    public AlphaProcessingMessage[] Excite(long currentTick)
+    public StratiumProcessingMessage[] Excite(long currentTick)
     {
         switch (State)
         {
@@ -112,7 +111,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
 
                 return NeighbourExcitatoryMessageBurst(currentTick)
                     // Add an inhibitory message burst if the node is tagged
-                    .Concat(IsTagged ? GlobalInhibitoryMessageBurst(currentTick) : [])
+                    .Concat(IsTagged ? NeighbourInhibitoryMessageBurst(currentTick) : [])
                     .ToArray();
             case NodeState.Refractory:
                 return NoAction();
@@ -137,7 +136,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// <param name="currentTick"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public AlphaProcessingMessage[] Inhibit(long currentTick)
+    public StratiumProcessingMessage[] Inhibit(long currentTick)
     {
         if (IsTagged)
             return NoAction();
@@ -184,7 +183,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// Generates exitatory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    private IEnumerable<AlphaProcessingMessage> NeighbourExcitatoryMessageBurst(long currentTick)
+    private IEnumerable<StratiumProcessingMessage> NeighbourExcitatoryMessageBurst(long currentTick)
     {
         var processingTime = Tau;
         var executionTime = DeltaExcitatory;
@@ -192,13 +191,13 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         var processAt = currentTick + processingTime;
         var executeAt = processAt + executionTime;
 
-        return Neighbours.Select(n => new AlphaProcessingMessage()
+        return Neighbours.Select(n => new StratiumProcessingMessage()
         {
             ReceiveAt = processAt,
             SentAt = currentTick,
-            SendMessage = new AlphaNodeMessage
+            SendMessage = new StratiumNodeMessage
             {
-                Type = AlphaNodeMessage.MessageType.Excitatory,
+                Type = StratiumNodeMessage.MessageType.Excitatory,
                 Sender = this,
                 Receiver = n,
                 SentAt = processAt,
@@ -211,7 +210,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    public IEnumerable<AlphaProcessingMessage> GlobalInhibitoryMessageBurst(long currentTick)
+    public IEnumerable<StratiumProcessingMessage> GlobalInhibitoryMessageBurst(long currentTick)
     {
         var processingTime = Tau;
         var executionTime = DeltaInhibitory;
@@ -219,13 +218,13 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         var processAt = currentTick + processingTime;
         var executeAt = processAt + executionTime;
 
-        return AllNodes.Select(n => new AlphaProcessingMessage()
+        return AllNodes.Select(n => new StratiumProcessingMessage()
         {
             ReceiveAt = processAt,
             SentAt = currentTick,
-            SendMessage = new AlphaNodeMessage
+            SendMessage = new StratiumNodeMessage
             {
-                Type = AlphaNodeMessage.MessageType.Inhibitory,
+                Type = StratiumNodeMessage.MessageType.Inhibitory,
                 Sender = this,
                 Receiver = n,
                 SentAt = processAt,
@@ -238,17 +237,26 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    private IEnumerable<AlphaNodeMessage> NeighbourInhibitoryMessageBurst(long currentTick)
+    private IEnumerable<StratiumProcessingMessage> NeighbourInhibitoryMessageBurst(long currentTick)
     {
-        var sendAt = currentTick + Tau;
+        var processingTime = Tau;
+        var executionTime = DeltaInhibitory;
 
-        return Neighbours.Select(n => new AlphaNodeMessage()
+        var processAt = currentTick + processingTime;
+        var executeAt = processAt + executionTime;
+
+        return Neighbours.Select(n => new StratiumProcessingMessage()
         {
-            Type = AlphaNodeMessage.MessageType.Inhibitory,
-            Sender = this,
-            Receiver = n,
-            SentAt = sendAt,
-            ReceiveAt = sendAt + DeltaInhibitory,
+            ReceiveAt = processAt,
+            SentAt = currentTick,
+            SendMessage = new StratiumNodeMessage
+            {
+                Type = StratiumNodeMessage.MessageType.Inhibitory,
+                Sender = this,
+                Receiver = n,
+                SentAt = processAt,
+                ReceiveAt = executeAt,
+            },
         });
     }
 
@@ -256,7 +264,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     /// Return empty message array, to be used when no action is needed
     /// </summary>
     /// <returns></returns>
-    private AlphaProcessingMessage[] NoAction() => [];
+    private StratiumProcessingMessage[] NoAction() => [];
 
     /// <summary>
     /// Disinhibit a inhibitied node. Function will be ignored if node is not inhibited.
@@ -270,7 +278,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         }
     }
 
-    protected bool Equals(AlphaNode other)
+    protected bool Equals(StratiumNode other)
     {
         return NodeId == other.NodeId;
     }
@@ -283,7 +291,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
             return true;
         if (obj.GetType() != GetType())
             return false;
-        return Equals((AlphaNode)obj);
+        return Equals((StratiumNode)obj);
     }
 
     public override int GetHashCode()

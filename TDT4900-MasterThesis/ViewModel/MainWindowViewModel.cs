@@ -1,18 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TDT4900_MasterThesis.Algorithm;
-using TDT4900_MasterThesis.Engine;
-using TDT4900_MasterThesis.Factory;
+using TDT4900_MasterThesis.Factory.GraphFactory;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Service;
 using TDT4900_MasterThesis.ViewModel.Component;
+using TDT4900_MasterThesis.ViewModel.Configuration;
+using AlphaAlgorithmConfigurationViewModel = TDT4900_MasterThesis.ViewModel.Configuration.AlphaAlgorithmConfigurationViewModel;
 
 namespace TDT4900_MasterThesis.ViewModel;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private NodeEngine _nodeEngine;
-
     private SequencePlotViewModel _sequencePlotViewModel;
     private GraphPlotViewModel _graphPlotViewModel;
     private SimulationService _simulationService;
@@ -22,7 +21,13 @@ public partial class MainWindowViewModel : ObservableObject
     private AlphaAlgorithmConfigurationViewModel _alphaAlgorithmConfigurationViewModel;
 
     [ObservableProperty]
-    private NeighbourGraphConfigurationViewModel _neighbourGraphConfigurationViewModel;
+    private StratiumAlgorithmConfigurationViewModel _stratiumAlgorithmConfigurationViewModel;
+
+    [ObservableProperty]
+    private RadiusNeighbourGraphConfigurationViewModel _radiusNeighbourGraphConfigurationViewModel;
+
+    [ObservableProperty]
+    private SquareGridHierarchicalGraphConfigurationViewModel _squareGridHierarchicalConfigurationViewModel;
 
     private AppSettings _appSettings;
 
@@ -52,22 +57,25 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(
         AppSettings appSettings,
-        NodeEngine nodeEngine,
         SimulationBatchService simulationBatchService,
         SequencePlotViewModel sequencePlotViewModel,
         GraphPlotViewModel graphPlotViewModel,
         SimulationService simulationService,
         AlphaAlgorithmConfigurationViewModel alphaAlgorithmConfigurationViewModel,
-        NeighbourGraphConfigurationViewModel neighbourGraphConfigurationViewModel
+        StratiumAlgorithmConfigurationViewModel stratiumAlgorithmConfigurationViewModel,
+        RadiusNeighbourGraphConfigurationViewModel radiusNeighbourGraphConfigurationViewModel,
+        SquareGridHierarchicalGraphConfigurationViewModel squareGridHierarchicalConfigurationViewModel
     )
     {
         _appSettings = appSettings;
-        _nodeEngine = nodeEngine;
         _graphPlotViewModel = graphPlotViewModel;
         _sequencePlotViewModel = sequencePlotViewModel;
         _simulationService = simulationService;
         _alphaAlgorithmConfigurationViewModel = alphaAlgorithmConfigurationViewModel;
-        _neighbourGraphConfigurationViewModel = neighbourGraphConfigurationViewModel;
+        _stratiumAlgorithmConfigurationViewModel = stratiumAlgorithmConfigurationViewModel;
+        _radiusNeighbourGraphConfigurationViewModel = radiusNeighbourGraphConfigurationViewModel;
+        _squareGridHierarchicalConfigurationViewModel =
+            squareGridHierarchicalConfigurationViewModel;
         _simulationBatchService = simulationBatchService;
 
         _targetTps = _appSettings.Simulation.TargetTps;
@@ -95,16 +103,8 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void ShowExampleGraph()
     {
-        var graph = new GraphFactory().CreateGraph(
-            new NeighboringGraphSpec()
-            {
-                NodeCount = NeighbourGraphConfigurationViewModel.NodeCount,
-                Distance = NeighbourGraphConfigurationViewModel.Distance,
-                Radius = NeighbourGraphConfigurationViewModel.Radius,
-                Noise = NeighbourGraphConfigurationViewModel.Noise,
-            }
-        );
-        _graphPlotViewModel.InitializeGraph(graph);
+        var graph = new GraphFactory().CreateGraph(BuildGraphSpec());
+        _graphPlotViewModel.Graph = graph;
     }
 
     [RelayCommand]
@@ -119,13 +119,7 @@ public partial class MainWindowViewModel : ObservableObject
         await _simulationBatchService.RunSimulationBatchAsync(
             SimulationBatchSize,
             PersistSimulationBatch,
-            new NeighboringGraphSpec()
-            {
-                NodeCount = NeighbourGraphConfigurationViewModel.NodeCount,
-                Distance = NeighbourGraphConfigurationViewModel.Distance,
-                Radius = NeighbourGraphConfigurationViewModel.Radius,
-                Noise = NeighbourGraphConfigurationViewModel.Noise,
-            },
+            BuildGraphSpec(),
             BuildAlgorithmSpec(),
             cancellationToken
         );
@@ -135,14 +129,43 @@ public partial class MainWindowViewModel : ObservableObject
         {
             AlgorithmType.Alpha => new AlphaAlgorithmSpec()
             {
-                AlgorithmType = AlgorithmType.Alpha,
                 DeltaTExcitatory = AlphaAlgorithmConfigurationViewModel.DeltaExcitatory,
                 DeltaTInhibitory = AlphaAlgorithmConfigurationViewModel.DeltaInhibitory,
                 RefractoryPeriod = AlphaAlgorithmConfigurationViewModel.RefractoryPeriod,
                 TauPlus = AlphaAlgorithmConfigurationViewModel.TauPlus,
                 TauZero = AlphaAlgorithmConfigurationViewModel.TauZero,
             },
+            AlgorithmType.Stratium => new StratiumAlgorithmSpec()
+            {
+                DeltaTExcitatory = StratiumAlgorithmConfigurationViewModel.DeltaExcitatory,
+                DeltaTInhibitory = StratiumAlgorithmConfigurationViewModel.DeltaInhibitory,
+                RefractoryPeriod = StratiumAlgorithmConfigurationViewModel.RefractoryPeriod,
+                TauPlus = StratiumAlgorithmConfigurationViewModel.TauPlus,
+                TauZero = StratiumAlgorithmConfigurationViewModel.TauZero,
+            },
             _ => new AlgorithmSpec() { AlgorithmType = SelectedAlgorithmOption.Value },
+        };
+
+    private GraphSpec BuildGraphSpec() =>
+        SelectedGraphOption.Value switch
+        {
+            GraphType.RadiusNeighbourhood => new RadiusNeighboringGraphSpec()
+            {
+                NodeCount = RadiusNeighbourGraphConfigurationViewModel.NodeCount,
+                Distance = RadiusNeighbourGraphConfigurationViewModel.Distance,
+                Radius = RadiusNeighbourGraphConfigurationViewModel.Radius,
+                Noise = RadiusNeighbourGraphConfigurationViewModel.Noise,
+            },
+            GraphType.SquareGridHierarchical => new SquareGridHierarchicalGraphSpec()
+            {
+                NodeCount = SquareGridHierarchicalConfigurationViewModel.NodeCount,
+                BaseGridSize = SquareGridHierarchicalConfigurationViewModel.BaseGridSize,
+                Distance = SquareGridHierarchicalConfigurationViewModel.Distance,
+                HierarchicalLevels =
+                    SquareGridHierarchicalConfigurationViewModel.HierarchicalLevels,
+                Noise = SquareGridHierarchicalConfigurationViewModel.Noise,
+            },
+            _ => throw new ArgumentException("Unknown graph type"),
         };
 
     [RelayCommand]

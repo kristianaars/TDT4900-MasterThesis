@@ -2,6 +2,7 @@
     x:Class="TDT4900_MasterThesis.View.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:configurationControl="clr-namespace:TDT4900_MasterThesis.View.ConfigurationControl"
     xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -247,7 +248,11 @@
                         SelectedItem="{Binding SelectedAlgorithmOption}" />
 
                     <Grid IsVisible="{Binding SelectedAlgorithmOption, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Alpha}">
-                        <view:AlphaAlgorithmConfigurationControl DataContext="{Binding AlphaAlgorithmConfigurationViewModel}" />
+                        <configurationControl:AlphaAlgorithmConfigurationControl DataContext="{Binding AlphaAlgorithmConfigurationViewModel}" />
+                    </Grid>
+
+                    <Grid IsVisible="{Binding SelectedAlgorithmOption, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Stratium}">
+                        <configurationControl:StratiumAlgorithmConfigurationControl DataContext="{Binding StratiumAlgorithmConfigurationViewModel}" />
                     </Grid>
                 </StackPanel>
 
@@ -270,8 +275,12 @@
                         Label="Graph Generator"
                         SelectedItem="{Binding SelectedGraphOption}" />
 
-                    <Grid IsVisible="{Binding SelectedGraphOption, ConverterParameter=Neighbourhood, Converter={StaticResource EnumToVisibilityConverter}}">
-                        <view:NeighbourGraphConfigurationControl DataContext="{Binding NeighbourGraphConfigurationViewModel}" />
+                    <Grid IsVisible="{Binding SelectedGraphOption, ConverterParameter=RadiusNeighbourhood, Converter={StaticResource EnumToVisibilityConverter}}">
+                        <configurationControl:RadiusNeighbourGraphConfigurationControl DataContext="{Binding RadiusNeighbourGraphConfigurationViewModel}" />
+                    </Grid>
+
+                    <Grid IsVisible="{Binding SelectedGraphOption, ConverterParameter=SquareGridHierarchical, Converter={StaticResource EnumToVisibilityConverter}}">
+                        <configurationControl:SquareGridHierarchicalGraphConfigurationControl DataContext="{Binding SquareGridHierarchicalConfigurationViewModel}" />
                     </Grid>
 
                     <Button Command="{Binding ShowExampleGraphCommand}">Show Example Graph</Button>

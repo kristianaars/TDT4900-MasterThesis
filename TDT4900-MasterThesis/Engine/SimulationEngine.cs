@@ -54,7 +54,12 @@ public class SimulationEngine(
         };
         algorithm.Initialize();
 
-        graphPlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
+        if (graphPlotViewModel != null)
+        {
+            graphPlotViewModel.Graph = simulationJob.Simulation.Graph!;
+            graphPlotViewModel.StartNode = simulationJob.Simulation.StartNode!;
+            graphPlotViewModel.TargetNode = simulationJob.Simulation.TargetNode!;
+        }
         sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
 
         _stopwatch.Start();
@@ -86,7 +91,7 @@ public class SimulationEngine(
 
             if (currentTime >= _nextRender)
             {
-                Render();
+                Render(force: true);
                 _nextRender += renderInterval;
             }
 
@@ -120,6 +125,8 @@ public class SimulationEngine(
             await Task.Yield();
         }
 
+        Render(force: true);
+
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
     }
 
@@ -132,16 +139,17 @@ public class SimulationEngine(
         _tickCounter++;
     }
 
-    private void Render()
+    private void Render(bool force = false)
     {
         var readyToRender = _drawableComponents.All(c => c.IsReadyToDraw);
 
-        if (!readyToRender)
+        // Not ready to render yet? Skip this frame
+        if (!readyToRender && !force)
             return;
 
         _drawableComponents.ForEach(c =>
         {
-            Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Background);
+            Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Render);
         });
         _frameCounter++;
     }

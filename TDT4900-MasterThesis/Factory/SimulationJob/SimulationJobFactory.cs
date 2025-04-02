@@ -4,6 +4,8 @@ using TDT4900_MasterThesis.Algorithm.Alpha;
 using TDT4900_MasterThesis.Algorithm.Alpha.Component;
 using TDT4900_MasterThesis.Algorithm.Dijkstras;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
+using TDT4900_MasterThesis.Algorithm.Stratium;
+using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 
@@ -52,6 +54,27 @@ public class SimulationJobFactory(IMapper mapper)
                     Graph = dijkstraGraph,
                     StartNode = dijkstraStartNode,
                     TargetNode = dijkstraTargetNode,
+                };
+                break;
+            case AlgorithmType.Stratium:
+                var striatumGraph = mapper.Map<StratiumGraph>(simulation.Graph!);
+                var striatumStartNode = striatumGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.StartNode!.NodeId
+                )!;
+                var striatumTargetNode = striatumGraph.Nodes.Find(n =>
+                    n.NodeId == simulation.TargetNode!.NodeId
+                )!;
+
+                algorithm = new StratiumAlgorithm()
+                {
+                    Graph = striatumGraph,
+                    StartNode = striatumStartNode,
+                    TargetNode = striatumTargetNode,
+                    AlgorithmSpec =
+                        algorithmSpec as StratiumAlgorithmSpec
+                        ?? throw new InvalidOperationException(
+                            $"AlgorithmSpec with type {typeof(AlgorithmSpec)} is not of type StratiumAlgorithmSpec."
+                        ),
                 };
                 break;
             default:

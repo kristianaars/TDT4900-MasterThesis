@@ -1,4 +1,3 @@
-using NetTopologySuite.Index.Quadtree;
 using Serilog;
 using TDT4900_MasterThesis.Algorithm.Component;
 

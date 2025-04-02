@@ -1,11 +1,9 @@
-using System.ComponentModel;
 using Avalonia;
-using Avalonia.Media;
 using ScottPlot;
 using ScottPlot.Avalonia;
-using ScottPlot.Hatches;
 using ScottPlot.Plottables;
 using TDT4900_MasterThesis.Constants;
+using TDT4900_MasterThesis.Helper;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
 using Color = ScottPlot.Color;
@@ -14,19 +12,14 @@ namespace TDT4900_MasterThesis.View.Plot;
 
 public class GraphPlotView : AvaPlot, IDrawable
 {
-    private List<LinePlot> _edges = new();
-    private List<Ellipse> _nodes = new();
+    private Graph _graph;
+    private NodeState[] _nodeStates;
+    private bool[] _nodeTags;
 
-    private readonly Lock _nodeEventsLock = new();
-    private readonly Queue<NodeEvent> _unprocessedNodeEventsQueue = new();
-    private Queue<NodeEvent> _drawBuffer = new();
+    private Node? _startNode;
+    private Node? _targetNode;
 
-    public bool IsReadyToDraw
-    {
-        get => _drawBuffer.Count == 0;
-    }
-
-    public bool EnableDataUpdate { get; set; }
+    public bool IsReadyToDraw { get; set; } = true;
 
     public GraphPlotView()
     {
@@ -34,39 +27,76 @@ public class GraphPlotView : AvaPlot, IDrawable
         Plot.Axes.Left.TickLabelStyle.IsVisible = false;
         Margin = new Thickness(0);
 
-        SizeChanged += (sender, args) => MaintainAspectRatio();
+        /*SizeChanged += (sender, args) => MaintainAspectRatio();
         Loaded += (sender, args) => MaintainAspectRatio();
-        MaintainAspectRatio();
-    }
-
-    public void AppendNodeEvent(NodeEvent nodeEvent)
-    {
-        if (!EnableDataUpdate)
-            return;
-
-        lock (_nodeEventsLock)
-        {
-            _unprocessedNodeEventsQueue.Enqueue(nodeEvent);
-        }
+        MaintainAspectRatio();*/
     }
 
     public void InitializeGraph(Graph graph)
     {
+        _graph = graph;
+
+        _nodeStates = new NodeState[graph.Nodes.Count];
+        ArrayHelper.FillArray(_nodeStates, NodeState.Neutral);
+
+        _nodeTags = new bool[graph.Nodes.Count];
+        ArrayHelper.FillArray(_nodeTags, false);
+
+        Plot.Axes.AutoScale();
+        MaintainAspectRatio();
+
+        _startNode = null;
+        _targetNode = null;
+
+        Draw();
+
+        Plot.Axes.AutoScale();
+    }
+
+    public void SetStartNode(Node? startNode)
+    {
+        _startNode = startNode;
+        Draw();
+    }
+
+    public void SetTargetNode(Node? endNode)
+    {
+        _targetNode = endNode;
+        Draw();
+    }
+
+    public void AppendNodeEvent(NodeEvent nodeEvent)
+    {
+        switch (nodeEvent.EventType)
+        {
+            case EventType.Tagged:
+                _nodeTags[nodeEvent.NodeId] = true;
+                break;
+            case EventType.Neutral:
+                _nodeStates[nodeEvent.NodeId] = NodeState.Neutral;
+                break;
+            case EventType.Refractory:
+                _nodeStates[nodeEvent.NodeId] = NodeState.Refractory;
+                break;
+            case EventType.Processing:
+                _nodeStates[nodeEvent.NodeId] = NodeState.Processing;
+                break;
+            case EventType.Inhibited:
+                _nodeStates[nodeEvent.NodeId] = NodeState.Inhibited;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    public void Draw()
+    {
         lock (Plot.Sync)
         {
-            lock (_unprocessedNodeEventsQueue)
-            {
-                _unprocessedNodeEventsQueue.Clear();
-                _drawBuffer.Clear();
-            }
-
             Plot.Clear();
 
-            var edges = graph.Edges;
-            var nodes = graph.Nodes;
-
-            _edges.Clear();
-            _nodes.Clear();
+            var edges = _graph.Edges;
+            var nodes = _graph.Nodes;
 
             // Draw edges
             foreach (var e in edges)
@@ -79,103 +109,94 @@ public class GraphPlotView : AvaPlot, IDrawable
                 double x2 = nodes[end].X,
                     y2 = nodes[end].Y;
 
-                var line = Plot.Add.Line(x1, y1, x2, y2);
-                line.LineWidth = 2;
-                line.LineColor = PlotColors.DarkGray;
-                _edges.Add(line);
+                var line = AddBezier(
+                    (x1, y1),
+                    (x2, y2),
+                    (e.Level == 0 ? 0 : Math.Pow(-1, e.Level)) * 1
+                );
+
+                line.LineColor = PlotColors.Blue.WithAlpha(e.Level == 0 ? 0.8f : 0.5f / e.Level);
+                line.LineWidth = 1;
+            }
+
+            // Draw start node and target-node
+            if (_startNode != null)
+            {
+                Plot.Add.Marker(
+                    _startNode.X,
+                    _startNode.Y,
+                    shape: MarkerShape.FilledCircle,
+                    color: PlotColors.Green,
+                    size: 15f
+                );
+            }
+
+            if (_targetNode != null)
+            {
+                Plot.Add.Marker(
+                    _targetNode.X,
+                    _targetNode.Y,
+                    shape: MarkerShape.FilledCircle,
+                    color: PlotColors.Pink,
+                    size: 15f
+                );
             }
 
             // Draw nodes
-            foreach (var n in nodes)
-            {
-                var node = Plot.Add.Circle(new Coordinates(n.X, n.Y), 16);
+            nodes.ForEach(n =>
+                Plot.Add.Marker(
+                    n.X,
+                    n.Y,
+                    shape: _nodeTags[n.NodeId]
+                        ? MarkerShape.FilledDiamond
+                        : MarkerShape.FilledCircle,
+                    color: GetStateFillColor(_nodeStates[n.NodeId], _nodeTags[n.NodeId]),
+                    size: 10f
+                )
+            );
 
-                node.FillColor = GetStateFillColor(EventType.Neutral);
-                node.LineColor = GetStateBorderColor(EventType.Neutral);
-                node.LineWidth = 4;
+            /*var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
+            text.LabelFontSize = 8;
+            text.OffsetY = 2;
+            text.LabelFontColor = PlotColors.DarkGray;
+            text.Alignment = Alignment.MiddleCenter;*/
 
-                var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
-                text.LabelFontSize = 12;
-                text.OffsetY = 2;
-                text.LabelFontColor = PlotColors.Black;
-                text.Alignment = Alignment.MiddleCenter;
-
-                _nodes!.Add(node);
-            }
-
-            Plot.Axes.AutoScale();
-            MaintainAspectRatio();
-
-            if (IsReadyToDraw)
-                Refresh();
+            Refresh();
         }
     }
 
-    /// <summary>
-    /// Draw fills the draw buffer with the unprocessed node events and invalidates the visual to trigger <see cref="Render"/>
-    /// </summary>
-    public void Draw()
+    private Scatter AddBezier((double x, double y) start, (double x, double y) end, double height)
     {
-        if (!IsReadyToDraw)
-            return;
+        (double x, double y) control = ((start.x + end.x) / 2, start.y + height);
 
-        lock (_nodeEventsLock)
+        List<double> xs = new();
+        List<double> ys = new();
+
+        for (double t = 0; t <= 1; t += 0.05)
         {
-            _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEventsQueue!);
-            _unprocessedNodeEventsQueue.Clear();
+            double x = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * control.x + t * t * end.x;
+            double y = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * control.y + t * t * end.y;
+            xs.Add(x);
+            ys.Add(y);
         }
 
-        InvalidateVisual();
+        xs.Add(end.x);
+        ys.Add(end.y);
+
+        var scatter = Plot.Add.Scatter(xs.ToArray(), ys.ToArray(), PlotColors.Blue);
+        scatter.MarkerShape = MarkerShape.None;
+
+        return scatter;
     }
 
-    public override void Render(DrawingContext context)
-    {
-        while (_drawBuffer.Count != 0)
+    private Color GetStateFillColor(NodeState state, bool tagged) =>
+        state switch
         {
-            var update = _drawBuffer.Dequeue();
-            var nodeComp = _nodes[update.NodeId];
-            var eventType = update.EventType!;
-
-            if (eventType == EventType.Tagged)
-            {
-                nodeComp.FillHatch = new Striped();
-                nodeComp.FillHatchColor = PlotColors.LightBlue.Darken(0.2);
-                nodeComp.LineWidth = 4;
-            }
-            else
-            {
-                nodeComp.FillColor = GetStateFillColor(eventType);
-                nodeComp.LineColor = GetStateBorderColor(eventType);
-            }
-        }
-
-        base.Render(context);
-    }
-
-    private Color GetStateFillColor(EventType eventType) =>
-        eventType switch
-        {
-            EventType.Neutral => PlotColors.White,
-            EventType.Refractory => PlotColors.LightGray,
-            EventType.Processing => PlotColors.Green,
-            EventType.Inhibited => PlotColors.DarkRed,
-            EventType.Tagged => throw new InvalidEnumArgumentException(
-                "Tagged does not contain a fill color"
-            ),
-            _ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null),
-        };
-
-    private Color GetStateBorderColor(EventType eventType) =>
-        eventType switch
-        {
-            EventType.Neutral => PlotColors.DarkGray,
-            EventType.Refractory => PlotColors.DarkGray,
-            EventType.Processing => PlotColors.GreenBorder,
-            EventType.Inhibited => PlotColors.DarkRedBorder,
-            EventType.Tagged => throw new InvalidEnumArgumentException(
-                "Tagged does not contain a border color"
-            ),
-            _ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null),
+            NodeState.Neutral => tagged ? PlotColors.Blue : PlotColors.Black,
+            NodeState.Refractory => PlotColors.DarkGray,
+            NodeState.Processing => PlotColors.GreenBorder,
+            NodeState.Inhibited => PlotColors.DarkRed,
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
         };
 
     private void MaintainAspectRatio()

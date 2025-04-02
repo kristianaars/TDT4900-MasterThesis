@@ -1,5 +1,6 @@
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
+using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras;
 

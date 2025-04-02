@@ -1,4 +1,3 @@
-using System.Collections;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -8,28 +7,28 @@ namespace TDT4900_MasterThesis.View.Controls;
 public partial class LabeledComboBox : UserControl
 {
     public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<
-        View.AlphaAlgorithmConfigurationControl,
+        ConfigurationControl.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Label));
 
     public static readonly StyledProperty<string> DescriptionProperty = AvaloniaProperty.Register<
-        View.AlphaAlgorithmConfigurationControl,
+        ConfigurationControl.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Description));
 
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<
-        View.AlphaAlgorithmConfigurationControl,
+        ConfigurationControl.AlphaAlgorithmConfigurationControl,
         string
     >(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<IEnumerable<object>?> ItemsSourceProperty =
-        AvaloniaProperty.Register<View.AlphaAlgorithmConfigurationControl, IEnumerable<object>?>(
-            nameof(ItemsSource),
-            defaultBindingMode: Avalonia.Data.BindingMode.OneWay
-        );
+        AvaloniaProperty.Register<
+            ConfigurationControl.AlphaAlgorithmConfigurationControl,
+            IEnumerable<object>?
+        >(nameof(ItemsSource), defaultBindingMode: Avalonia.Data.BindingMode.OneWay);
 
     public static readonly StyledProperty<object> SelectedItemProperty = AvaloniaProperty.Register<
-        View.AlphaAlgorithmConfigurationControl,
+        ConfigurationControl.AlphaAlgorithmConfigurationControl,
         object
     >(nameof(ItemsSource), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 

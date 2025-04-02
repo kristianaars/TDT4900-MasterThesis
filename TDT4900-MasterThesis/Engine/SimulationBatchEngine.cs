@@ -1,6 +1,5 @@
 using Serilog;
-using TDT4900_MasterThesis.Algorithm;
-using TDT4900_MasterThesis.Factory;
+using TDT4900_MasterThesis.Factory.GraphFactory;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Service;
 using TDT4900_MasterThesis.ViewModel;
@@ -91,6 +90,7 @@ public class SimulationBatchEngine(
 
             // Generate the graph and set random source and target node
             simulation.Graph = graphFactory.CreateGraph(graphGenerationSpec);
+
             simulation.StartNode = simulation.TargetNode = simulation.Graph.Nodes[
                 new Random().Next(simulation.Graph.Nodes.Count)
             ];

@@ -1,7 +1,6 @@
 using TDT4900_MasterThesis.Algorithm;
 using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
-using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Service;
