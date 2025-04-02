@@ -1,10 +1,12 @@
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
+using TDT4900_MasterThesis.Handler;
+using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
 
 namespace TDT4900_MasterThesis.Algorithm.Stratium.Engine;
 
-public class StratiumAlgorithmMessageEngine : IUpdatable
+public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProducer
 {
     public required StratiumGraph Graph { init; get; }
     public required StratiumNode TargetNode { init; get; }
@@ -43,13 +45,37 @@ public class StratiumAlgorithmMessageEngine : IUpdatable
 
             _messageQueue.Enqueue(message, message.ReceiveAt);
 
+            if (sender != null)
+                PostEvent(
+                    new EdgeEvent
+                    {
+                        SourceId = sender.NodeId,
+                        TargetId = message.Receiver.NodeId,
+                        EventType = EdgeEventType.Active,
+                        Tick = message.SentAt,
+                        ReceiveAt = message.ReceiveAt,
+                    }
+                );
+
             // Begin refraction if sender exists (It does not exist if the message is a "start" message)
             sender?.BeginRefraction(currentTick);
         }
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)
         {
-            ExecuteNodeMessage(_messageQueue.Dequeue());
+            var message = _messageQueue.Dequeue();
+            if (message.Sender != null)
+                PostEvent(
+                    new EdgeEvent
+                    {
+                        SourceId = message.Sender.NodeId,
+                        TargetId = message.Receiver.NodeId,
+                        EventType = EdgeEventType.Inactive,
+                        Tick = message.ReceiveAt,
+                        ReceiveAt = message.ReceiveAt,
+                    }
+                );
+            ExecuteNodeMessage(message);
         }
     }
 
@@ -104,8 +130,10 @@ public class StratiumAlgorithmMessageEngine : IUpdatable
         );
     }
 
-    public void ResetComponent()
+    public AlgorithmEventHandler? EventHandler { get; set; }
+
+    public void PostEvent(AlgorithmEvent algEvent)
     {
-        throw new NotImplementedException();
+        EventHandler?.PostEvent(algEvent);
     }
 }

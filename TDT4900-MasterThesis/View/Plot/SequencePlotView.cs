@@ -21,16 +21,11 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     public bool EnableDataUpdate { get; set; } = false;
 
-    private readonly Queue<NodeEvent> _unprocessedNodeEvents;
-    private Queue<NodeEvent> _drawBuffer;
-
     private readonly Lock _nodeEventsLock = new();
 
     private readonly int _tickWindow = 80;
     private readonly float _tickOffsetRightRatio = 0.05f;
     private int TickOffsetRight => (int)(_tickWindow * _tickOffsetRightRatio);
-
-    public bool IsReadyToDraw => _drawBuffer.Count == 0;
 
     private BarPlot[] _bars;
     private bool[] _isNeutral;
@@ -59,19 +54,82 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
         _bars = [];
         _isNeutral = [];
-        _unprocessedNodeEvents = [];
-        _drawBuffer = [];
         _nodeTagged = [];
     }
 
-    public void AppendNodeEvent(NodeEvent nodeEvent)
+    public void Draw()
     {
         if (!EnableDataUpdate)
             return;
-        _unprocessedNodeEvents.Enqueue(nodeEvent);
+
+        lock (Plot.Sync)
+        {
+            Refresh();
+        }
     }
 
-    private void PlotNewBar(int nodeId, EventType eventType, long atTick, bool isTagged)
+    public bool IsReadyToDraw => true;
+
+    public void AppendAlgorithmEvent(AlgorithmEvent algEvent)
+    {
+        if (!EnableDataUpdate)
+            return;
+
+        lock (Plot.Sync)
+        {
+            switch (algEvent)
+            {
+                case EdgeEvent edgeEvent:
+                    ConsumeEdgeEvent(edgeEvent);
+                    break;
+                case NodeEvent nodeEvent:
+                    ConsumeNodeEvent(nodeEvent);
+                    break;
+            }
+        }
+    }
+
+    private void ConsumeEdgeEvent(EdgeEvent edgeEvent)
+    {
+        if (edgeEvent.EventType == EdgeEventType.Active)
+        {
+            PlotNodeMessage(
+                edgeEvent.SourceId,
+                edgeEvent.TargetId,
+                edgeEvent.Tick,
+                edgeEvent.ReceiveAt
+            );
+        }
+    }
+
+    private void ConsumeNodeEvent(NodeEvent nodeEvent)
+    {
+        var tick = (long)nodeEvent.Tick!;
+        var nodeId = nodeEvent.NodeId;
+        var eventType = nodeEvent.EventType;
+
+        // If there exists a bar for the node, update it up until the update tick
+        if (!_isNeutral[nodeId])
+        {
+            UpdateLastBarValue(nodeId, tick);
+        }
+
+        // Update neutral state for node
+        _isNeutral[nodeId] = eventType == NodeEventType.Neutral;
+
+        // If the node is not neutral anymore, initialize a new bar
+        if (!_isNeutral[nodeId] && eventType != NodeEventType.Tagged)
+            PlotNewBar(nodeId, eventType, tick, _nodeTagged[nodeId]);
+
+        // Visualize the moment a node is tagged
+        if (eventType == NodeEventType.Tagged && !_nodeTagged[nodeId])
+        {
+            MarkNodeAsTagged(tick, nodeId);
+            _nodeTagged[nodeId] = true;
+        }
+    }
+
+    private void PlotNewBar(int nodeId, NodeEventType eventType, long atTick, bool isTagged)
     {
         _bars[nodeId]
             .Bars.Add(
@@ -90,21 +148,15 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
             );
     }
 
-    /*
-    private void PlotNodeMessage(NodeMessage message)
+    private void PlotNodeMessage(int source, int target, long sentAt, long receiveAt)
     {
-        var source = message.Sender;
-        var target = message.Receiver;
-        var isExcitatory = message.Type == NodeMessage.MessageType.Excitatory;
+        var isExcitatory = true;
 
-        if (source == null)
-            return;
+        var y1 = _bars[source].Bars[^1].Rect.VerticalCenter;
+        var y2 = _bars[target].Bars[^1].Rect.VerticalCenter;
 
-        var y1 = _bars[source.Id].Bars[^1].Rect.VerticalCenter;
-        var y2 = _bars[target.Id].Bars[^1].Rect.VerticalCenter;
-
-        var x1 = message.SentAt;
-        var x2 = message.ReceiveAt;
+        var x1 = sentAt;
+        var x2 = receiveAt;
 
         var line = Plot.Add.Line(x1, y1, x2, y2);
         var lineColor = isExcitatory ? PlotColors.GreenBorder : PlotColors.DarkRedBorder;
@@ -113,18 +165,18 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
         line.LinePattern = isExcitatory ? LinePattern.Solid : LinePattern.Dashed;
 
-        line.LineWidth = 2;
-        line.LineColor = lineColor;
+        line.LineWidth = 1;
+        line.LineColor = lineColor.WithAlpha(0.5f);
 
         var verticalStartLine = Plot.Add.Line(x1, y1 - BarSize / 2.0f, x1, y1 + BarSize / 2.0f);
-        verticalStartLine.LineWidth = 2;
+        verticalStartLine.LineWidth = 1;
         verticalStartLine.LineColor = startLineColor;
 
         var verticaEndLine = Plot.Add.Line(x2, y2 - BarSize / 1.5f, x2, y2 + BarSize / 1.5f);
-        verticaEndLine.LineWidth = 2;
+        verticaEndLine.LineWidth = 1;
         verticaEndLine.LineColor = endLineColor;
     }
-*/
+
     private void MarkNodeAsTagged(long atTick, int nodeId)
     {
         var yCenter = _bars[nodeId].Bars[^1].Rect.VerticalCenter;
@@ -139,59 +191,17 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         verticalLine.LineColor = PlotColors.BlueLightBorder;
     }
 
-    public void Draw()
-    {
-        lock (_nodeEventsLock)
-        {
-            _drawBuffer = new Queue<NodeEvent>(_unprocessedNodeEvents);
-            _unprocessedNodeEvents.Clear();
-        }
-
-        InvalidateVisual();
-    }
-
     public override void Render(DrawingContext context)
     {
-        while (_drawBuffer.Count != 0)
+        lock (Plot.Sync)
         {
-            var update = _drawBuffer.Dequeue();
-            var nodeId = update.NodeId;
-            var eventType = update.EventType;
-            var updateTick = (long)update.Tick!;
-
-            // If there exists a bar for the node, update it up until the update tick
-            if (!_isNeutral[nodeId])
+            if (EnableAutoScroll)
             {
-                UpdateLastBarValue(nodeId, updateTick);
+                Plot.Axes.SetLimitsX(
+                    _latestTick - (_tickWindow - TickOffsetRight),
+                    _latestTick + TickOffsetRight
+                );
             }
-
-            // If the node is not neutral anymore, initialize a new bar
-            _isNeutral[nodeId] = eventType == EventType.Neutral;
-            if (!_isNeutral[nodeId] && eventType != EventType.Tagged)
-                PlotNewBar(nodeId, eventType, updateTick, _nodeTagged[nodeId]);
-
-            // Visualize the moment a node is tagged
-            if (eventType == EventType.Tagged && !_nodeTagged[nodeId])
-            {
-                MarkNodeAsTagged(updateTick, nodeId);
-                _nodeTagged[nodeId] = true;
-            }
-        }
-
-        // Update active bars to latest tick
-        for (var n = 0; n < _isNeutral.Length; n++)
-        {
-            if (_isNeutral[n])
-                continue;
-            UpdateLastBarValue(n, _latestTick);
-        }
-
-        if (EnableAutoScroll)
-        {
-            Plot.Axes.SetLimitsX(
-                _latestTick - (_tickWindow - TickOffsetRight),
-                _latestTick + TickOffsetRight
-            );
         }
 
         base.Render(context);
@@ -214,8 +224,6 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
     {
         lock (Plot.Sync)
         {
-            _unprocessedNodeEvents.Clear();
-            _drawBuffer.Clear();
             Plot.Clear();
 
             // Add bars to plot
@@ -242,14 +250,14 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         }
     }
 
-    private Color GetStateFillColor(EventType eventType) =>
+    private Color GetStateFillColor(NodeEventType eventType) =>
         eventType switch
         {
-            EventType.Neutral => Colors.Transparent,
-            EventType.Refractory => PlotColors.LightGray,
-            EventType.Processing => PlotColors.Green,
-            EventType.Inhibited => PlotColors.DarkRed,
-            EventType.Tagged => throw new InvalidEnumArgumentException(
+            NodeEventType.Neutral => Colors.Transparent,
+            NodeEventType.Refractory => PlotColors.LightGray,
+            NodeEventType.Processing => PlotColors.Green,
+            NodeEventType.Inhibited => PlotColors.DarkRed,
+            NodeEventType.Tagged => throw new InvalidEnumArgumentException(
                 "Tagged does not contain a fill color"
             ),
             _ => throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null),

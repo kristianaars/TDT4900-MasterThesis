@@ -1,23 +1,19 @@
-using TDT4900_MasterThesis.Algorithm.Stratium.Component;
-using TDT4900_MasterThesis.Algorithm.Stratium.Component;
-using TDT4900_MasterThesis.Algorithm.Stratium.Engine;
-using TDT4900_MasterThesis.Algorithm.Stratium.Engine;
+using TDT4900_MasterThesis.Algorithm.Alpha.Component;
+using TDT4900_MasterThesis.Algorithm.Alpha.Engine;
 using TDT4900_MasterThesis.Model.Db;
 
-namespace TDT4900_MasterThesis.Algorithm.Stratium;
+namespace TDT4900_MasterThesis.Algorithm.Alpha;
 
-/// <summary>
-/// TODO: Rename to Multistrata?
-/// </summary>
-public class StratiumAlgorithm : BaseAlgorithm<StratiumNode, StratiumEdge, StratiumGraph>
+public class AlphaAlgorithmAlgorithmAlgorithmAlgorithm
+    : BaseAlgorithmAlgorithmAlgorithmAlgorithm<AlphaNode, AlphaEdge, AlphaGraph>
 {
-    private StratiumAlgorithmMessageEngine? _messageEngine;
+    private AlphaAlgorithmMessageEngine? _messageEngine;
 
-    public required StratiumAlgorithmSpec AlgorithmSpec { init; get; }
+    public required AlphaAlgorithmSpec AlgorithmSpec { init; get; }
 
-    public override required StratiumGraph Graph { get; init; }
-    public override required StratiumNode StartNode { get; init; }
-    public override required StratiumNode TargetNode { get; init; }
+    public override required AlphaGraph Graph { get; init; }
+    public override required AlphaNode StartNode { get; init; }
+    public override required AlphaNode TargetNode { get; init; }
 
     public override void Initialize()
     {
@@ -26,7 +22,7 @@ public class StratiumAlgorithm : BaseAlgorithm<StratiumNode, StratiumEdge, Strat
         // Configure the Event Handler for all nodes in the graph
         Graph.Nodes.ForEach(n => n.EventHandler = EventHandler);
 
-        _messageEngine = new StratiumAlgorithmMessageEngine()
+        _messageEngine = new AlphaAlgorithmMessageEngine()
         {
             Graph = Graph,
             TargetNode = Graph.Nodes.Find(n => n.NodeId == TargetNode.NodeId)!,

@@ -46,6 +46,7 @@ public class RadiusNeighbouringGraphFactory
         var nodes = GraphFactoryHelper.ScatterNodes(_nodeCount, _nodeSpacing, _noise);
 
         // Connect nodes within a certain radius
+        var edgeCounter = 0;
         for (int i = 0; i < _nodeCount - 1; i++)
         {
             for (int j = i + 1; j < _nodeCount; j++)
@@ -56,6 +57,7 @@ public class RadiusNeighbouringGraphFactory
                     edges.Add(
                         new Edge()
                         {
+                            EdgeId = edgeCounter++,
                             SourceNodeId = nodes[i].NodeId,
                             TargetNodeId = nodes[j].NodeId,
                         }

@@ -5,7 +5,7 @@ using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis.ViewModel;
 
-public partial class GraphPlotViewModel : ObservableObject, IEventConsumer
+public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsumer
 {
     public GraphPlotView GraphPlotView;
 
@@ -32,9 +32,9 @@ public partial class GraphPlotViewModel : ObservableObject, IEventConsumer
         //GraphPlotView.EnableDataUpdate = value;
     }
 
-    public void ConsumeEvent(NodeEvent nodeEvent)
+    public void ConsumeEvent(AlgorithmEvent algorithmEvent)
     {
-        GraphPlotView.AppendNodeEvent(nodeEvent);
+        GraphPlotView.AppendAlgorithmEvent(algorithmEvent);
     }
 
     partial void OnGraphChanged(Graph? value)

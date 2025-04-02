@@ -28,7 +28,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new AlphaAlgorithm()
+                algorithm = new AlphaAlgorithmAlgorithmAlgorithmAlgorithm()
                 {
                     Graph = alphaGraph,
                     StartNode = alphaStartNode,
@@ -49,7 +49,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new DijkstrasAlgorithm()
+                algorithm = new DijkstrasAlgorithmAlgorithmAlgorithmAlgorithm()
                 {
                     Graph = dijkstraGraph,
                     StartNode = dijkstraStartNode,
@@ -65,7 +65,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new StratiumAlgorithm()
+                algorithm = new StratiumAlgorithmAlgorithmAlgorithmAlgorithm()
                 {
                     Graph = striatumGraph,
                     StartNode = striatumStartNode,

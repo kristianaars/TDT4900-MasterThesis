@@ -47,6 +47,7 @@ public class SquareGridHierarchicalGraphFactory
                 gridBlocks[x, y].Add(node);
             }
 
+            var edgeCounter = 0;
             // Connect nodes with nodes in neighbouring grid blocks (left, right, above, below)
             // In principle all direct neighbours are connected, but we only add right and bottom neighbours to avoid
             // duplicate edges. The final graph is undirected, and will solve this problem
@@ -70,6 +71,7 @@ public class SquareGridHierarchicalGraphFactory
                         currentBlock.SelectMany(n =>
                             neighbours.Select(m => new Edge
                             {
+                                EdgeId = edgeCounter++,
                                 SourceNodeId = n.NodeId,
                                 TargetNodeId = m.NodeId,
                                 Level = level,

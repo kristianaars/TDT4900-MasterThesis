@@ -6,7 +6,7 @@ using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis.ViewModel;
 
-public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
+public partial class SequencePlotViewModel : ObservableObject, IAlgorithmEventConsumer
 {
     public SequencePlotView SequencePlotView;
 
@@ -36,8 +36,8 @@ public partial class SequencePlotViewModel : ObservableObject, IEventConsumer
         SequencePlotView.InitializeGraph(graph);
     }
 
-    public void ConsumeEvent(NodeEvent nodeEvent)
+    public void ConsumeEvent(AlgorithmEvent algorithmEvent)
     {
-        SequencePlotView.AppendNodeEvent(nodeEvent);
+        SequencePlotView.AppendAlgorithmEvent(algorithmEvent);
     }
 }

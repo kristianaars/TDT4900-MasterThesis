@@ -5,7 +5,9 @@ using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Algorithm;
 
-public abstract class BaseAlgorithm<TNode, TEdge, TGraph> : BaseEventProducer, IAlgorithm
+public abstract class BaseAlgorithmAlgorithmAlgorithmAlgorithm<TNode, TEdge, TGraph>
+    : BaseAlgorithmAlgorithmEventProducer,
+        IAlgorithm
     where TNode : AlgorithmNode
     where TEdge : AlgorithmEdge
     where TGraph : AlgorithmGraph<TNode, TEdge>
@@ -44,7 +46,7 @@ public abstract class BaseAlgorithm<TNode, TEdge, TGraph> : BaseEventProducer, I
         return new AlgorithmResult() { GraphTagged = graphTagged, Distance = distance };
     }
 
-    public void ConsumeEvent(NodeEvent nodeEvent)
+    public void ConsumeEvent(AlgorithmEvent algorithmEvent)
     {
         //EventHistory.Add(nodeEvent);
     }

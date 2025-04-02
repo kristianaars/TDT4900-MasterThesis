@@ -5,7 +5,7 @@ using TDT4900_MasterThesis.Model.Graph;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
 
-public class DijkstrasForwardPassEngine : BaseEventProducer, IUpdatable
+public class DijkstrasForwardPassEngine : BaseAlgorithmAlgorithmEventProducer, IUpdatable
 {
     public bool IsFinished { get; set; }
 
@@ -45,7 +45,7 @@ public class DijkstrasForwardPassEngine : BaseEventProducer, IUpdatable
                 PostEvent(
                     new NodeEvent()
                     {
-                        EventType = EventType.Processing,
+                        EventType = NodeEventType.Processing,
                         NodeId = neighbor.NodeId,
                         Tick = currentTick,
                     }

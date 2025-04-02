@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 using Serilog;
+using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.ViewModel;
-using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Engine;
 
@@ -48,7 +48,7 @@ public class SimulationEngine(
     )
     {
         var algorithm = simulationJob.Algorithm;
-        algorithm.EventHandler = new EventHandler()
+        algorithm.EventHandler = new AlgorithmEventHandler()
         {
             Consumers = [graphPlotViewModel, sequencePlotViewModel, algorithm],
         };
@@ -115,7 +115,7 @@ public class SimulationEngine(
                 try
                 {
                     await Task.Delay(
-                        (int)(Math.Min(updateInterval, renderInterval) / 4.0),
+                        (int)(Math.Min(updateInterval, renderInterval) / 2.0),
                         stoppingToken
                     );
                 }
@@ -144,12 +144,12 @@ public class SimulationEngine(
         var readyToRender = _drawableComponents.All(c => c.IsReadyToDraw);
 
         // Not ready to render yet? Skip this frame
-        if (!readyToRender && !force)
+        if (!readyToRender)
             return;
 
         _drawableComponents.ForEach(c =>
         {
-            Dispatcher.UIThread.Invoke(c.Draw, DispatcherPriority.Render);
+            Dispatcher.UIThread.InvokeAsync(c.Draw, DispatcherPriority.MaxValue);
         });
         _frameCounter++;
     }

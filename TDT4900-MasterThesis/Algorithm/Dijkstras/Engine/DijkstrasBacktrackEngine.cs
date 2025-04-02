@@ -5,7 +5,7 @@ using TDT4900_MasterThesis.Model.Graph;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras.Engine;
 
-public class DijkstrasBacktrackEngine : BaseEventProducer, IUpdatable
+public class DijkstrasBacktrackEngine : BaseAlgorithmAlgorithmEventProducer, IUpdatable
 {
     public bool IsFinished { get; set; }
     public required DijkstraNode TargetNode { get; set; }
@@ -23,7 +23,7 @@ public class DijkstrasBacktrackEngine : BaseEventProducer, IUpdatable
         PostEvent(
             new NodeEvent()
             {
-                EventType = EventType.Tagged,
+                EventType = NodeEventType.Tagged,
                 NodeId = _toBeTagged!.NodeId,
                 Tick = currentTick,
             }

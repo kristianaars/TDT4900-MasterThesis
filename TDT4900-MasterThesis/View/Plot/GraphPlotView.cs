@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 using ScottPlot;
 using ScottPlot.Avalonia;
 using ScottPlot.Plottables;
@@ -14,6 +15,7 @@ public class GraphPlotView : AvaPlot, IDrawable
 {
     private Graph _graph;
     private NodeState[] _nodeStates;
+    private bool[,] _edgeStates;
     private bool[] _nodeTags;
 
     private Node? _startNode;
@@ -42,6 +44,9 @@ public class GraphPlotView : AvaPlot, IDrawable
         _nodeTags = new bool[graph.Nodes.Count];
         ArrayHelper.FillArray(_nodeTags, false);
 
+        _edgeStates = new bool[graph.Nodes.Count, graph.Nodes.Count];
+        ArrayHelper.FillArray(_edgeStates, false);
+
         Plot.Axes.AutoScale();
         MaintainAspectRatio();
 
@@ -65,34 +70,51 @@ public class GraphPlotView : AvaPlot, IDrawable
         Draw();
     }
 
-    public void AppendNodeEvent(NodeEvent nodeEvent)
+    public void AppendAlgorithmEvent(AlgorithmEvent algEvent)
     {
-        switch (nodeEvent.EventType)
+        switch (algEvent)
         {
-            case EventType.Tagged:
-                _nodeTags[nodeEvent.NodeId] = true;
+            case NodeEvent nodeEvent:
+                switch (nodeEvent.EventType)
+                {
+                    case NodeEventType.Tagged:
+                        _nodeTags[nodeEvent.NodeId] = true;
+                        break;
+                    case NodeEventType.Neutral:
+                        _nodeStates[nodeEvent.NodeId] = NodeState.Neutral;
+                        break;
+                    case NodeEventType.Refractory:
+                        _nodeStates[nodeEvent.NodeId] = NodeState.Refractory;
+                        break;
+                    case NodeEventType.Processing:
+                        _nodeStates[nodeEvent.NodeId] = NodeState.Processing;
+                        break;
+                    case NodeEventType.Inhibited:
+                        _nodeStates[nodeEvent.NodeId] = NodeState.Inhibited;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
                 break;
-            case EventType.Neutral:
-                _nodeStates[nodeEvent.NodeId] = NodeState.Neutral;
+            case EdgeEvent edgeEvent:
+                var i = edgeEvent.SourceId;
+                var j = edgeEvent.TargetId;
+
+                _edgeStates[i, j] = edgeEvent.EventType == EdgeEventType.Active;
+                _edgeStates[j, i] = edgeEvent.EventType == EdgeEventType.Active;
                 break;
-            case EventType.Refractory:
-                _nodeStates[nodeEvent.NodeId] = NodeState.Refractory;
-                break;
-            case EventType.Processing:
-                _nodeStates[nodeEvent.NodeId] = NodeState.Processing;
-                break;
-            case EventType.Inhibited:
-                _nodeStates[nodeEvent.NodeId] = NodeState.Inhibited;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
         }
     }
 
     public void Draw()
     {
+        if (!IsReadyToDraw)
+            return;
+
         lock (Plot.Sync)
         {
+            IsReadyToDraw = false;
             Plot.Clear();
 
             var edges = _graph.Edges;
@@ -115,7 +137,10 @@ public class GraphPlotView : AvaPlot, IDrawable
                     (e.Level == 0 ? 0 : Math.Pow(-1, e.Level)) * 1
                 );
 
-                line.LineColor = PlotColors.Blue.WithAlpha(e.Level == 0 ? 0.8f : 0.5f / e.Level);
+                var alpha = e.Level == 0 ? 0.8f : 0.5f / e.Level;
+                line.LineColor = (
+                    _edgeStates[start, end] ? PlotColors.GreenBorder : PlotColors.Blue
+                ).WithAlpha(alpha);
                 line.LineWidth = 1;
             }
 
@@ -163,6 +188,12 @@ public class GraphPlotView : AvaPlot, IDrawable
 
             Refresh();
         }
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        base.Render(context);
+        IsReadyToDraw = true;
     }
 
     private Scatter AddBezier((double x, double y) start, (double x, double y) end, double height)

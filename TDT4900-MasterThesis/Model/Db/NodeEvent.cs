@@ -2,19 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TDT4900_MasterThesis.Model.Db;
 
-public class NodeEvent : BaseModel
+public class NodeEvent : AlgorithmEvent
 {
     [Required]
     public int NodeId { get; set; }
 
     [Required]
-    public long? Tick { get; set; } = null;
-
-    [Required]
-    public EventType EventType { get; set; }
+    public NodeEventType EventType { get; set; }
 }
 
-public enum EventType
+public enum NodeEventType
 {
     Tagged,
     Neutral,

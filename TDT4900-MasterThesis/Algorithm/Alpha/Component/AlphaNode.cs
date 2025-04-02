@@ -3,12 +3,11 @@ using TDT4900_MasterThesis.Algorithm.Component;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
-using EventHandler = TDT4900_MasterThesis.Handler.EventHandler;
 
 namespace TDT4900_MasterThesis.Algorithm.Alpha.Component;
 
 [AutoMap(typeof(Node))]
-public class AlphaNode : AlgorithmNode, IEventProducer
+public class AlphaNode : AlgorithmNode, IAlgorithmEventProducer
 {
     public List<AlphaNode> Neighbours { get; set; } = new();
     public List<AlphaNode> AllNodes { get; set; } = new();
@@ -75,7 +74,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
                         $"Cannot disable refractory state when node is in state {State}. Refractory counter: {_refractoryCounter}. Node: {this}"
                     );
                 State = NodeState.Neutral;
-                PostEvent(EventType.Neutral, currentTick);
+                PostEvent(NodeEventType.Neutral, currentTick);
             }
         }
     }
@@ -90,7 +89,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         {
             _refractoryCounter = RefractoryPeriod;
             State = NodeState.Refractory;
-            PostEvent(EventType.Refractory, currentTick);
+            PostEvent(NodeEventType.Refractory, currentTick);
         }
     }
 
@@ -108,7 +107,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
                 _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
 
                 State = NodeState.Processing;
-                PostEvent(EventType.Processing, currentTick);
+                PostEvent(NodeEventType.Processing, currentTick);
 
                 return NeighbourExcitatoryMessageBurst(currentTick)
                     // Add an inhibitory message burst if the node is tagged
@@ -151,17 +150,17 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         {
             case NodeState.Neutral:
                 State = NodeState.Inhibited;
-                PostEvent(EventType.Inhibited, currentTick);
+                PostEvent(NodeEventType.Inhibited, currentTick);
                 return NoAction();
             case NodeState.Refractory:
                 // Disable the refractory period
                 _refractoryCounter = 0;
                 State = NodeState.Inhibited;
-                PostEvent(EventType.Inhibited, currentTick);
+                PostEvent(NodeEventType.Inhibited, currentTick);
                 return NoAction();
             case NodeState.Processing:
                 State = NodeState.Inhibited;
-                PostEvent(EventType.Inhibited, currentTick);
+                PostEvent(NodeEventType.Inhibited, currentTick);
                 return NoAction();
             case NodeState.Inhibited:
                 return NoAction();
@@ -177,7 +176,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     {
         IsTagged = true;
         Tau = TauPlus;
-        PostEvent(EventType.Tagged, currentTick);
+        PostEvent(NodeEventType.Tagged, currentTick);
     }
 
     /// <summary>
@@ -266,7 +265,7 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         if (State == NodeState.Inhibited)
         {
             State = NodeState.Neutral;
-            PostEvent(EventType.Neutral, currentTick);
+            PostEvent(NodeEventType.Neutral, currentTick);
         }
     }
 
@@ -297,11 +296,11 @@ public class AlphaNode : AlgorithmNode, IEventProducer
     }
 
     /// <summary>
-    /// Post event update for the node to the current <see cref="Handler.EventHandler"/>
+    /// Post event update for the node to the current <see cref="AlgorithmEventHandler"/>
     /// </summary>
     /// <param name="eventType"></param>
     /// <param name="atTick"></param>
-    private void PostEvent(EventType eventType, long atTick)
+    private void PostEvent(NodeEventType eventType, long atTick)
     {
         PostEvent(
             new NodeEvent
@@ -313,10 +312,10 @@ public class AlphaNode : AlgorithmNode, IEventProducer
         );
     }
 
-    public EventHandler? EventHandler { get; set; }
+    public AlgorithmEventHandler? EventHandler { get; set; }
 
-    public void PostEvent(NodeEvent nodeEvent)
+    public void PostEvent(AlgorithmEvent algEvent)
     {
-        EventHandler?.PostEvent(nodeEvent);
+        EventHandler?.PostEvent(algEvent);
     }
 }

@@ -4,7 +4,7 @@ using TDT4900_MasterThesis.Model.Graph;
 
 namespace TDT4900_MasterThesis.Algorithm;
 
-public interface IAlgorithm : IUpdatable, IEventProducer, IEventConsumer
+public interface IAlgorithm : IUpdatable, IAlgorithmEventProducer, IAlgorithmEventConsumer
 {
     public List<NodeEvent>? EventHistory { get; }
 
