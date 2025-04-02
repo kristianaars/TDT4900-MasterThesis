@@ -10,6 +10,7 @@ public class EdgeEvent : AlgorithmEvent
 
 public enum EdgeEventType
 {
-    Active,
-    Inactive,
+    Excitatory,
+    Inhibitory,
+    Neutral,
 }

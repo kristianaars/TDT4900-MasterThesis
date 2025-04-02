@@ -91,9 +91,10 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
     private void ConsumeEdgeEvent(EdgeEvent edgeEvent)
     {
-        if (edgeEvent.EventType == EdgeEventType.Active)
+        if (edgeEvent.EventType != EdgeEventType.Neutral)
         {
             PlotNodeMessage(
+                edgeEvent.EventType,
                 edgeEvent.SourceId,
                 edgeEvent.TargetId,
                 edgeEvent.Tick,
@@ -148,9 +149,15 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
             );
     }
 
-    private void PlotNodeMessage(int source, int target, long sentAt, long receiveAt)
+    private void PlotNodeMessage(
+        EdgeEventType eventType,
+        int source,
+        int target,
+        long sentAt,
+        long receiveAt
+    )
     {
-        var isExcitatory = true;
+        var isExcitatory = eventType == EdgeEventType.Excitatory;
 
         var y1 = _bars[source].Bars[^1].Rect.VerticalCenter;
         var y2 = _bars[target].Bars[^1].Rect.VerticalCenter;

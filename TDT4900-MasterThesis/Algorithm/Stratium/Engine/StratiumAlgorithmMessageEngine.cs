@@ -51,7 +51,10 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
                     {
                         SourceId = sender.NodeId,
                         TargetId = message.Receiver.NodeId,
-                        EventType = EdgeEventType.Active,
+                        EventType =
+                            message.Type == StratiumNodeMessage.MessageType.Excitatory
+                                ? EdgeEventType.Excitatory
+                                : EdgeEventType.Inhibitory,
                         Tick = message.SentAt,
                         ReceiveAt = message.ReceiveAt,
                     }
@@ -70,7 +73,7 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
                     {
                         SourceId = message.Sender.NodeId,
                         TargetId = message.Receiver.NodeId,
-                        EventType = EdgeEventType.Inactive,
+                        EventType = EdgeEventType.Neutral,
                         Tick = message.ReceiveAt,
                         ReceiveAt = message.ReceiveAt,
                     }

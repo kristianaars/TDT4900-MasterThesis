@@ -15,7 +15,7 @@ public class GraphPlotView : AvaPlot, IDrawable
 {
     private Graph _graph;
     private NodeState[] _nodeStates;
-    private bool[,] _edgeStates;
+    private EdgeEventType[,] _edgeStates;
     private bool[] _nodeTags;
 
     private Node? _startNode;
@@ -44,8 +44,8 @@ public class GraphPlotView : AvaPlot, IDrawable
         _nodeTags = new bool[graph.Nodes.Count];
         ArrayHelper.FillArray(_nodeTags, false);
 
-        _edgeStates = new bool[graph.Nodes.Count, graph.Nodes.Count];
-        ArrayHelper.FillArray(_edgeStates, false);
+        _edgeStates = new EdgeEventType[graph.Nodes.Count, graph.Nodes.Count];
+        ArrayHelper.FillArray(_edgeStates, EdgeEventType.Neutral);
 
         Plot.Axes.AutoScale();
         MaintainAspectRatio();
@@ -101,8 +101,8 @@ public class GraphPlotView : AvaPlot, IDrawable
                 var i = edgeEvent.SourceId;
                 var j = edgeEvent.TargetId;
 
-                _edgeStates[i, j] = edgeEvent.EventType == EdgeEventType.Active;
-                _edgeStates[j, i] = edgeEvent.EventType == EdgeEventType.Active;
+                _edgeStates[i, j] = edgeEvent.EventType;
+                _edgeStates[j, i] = edgeEvent.EventType;
                 break;
         }
     }
@@ -139,8 +139,14 @@ public class GraphPlotView : AvaPlot, IDrawable
 
                 var alpha = e.Level == 0 ? 0.8f : 0.5f / e.Level;
                 line.LineColor = (
-                    _edgeStates[start, end] ? PlotColors.GreenBorder : PlotColors.Blue
+                    _edgeStates[start, end] switch
+                    {
+                        EdgeEventType.Excitatory => PlotColors.GreenBorder,
+                        EdgeEventType.Inhibitory => PlotColors.DarkRed,
+                        _ => PlotColors.Blue,
+                    }
                 ).WithAlpha(alpha);
+
                 line.LineWidth = 1;
             }
 
