@@ -7,4 +7,5 @@ public class SquareGridHierarchicalGraphSpec : GraphSpec
 
     public int BaseGridSize { get; set; }
     public int HierarchicalLevels { get; set; }
+    public bool SingleLineGraph { get; set; }
 }

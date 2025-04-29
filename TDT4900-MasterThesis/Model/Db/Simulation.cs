@@ -32,4 +32,6 @@ public class Simulation : BaseModel
     public int ShortestPathLength { get; set; } = -1;
 
     public List<NodeEvent>? EventHistory { get; set; }
+
+    public bool Success { get; set; }
 }

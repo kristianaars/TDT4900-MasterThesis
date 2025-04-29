@@ -15,7 +15,7 @@ public class GraphPlotView : AvaPlot, IDrawable
 {
     private Graph _graph;
     private NodeState[] _nodeStates;
-    private EdgeEventType[,] _edgeStates;
+    private EdgeEventType[,,] _edgeStates;
     private bool[] _nodeTags;
 
     private Node? _startNode;
@@ -36,26 +36,31 @@ public class GraphPlotView : AvaPlot, IDrawable
 
     public void InitializeGraph(Graph graph)
     {
-        _graph = graph;
+        lock (Plot.Sync)
+        {
+            _graph = graph;
 
-        _nodeStates = new NodeState[graph.Nodes.Count];
-        ArrayHelper.FillArray(_nodeStates, NodeState.Neutral);
+            _nodeStates = new NodeState[graph.Nodes.Count];
+            ArrayHelper.FillArray(_nodeStates, NodeState.Neutral);
 
-        _nodeTags = new bool[graph.Nodes.Count];
-        ArrayHelper.FillArray(_nodeTags, false);
+            _nodeTags = new bool[graph.Nodes.Count];
+            ArrayHelper.FillArray(_nodeTags, false);
 
-        _edgeStates = new EdgeEventType[graph.Nodes.Count, graph.Nodes.Count];
-        ArrayHelper.FillArray(_edgeStates, EdgeEventType.Neutral);
+            var levels = graph.Edges.Max(e => e.Level) + 1;
+            _edgeStates = new EdgeEventType[graph.Nodes.Count, graph.Nodes.Count, levels];
 
-        Plot.Axes.AutoScale();
-        MaintainAspectRatio();
+            ArrayHelper.FillArray(_edgeStates, EdgeEventType.Neutral);
 
-        _startNode = null;
-        _targetNode = null;
+            Plot.Axes.AutoScale();
+            MaintainAspectRatio();
 
-        Draw();
+            _startNode = null;
+            _targetNode = null;
 
-        Plot.Axes.AutoScale();
+            Draw();
+
+            Plot.Axes.AutoScale();
+        }
     }
 
     public void SetStartNode(Node? startNode)
@@ -101,8 +106,8 @@ public class GraphPlotView : AvaPlot, IDrawable
                 var i = edgeEvent.SourceId;
                 var j = edgeEvent.TargetId;
 
-                _edgeStates[i, j] = edgeEvent.EventType;
-                _edgeStates[j, i] = edgeEvent.EventType;
+                _edgeStates[i, j, edgeEvent.Level] = edgeEvent.EventType;
+                _edgeStates[j, i, edgeEvent.Level] = edgeEvent.EventType;
                 break;
         }
     }
@@ -137,9 +142,9 @@ public class GraphPlotView : AvaPlot, IDrawable
                     (e.Level == 0 ? 0 : Math.Pow(-1, e.Level)) * 1
                 );
 
-                var alpha = e.Level == 0 ? 0.8f : 0.5f / e.Level;
+                var alpha = e.Level == 0 ? 0.5f : 0.5f / e.Level;
                 line.LineColor = (
-                    _edgeStates[start, end] switch
+                    _edgeStates[start, end, e.Level] switch
                     {
                         EdgeEventType.Excitatory => PlotColors.GreenBorder,
                         EdgeEventType.Inhibitory => PlotColors.DarkRed,
@@ -147,7 +152,7 @@ public class GraphPlotView : AvaPlot, IDrawable
                     }
                 ).WithAlpha(alpha);
 
-                line.LineWidth = 1;
+                line.LineWidth = 2;
             }
 
             // Draw start node and target-node
@@ -157,8 +162,8 @@ public class GraphPlotView : AvaPlot, IDrawable
                     _startNode.X,
                     _startNode.Y,
                     shape: MarkerShape.FilledCircle,
-                    color: PlotColors.Green,
-                    size: 15f
+                    color: PlotColors.Pink,
+                    size: 24f
                 );
             }
 
@@ -169,12 +174,13 @@ public class GraphPlotView : AvaPlot, IDrawable
                     _targetNode.Y,
                     shape: MarkerShape.FilledCircle,
                     color: PlotColors.Pink,
-                    size: 15f
+                    size: 18f
                 );
             }
 
             // Draw nodes
             nodes.ForEach(n =>
+            {
                 Plot.Add.Marker(
                     n.X,
                     n.Y,
@@ -182,15 +188,15 @@ public class GraphPlotView : AvaPlot, IDrawable
                         ? MarkerShape.FilledDiamond
                         : MarkerShape.FilledCircle,
                     color: GetStateFillColor(_nodeStates[n.NodeId], _nodeTags[n.NodeId]),
-                    size: 10f
-                )
-            );
+                    size: 16f
+                );
 
-            /*var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
-            text.LabelFontSize = 8;
-            text.OffsetY = 2;
-            text.LabelFontColor = PlotColors.DarkGray;
-            text.Alignment = Alignment.MiddleCenter;*/
+                var text = Plot.Add.Text($"{n.NodeId}", n.X, n.Y);
+                text.LabelFontSize = 10;
+                text.OffsetY = 3;
+                text.LabelFontColor = PlotColors.White;
+                text.Alignment = Alignment.MiddleCenter;
+            });
 
             Refresh();
         }
@@ -229,7 +235,7 @@ public class GraphPlotView : AvaPlot, IDrawable
     private Color GetStateFillColor(NodeState state, bool tagged) =>
         state switch
         {
-            NodeState.Neutral => tagged ? PlotColors.Blue : PlotColors.Black,
+            NodeState.Neutral => tagged ? PlotColors.Pink : PlotColors.Black,
             NodeState.Refractory => PlotColors.DarkGray,
             NodeState.Processing => PlotColors.GreenBorder,
             NodeState.Inhibited => PlotColors.DarkRed,

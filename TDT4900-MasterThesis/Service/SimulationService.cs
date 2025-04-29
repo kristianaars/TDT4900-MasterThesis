@@ -1,7 +1,11 @@
+using GLib;
 using TDT4900_MasterThesis.Algorithm;
 using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
+using TDT4900_MasterThesis.Factory.SimulationJob;
 using TDT4900_MasterThesis.Model.Db;
+using Log = Serilog.Log;
+using Task = System.Threading.Tasks.Task;
 
 namespace TDT4900_MasterThesis.Service;
 
@@ -52,8 +56,21 @@ public class SimulationService(
             .GraphTagged.Nodes.Select(n => simulation.Graph!.Nodes[n.NodeId])
             .ToList();
 
+        simulation.Success = algorithmResult.Success;
+
         // Add EventHistory to the Simulation object
         simulation.EventHistory = simulationJob.Algorithm.EventHistory;
+
+        Log.Information(
+            "Result from simulation: {@result}",
+            new
+            {
+                Success = dijkstraResult.Success,
+                ActualShortest = dijkstraResult.Distance,
+                AlgorithmShorest = algorithmResult.Distance,
+                Difference = dijkstraResult.Distance - algorithmResult.Distance,
+            }
+        );
     }
 
     public void PauseSimulation()

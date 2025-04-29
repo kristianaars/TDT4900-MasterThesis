@@ -52,7 +52,7 @@ public class SimulationBatchEngine(
         }
 
         // Clear reference to simulations to invoke garbage collection
-        simulationBatch.Simulations.Clear();
+        //simulationBatch.Simulations.Clear();
 
         Log.Information(
             "Starting simulation batch with id {simulationBatchId} containing {batchSize} simulations",
@@ -107,6 +107,7 @@ public class SimulationBatchEngine(
                 batchSize,
                 simulation.Id
             );
+
             // Build the simulation job
             await simulationService.RunSimulationWithVerificationAsync(
                 simulation,
@@ -178,10 +179,22 @@ public class SimulationBatchEngine(
         }
 
         Log.Information(
-            "Simulation batch with id {simulationBatchId} {status} after {completedSimulations} simulations",
+            "Simulation batch with id {simulationBatchId} {status} after {completedSimulations} simulations. Success rate: {successRate}%. Average divergence-distance from shortest path for success: {divergence}%",
             simulationBatch.Id,
             cancellationToken.IsCancellationRequested ? "was cancelled" : "completed",
-            batchSize - simulationQueue.Count
+            batchSize - simulationQueue.Count,
+            (
+                simulationBatch.Simulations.Select(s => s.Success).Count(s => s)
+                * 100.0
+                / (float)batchSize
+            ),
+            simulationBatch
+                .Simulations.Select(s =>
+                    s.Success
+                        ? s.AlgorithmShortestPathLength * 100.0 / (float)s.ShortestPathLength
+                        : 100.0
+                )
+                .Average()
         );
 
         var totalTasks = persistenceTasks.Count;

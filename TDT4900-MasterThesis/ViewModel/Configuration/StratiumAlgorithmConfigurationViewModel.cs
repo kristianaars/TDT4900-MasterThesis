@@ -12,10 +12,10 @@ public partial class StratiumAlgorithmConfigurationViewModel(AppSettings appSett
     private int _deltaInhibitory = 5;
 
     [ObservableProperty]
-    private int _tauPlus = 4;
+    private int _tauPlus = 2;
 
     [ObservableProperty]
-    private int _tauZero = 2;
+    private int _tauZero = 4;
 
     [ObservableProperty]
     private int _refractoryPeriod = 22;

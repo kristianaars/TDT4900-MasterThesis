@@ -11,4 +11,6 @@ public class AlgorithmEdge
     public int SourceNodeId { get; set; }
 
     public int TargetNodeId { get; set; }
+
+    public int Level { get; set; }
 }

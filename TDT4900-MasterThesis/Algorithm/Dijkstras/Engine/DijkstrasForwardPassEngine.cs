@@ -31,7 +31,7 @@ public class DijkstrasForwardPassEngine : BaseAlgorithmAlgorithmEventProducer, I
             return;
         }
 
-        var adjecentNodes = Graph.GetOutNeighbours(node);
+        var adjecentNodes = Graph.GetOutNeighbours(node, level: 0);
         foreach (var neighbor in adjecentNodes)
         {
             var distance = node.Distance + 1; //1 Since weight is uniform

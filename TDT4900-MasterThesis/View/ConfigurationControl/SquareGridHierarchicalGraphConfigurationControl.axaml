@@ -4,8 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:configuration="clr-namespace:TDT4900_MasterThesis.ViewModel.Configuration"
     xmlns:controls="clr-namespace:TDT4900_MasterThesis.View.Controls"
-    xmlns:vm="clr-namespace:TDT4900_MasterThesis.ViewModel"
     HorizontalAlignment="Stretch">
+
     <StackPanel HorizontalAlignment="Stretch" Spacing="4">
         <Design.DataContext>
             <configuration:SquareGridHierarchicalGraphConfigurationViewModel />
@@ -40,6 +40,11 @@
                 Description="Size of the base grid"
                 Label="Base Grid Size"
                 Text="{Binding BaseGridSize}" />
+
+            <ToggleSwitch
+                IsChecked="{Binding SingleLineGraph, Mode=TwoWay}"
+                OffContent="Two Dimensional Graph"
+                OnContent="Single Line Graph" />
         </StackPanel>
 
 

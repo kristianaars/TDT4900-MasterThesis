@@ -4,8 +4,7 @@ using TDT4900_MasterThesis.View.Plot;
 
 namespace TDT4900_MasterThesis.Algorithm.Dijkstras;
 
-public class DijkstrasAlgorithmAlgorithmAlgorithmAlgorithm
-    : BaseAlgorithmAlgorithmAlgorithmAlgorithm<DijkstraNode, DijkstraEdge, DijkstraGraph>
+public class DijkstrasAlgorithm : BaseAlgorithm<DijkstraNode, DijkstraEdge, DijkstraGraph>
 {
     public override required DijkstraGraph Graph { get; init; }
     public override required DijkstraNode StartNode { get; init; }

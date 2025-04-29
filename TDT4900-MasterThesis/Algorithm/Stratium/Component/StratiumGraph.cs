@@ -18,6 +18,7 @@ public class StratiumGraph : AlgorithmGraph<StratiumNode, StratiumEdge>
         Nodes.ForEach(n =>
         {
             n.Neighbours = GetOutNeighbours(n).ToList();
+            n.NeighbouringEdges = GetOutEdges(n).ToList();
             n.AllNodes = Nodes;
             n.RefractoryPeriod = algorithmSpec.RefractoryPeriod;
             n.DeltaExcitatory = algorithmSpec.DeltaTExcitatory;
@@ -25,6 +26,7 @@ public class StratiumGraph : AlgorithmGraph<StratiumNode, StratiumEdge>
             n.TauZero = algorithmSpec.TauZero;
             n.TauPlus = algorithmSpec.TauPlus;
             n.Tau = n.TauZero;
+            n.SearchLevel = n.NeighbouringEdges.Max(e => e.Level as int?) ?? 0; // Begin search at the highest possible level for forward sweeeps
         });
     }
 }

@@ -48,12 +48,8 @@ public class SimulationEngine(
     )
     {
         var algorithm = simulationJob.Algorithm;
-        algorithm.EventHandler = new AlgorithmEventHandler()
-        {
-            Consumers = [graphPlotViewModel, sequencePlotViewModel, algorithm],
-        };
-        algorithm.Initialize();
 
+        // Prepare plots
         if (graphPlotViewModel != null)
         {
             graphPlotViewModel.Graph = simulationJob.Simulation.Graph!;
@@ -61,6 +57,13 @@ public class SimulationEngine(
             graphPlotViewModel.TargetNode = simulationJob.Simulation.TargetNode!;
         }
         sequencePlotViewModel?.InitializeGraph(simulationJob.Simulation.Graph!);
+
+        // Initialize algorithm
+        algorithm.EventHandler = new AlgorithmEventHandler()
+        {
+            Consumers = [graphPlotViewModel, sequencePlotViewModel, algorithm],
+        };
+        algorithm.Initialize();
 
         _stopwatch.Start();
 
@@ -91,7 +94,7 @@ public class SimulationEngine(
 
             if (currentTime >= _nextRender)
             {
-                Render(force: true);
+                Render(force: false);
                 _nextRender += renderInterval;
             }
 
@@ -144,12 +147,12 @@ public class SimulationEngine(
         var readyToRender = _drawableComponents.All(c => c.IsReadyToDraw);
 
         // Not ready to render yet? Skip this frame
-        if (!readyToRender)
+        if (!force && !readyToRender)
             return;
 
         _drawableComponents.ForEach(c =>
         {
-            Dispatcher.UIThread.InvokeAsync(c.Draw, DispatcherPriority.MaxValue);
+            Dispatcher.UIThread.Post(c.Draw, DispatcherPriority.Background);
         });
         _frameCounter++;
     }

@@ -32,12 +32,4 @@ public partial class SimulationStatsViewModel(SequencePlotViewModel sequencePlot
 
     [ObservableProperty]
     private string _graphType;
-
-    partial void OnFpsChanged(int value)
-    {
-        if (Fps < 10)
-        {
-            sequencePlotViewModel.EnableDataUpdate = false;
-        }
-    }
 }

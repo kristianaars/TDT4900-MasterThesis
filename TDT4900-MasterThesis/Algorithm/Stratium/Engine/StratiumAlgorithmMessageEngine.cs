@@ -1,5 +1,4 @@
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
-using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
 using TDT4900_MasterThesis.Model.Graph;
@@ -15,6 +14,20 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
     public bool IsFinished = false;
 
     /// <summary>
+    /// Buffer to allow search to complete before the algorithm is marked as finished.
+    /// </summary>
+    private int _isFinishedWaveCountBuffer = 8;
+
+    /// <summary>
+    /// Experimental!
+    /// </summary>
+    private int _wavesPerLevel = 5;
+
+    private int _wavesLeftForLevel = 5;
+
+    public int CurrentSearchLevel { get; set; } = 2;
+
+    /// <summary>
     /// Queue which holds all processed messages ready to be executed at a specific tick.
     /// Structure is (message, executionTick) where executionTick is the tick at which the message is to be executed
     /// </summary>
@@ -26,13 +39,34 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
     /// </summary>
     private readonly PriorityQueue<StratiumProcessingMessage, long> _processingQueue = new();
 
+    /// <summary>
+    /// Keeps track of tagged nodes in the previous wave, to know when the algorithm can be completed.
+    /// </summary>
+    private bool[] _taggedNodes = [];
+
     public void Update(long currentTick)
     {
         if (_messageQueue.Count + _processingQueue.Count == 0)
         {
             Graph.Nodes.ForEach(node => node.DisinhibitNode(currentTick));
 
-            IsFinished = StartNode.IsTagged;
+            // Decrease search level when the given number of waves have completed on the current level
+            _wavesLeftForLevel = Math.Max(0, --_wavesLeftForLevel);
+            if (_wavesLeftForLevel == 0)
+            {
+                _wavesLeftForLevel = _wavesPerLevel;
+                CurrentSearchLevel = Math.Max(0, --CurrentSearchLevel);
+
+                Graph.Nodes.ForEach(node =>
+                    node.SearchLevel = Math.Min(node.SearchLevel, CurrentSearchLevel)
+                );
+            }
+
+            if (StartNode is { IsTagged: true, SearchLevel: 0 })
+            {
+                _isFinishedWaveCountBuffer--;
+                IsFinished = _isFinishedWaveCountBuffer <= 0;
+            }
 
             if (!IsFinished)
                 BeginNewWave(currentTick, currentTick + 5);
@@ -41,16 +75,16 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
         while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
         {
             var message = _processingQueue.Dequeue().SendMessage;
-            var sender = message.Sender;
 
             _messageQueue.Enqueue(message, message.ReceiveAt);
 
-            if (sender != null)
+            if (message.SourceEdge != null)
                 PostEvent(
                     new EdgeEvent
                     {
-                        SourceId = sender.NodeId,
+                        SourceId = message.SourceEdge.GetOtherNode(message.Receiver).NodeId,
                         TargetId = message.Receiver.NodeId,
+                        Level = message.SourceEdge.Level,
                         EventType =
                             message.Type == StratiumNodeMessage.MessageType.Excitatory
                                 ? EdgeEventType.Excitatory
@@ -61,18 +95,19 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
                 );
 
             // Begin refraction if sender exists (It does not exist if the message is a "start" message)
-            sender?.BeginRefraction(currentTick);
+            message.Source?.BeginRefraction(currentTick);
         }
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)
         {
             var message = _messageQueue.Dequeue();
-            if (message.Sender != null)
+            if (message.SourceEdge != null)
                 PostEvent(
                     new EdgeEvent
                     {
-                        SourceId = message.Sender.NodeId,
+                        SourceId = message.SourceEdge.GetOtherNodeId(message.Receiver.NodeId),
                         TargetId = message.Receiver.NodeId,
+                        Level = message.SourceEdge.Level,
                         EventType = EdgeEventType.Neutral,
                         Tick = message.ReceiveAt,
                         ReceiveAt = message.ReceiveAt,
@@ -90,11 +125,13 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
     {
         var receiver = nodeMessage.Receiver;
         var currentTick = nodeMessage.ReceiveAt;
+        var edgeLevel = nodeMessage.SourceEdge?.Level ?? 0;
 
         IEnumerable<StratiumProcessingMessage> newMessages = nodeMessage.Type switch
         {
-            StratiumNodeMessage.MessageType.Excitatory => receiver.Excite(currentTick),
+            StratiumNodeMessage.MessageType.Excitatory => receiver.Excite(currentTick, edgeLevel),
             StratiumNodeMessage.MessageType.Inhibitory => receiver.Inhibit(currentTick),
+            StratiumNodeMessage.MessageType.InitiateWave => receiver.InitiateWave(currentTick),
             _ => throw new ArgumentOutOfRangeException(),
         };
 
@@ -116,21 +153,35 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
 
     public void BeginNewWave(long currentTick, long atTick)
     {
-        QueueMessage(
-            new StratiumProcessingMessage()
+        // Check if the algorithm is finished (e.g. no new nodes were tagged since last wave)
+        var currentlyTaggedNodes = Graph.Nodes.Select(n => n.IsTagged).ToArray();
+        if (currentlyTaggedNodes.Equals(_taggedNodes))
+        {
+            IsFinished = true;
+            return;
+        }
+
+        _taggedNodes = currentlyTaggedNodes;
+
+        // Create a new message for all nodes marked as wave initiators
+        var waveInitiatorMessages = Graph
+            .Nodes.Where(n => n.WaveInitiator)
+            .Select(n => new StratiumProcessingMessage()
             {
                 SentAt = currentTick,
                 ReceiveAt = atTick,
                 SendMessage = new StratiumNodeMessage()
                 {
-                    Type = StratiumNodeMessage.MessageType.Excitatory,
+                    Type = StratiumNodeMessage.MessageType.InitiateWave,
+                    SourceEdge = null,
                     ReceiveAt = atTick,
                     SentAt = atTick,
-                    Receiver = StartNode,
-                    Sender = null,
+                    Receiver = n,
                 },
-            }
-        );
+            });
+
+        // Queue the messages to execute the wave
+        QueueMessages(waveInitiatorMessages);
     }
 
     public AlgorithmEventHandler? EventHandler { get; set; }

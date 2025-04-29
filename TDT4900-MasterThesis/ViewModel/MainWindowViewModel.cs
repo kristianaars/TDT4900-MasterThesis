@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
 using TDT4900_MasterThesis.Algorithm;
 using TDT4900_MasterThesis.Factory.GraphFactory;
 using TDT4900_MasterThesis.Model.Db;
@@ -38,7 +39,7 @@ public partial class MainWindowViewModel : ObservableObject
     private int _targetFps;
 
     [ObservableProperty]
-    private int _simulationBatchSize;
+    private int _simulationBatchSize = 1;
 
     [ObservableProperty]
     private bool _persistSimulationBatch;
@@ -116,13 +117,23 @@ public partial class MainWindowViewModel : ObservableObject
 
     [RelayCommand(IncludeCancelCommand = true)]
     private async Task RunSimulationBatchAsync(CancellationToken cancellationToken) =>
-        await _simulationBatchService.RunSimulationBatchAsync(
-            SimulationBatchSize,
-            PersistSimulationBatch,
-            BuildGraphSpec(),
-            BuildAlgorithmSpec(),
-            cancellationToken
-        );
+        new Thread(async () =>
+        {
+            try
+            {
+                await _simulationBatchService.RunSimulationBatchAsync(
+                    SimulationBatchSize,
+                    PersistSimulationBatch,
+                    BuildGraphSpec(),
+                    BuildAlgorithmSpec(),
+                    cancellationToken
+                );
+            }
+            catch (Exception e)
+            {
+                Log.Fatal(e, "Fatal error while running simulation batch");
+            }
+        }).Start();
 
     private AlgorithmSpec BuildAlgorithmSpec() =>
         SelectedAlgorithmOption.Value switch
@@ -164,6 +175,7 @@ public partial class MainWindowViewModel : ObservableObject
                 HierarchicalLevels =
                     SquareGridHierarchicalConfigurationViewModel.HierarchicalLevels,
                 Noise = SquareGridHierarchicalConfigurationViewModel.Noise,
+                SingleLineGraph = SquareGridHierarchicalConfigurationViewModel.SingleLineGraph,
             },
             _ => throw new ArgumentException("Unknown graph type"),
         };

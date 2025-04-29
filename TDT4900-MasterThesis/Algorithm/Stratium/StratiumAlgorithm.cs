@@ -1,7 +1,6 @@
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
 using TDT4900_MasterThesis.Algorithm.Stratium.Engine;
-using TDT4900_MasterThesis.Algorithm.Stratium.Engine;
 using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Algorithm.Stratium;
@@ -9,8 +8,7 @@ namespace TDT4900_MasterThesis.Algorithm.Stratium;
 /// <summary>
 /// TODO: Rename to Multistrata?
 /// </summary>
-public class StratiumAlgorithmAlgorithmAlgorithmAlgorithm
-    : BaseAlgorithmAlgorithmAlgorithmAlgorithm<StratiumNode, StratiumEdge, StratiumGraph>
+public class StratiumAlgorithm : BaseAlgorithm<StratiumNode, StratiumEdge, StratiumGraph>
 {
     private StratiumAlgorithmMessageEngine? _messageEngine;
 
@@ -36,6 +34,7 @@ public class StratiumAlgorithmAlgorithmAlgorithmAlgorithm
         _messageEngine.EventHandler = EventHandler;
 
         TargetNode.TagNode(0);
+        StartNode.WaveInitiator = true;
     }
 
     /// <summary>

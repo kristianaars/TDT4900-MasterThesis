@@ -5,6 +5,7 @@ namespace TDT4900_MasterThesis.Factory.GraphFactory;
 
 public class SquareGridHierarchicalGraphFactory
 {
+    public required bool SingleLineGraph { get; set; }
     public required int NodeCount { get; set; }
     public required int Distance { get; set; }
     public required int Noise { get; set; }
@@ -16,13 +17,13 @@ public class SquareGridHierarchicalGraphFactory
     {
         var edges = new List<Edge>();
 
-        var nodes = GraphFactoryHelper.ScatterNodes(NodeCount, Distance, Noise);
-
-        //var nodes = GraphFactoryHelper.LineOfNodes(NodeCount, Distance);
+        var nodes = SingleLineGraph
+            ? GraphFactoryHelper.LineOfNodes(NodeCount, Distance, Noise)
+            : GraphFactoryHelper.ScatterNodes(NodeCount, Distance, Noise);
 
         var dimensions = GraphFactoryHelper.GetDimensions(nodes);
-        var width = dimensions.X;
-        var height = dimensions.Y;
+        var width = dimensions.X + BaseGridSize;
+        var height = dimensions.Y + BaseGridSize;
 
         var level = 0;
 
@@ -30,8 +31,8 @@ public class SquareGridHierarchicalGraphFactory
         {
             var gridSize = BaseGridSize * Math.Pow(2, level);
 
-            var vGrids = (int)Math.Ceiling(height / gridSize) + 1;
-            var hGrids = (int)Math.Ceiling(width / gridSize) + 1;
+            var vGrids = (int)Math.Ceiling((height + gridSize) / gridSize);
+            var hGrids = (int)Math.Ceiling((width + gridSize) / gridSize);
             var gridBlocks = new List<Node>[hGrids, vGrids];
 
             // Initialize each element with a new List<Node>
@@ -42,8 +43,9 @@ public class SquareGridHierarchicalGraphFactory
             // Fill grid blocks with relevant nodes
             foreach (var node in nodes)
             {
-                var x = (int)Math.Max(0, Math.Ceiling(node.X / gridSize));
-                var y = (int)Math.Max(0, Math.Ceiling(node.Y / gridSize));
+                var x = (int)Math.Max(0, Math.Ceiling((node.X + (BaseGridSize / 2.0)) / gridSize));
+                var y = (int)Math.Max(0, Math.Ceiling((node.Y + (BaseGridSize / 2.0)) / gridSize));
+
                 gridBlocks[x, y].Add(node);
             }
 

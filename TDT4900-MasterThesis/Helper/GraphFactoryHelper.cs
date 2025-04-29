@@ -48,16 +48,20 @@ public class GraphFactoryHelper
     /// <param name="nodeCount">Number of nodes</param>
     /// <param name="spacing">Distance between the nodes</param>
     /// <returns></returns>
-    public static List<Node> LineOfNodes(int nodeCount, int spacing) =>
-        Enumerable
+    public static List<Node> LineOfNodes(int nodeCount, int spacing, int noise = 0)
+    {
+        Random random = new Random();
+
+        return Enumerable
             .Range(0, nodeCount)
             .Select(i => new Node()
             {
                 NodeId = i,
-                X = i * spacing,
+                X = i * spacing + random.Next(-noise, noise),
                 Y = 0,
             })
             .ToList();
+    }
 
     /// <summary>
     /// Calculates the Euclidean distance between two nodes a and b.

@@ -42,7 +42,7 @@ public class VerifySolution
                 .SelectMany(n =>
                 {
                     var neighbours = GraphTagged
-                        .GetOutNeighbours(n)
+                        .GetOutNeighbours(n, level: 0)
                         .Distinct() // Distinct is used to avoid adding the same node multiple times
                         .Where(neighbour => !_visitedNodes.Contains(neighbour))
                         .ToList();

@@ -1,11 +1,13 @@
+using GLib;
 using TDT4900_MasterThesis.Algorithm.Component;
 using TDT4900_MasterThesis.Algorithm.Utilities;
 using TDT4900_MasterThesis.Handler;
 using TDT4900_MasterThesis.Model.Db;
+using Log = Serilog.Log;
 
 namespace TDT4900_MasterThesis.Algorithm;
 
-public abstract class BaseAlgorithmAlgorithmAlgorithmAlgorithm<TNode, TEdge, TGraph>
+public abstract class BaseAlgorithm<TNode, TEdge, TGraph>
     : BaseAlgorithmAlgorithmEventProducer,
         IAlgorithm
     where TNode : AlgorithmNode
@@ -41,9 +43,28 @@ public abstract class BaseAlgorithmAlgorithmAlgorithmAlgorithm<TNode, TEdge, TGr
             StartNode = StartNode,
             TargetNode = TargetNode,
         };
-        var distance = verifySolution.GetSolutionDistance();
 
-        return new AlgorithmResult() { GraphTagged = graphTagged, Distance = distance };
+        try
+        {
+            var distance = verifySolution.GetSolutionDistance();
+            return new AlgorithmResult()
+            {
+                Success = true,
+                GraphTagged = graphTagged,
+                Distance = distance,
+            };
+        }
+        catch (Exception e)
+        {
+            Log.Fatal(e, "Unable to verify solution: {ErrorMessage}", e.Message);
+            return new AlgorithmResult()
+            {
+                Success = false,
+                ErrorMessage = e.Message,
+                GraphTagged = graphTagged,
+                Distance = -1,
+            };
+        }
     }
 
     public void ConsumeEvent(AlgorithmEvent algorithmEvent)

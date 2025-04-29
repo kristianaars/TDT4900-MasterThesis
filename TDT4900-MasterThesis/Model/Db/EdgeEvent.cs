@@ -6,6 +6,7 @@ public class EdgeEvent : AlgorithmEvent
     public int TargetId { get; set; }
     public EdgeEventType EventType { get; set; }
     public long ReceiveAt { get; set; }
+    public int Level { get; set; }
 }
 
 public enum EdgeEventType

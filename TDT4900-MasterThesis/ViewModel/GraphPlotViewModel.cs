@@ -9,14 +9,29 @@ public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsu
 {
     public GraphPlotView GraphPlotView;
 
-    [ObservableProperty]
     private Graph? _graph;
 
-    [ObservableProperty]
+    public Graph Graph
+    {
+        get => _graph;
+        set => GraphPlotView.InitializeGraph(value!);
+    }
+
     private Node _startNode;
 
-    [ObservableProperty]
+    public Node StartNode
+    {
+        get => _startNode;
+        set => GraphPlotView.SetStartNode(value);
+    }
+
     private Node _targetNode;
+
+    public Node TargetNode
+    {
+        get => _targetNode;
+        set => GraphPlotView.SetTargetNode(value);
+    }
 
     [ObservableProperty]
     private bool _enableDataUpdate;
@@ -35,21 +50,5 @@ public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsu
     public void ConsumeEvent(AlgorithmEvent algorithmEvent)
     {
         GraphPlotView.AppendAlgorithmEvent(algorithmEvent);
-    }
-
-    partial void OnGraphChanged(Graph? value)
-    {
-        if (value != null)
-            GraphPlotView.InitializeGraph(Graph!);
-    }
-
-    partial void OnStartNodeChanged(Node value)
-    {
-        GraphPlotView.SetStartNode(value);
-    }
-
-    partial void OnTargetNodeChanged(Node value)
-    {
-        GraphPlotView.SetTargetNode(value);
     }
 }

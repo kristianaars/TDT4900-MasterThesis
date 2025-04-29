@@ -21,6 +21,7 @@ public class GraphFactory
                 Noise = n.Noise,
                 BaseGridSize = n.BaseGridSize,
                 HierarchicalLevels = n.HierarchicalLevels,
+                SingleLineGraph = n.SingleLineGraph,
             }.GetGraph(),
             _ => throw new ArgumentException("Unknown graph spec"),
         };

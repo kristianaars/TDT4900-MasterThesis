@@ -7,6 +7,7 @@ using TDT4900_MasterThesis.Context;
 using TDT4900_MasterThesis.Engine;
 using TDT4900_MasterThesis.Factory;
 using TDT4900_MasterThesis.Factory.GraphFactory;
+using TDT4900_MasterThesis.Factory.SimulationJob;
 using TDT4900_MasterThesis.Model.Graph;
 using TDT4900_MasterThesis.Repository;
 using TDT4900_MasterThesis.Service;

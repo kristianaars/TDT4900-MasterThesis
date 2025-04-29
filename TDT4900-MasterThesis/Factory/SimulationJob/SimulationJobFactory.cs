@@ -6,14 +6,13 @@ using TDT4900_MasterThesis.Algorithm.Dijkstras;
 using TDT4900_MasterThesis.Algorithm.Dijkstras.Component;
 using TDT4900_MasterThesis.Algorithm.Stratium;
 using TDT4900_MasterThesis.Algorithm.Stratium.Component;
-using TDT4900_MasterThesis.Model;
 using TDT4900_MasterThesis.Model.Db;
 
-namespace TDT4900_MasterThesis.Factory;
+namespace TDT4900_MasterThesis.Factory.SimulationJob;
 
 public class SimulationJobFactory(IMapper mapper)
 {
-    public SimulationJob GetSimulationJob(Simulation simulation, AlgorithmSpec algorithmSpec)
+    public Model.SimulationJob GetSimulationJob(Simulation simulation, AlgorithmSpec algorithmSpec)
     {
         IAlgorithm algorithm;
 
@@ -28,7 +27,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new AlphaAlgorithmAlgorithmAlgorithmAlgorithm()
+                algorithm = new AlphaAlgorithm()
                 {
                     Graph = alphaGraph,
                     StartNode = alphaStartNode,
@@ -49,7 +48,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new DijkstrasAlgorithmAlgorithmAlgorithmAlgorithm()
+                algorithm = new DijkstrasAlgorithm()
                 {
                     Graph = dijkstraGraph,
                     StartNode = dijkstraStartNode,
@@ -58,6 +57,12 @@ public class SimulationJobFactory(IMapper mapper)
                 break;
             case AlgorithmType.Stratium:
                 var striatumGraph = mapper.Map<StratiumGraph>(simulation.Graph!);
+                striatumGraph.Edges.ForEach(e =>
+                {
+                    e.Source = striatumGraph.Nodes[e.SourceNodeId];
+                    e.Target = striatumGraph.Nodes[e.TargetNodeId];
+                });
+
                 var striatumStartNode = striatumGraph.Nodes.Find(n =>
                     n.NodeId == simulation.StartNode!.NodeId
                 )!;
@@ -65,7 +70,7 @@ public class SimulationJobFactory(IMapper mapper)
                     n.NodeId == simulation.TargetNode!.NodeId
                 )!;
 
-                algorithm = new StratiumAlgorithmAlgorithmAlgorithmAlgorithm()
+                algorithm = new StratiumAlgorithm()
                 {
                     Graph = striatumGraph,
                     StartNode = striatumStartNode,
@@ -83,6 +88,6 @@ public class SimulationJobFactory(IMapper mapper)
                 );
         }
 
-        return new SimulationJob() { Algorithm = algorithm, Simulation = simulation };
+        return new Model.SimulationJob() { Algorithm = algorithm, Simulation = simulation };
     }
 }

@@ -4,8 +4,7 @@ using TDT4900_MasterThesis.Model.Db;
 
 namespace TDT4900_MasterThesis.Algorithm.Alpha;
 
-public class AlphaAlgorithmAlgorithmAlgorithmAlgorithm
-    : BaseAlgorithmAlgorithmAlgorithmAlgorithm<AlphaNode, AlphaEdge, AlphaGraph>
+public class AlphaAlgorithm : BaseAlgorithm<AlphaNode, AlphaEdge, AlphaGraph>
 {
     private AlphaAlgorithmMessageEngine? _messageEngine;
 

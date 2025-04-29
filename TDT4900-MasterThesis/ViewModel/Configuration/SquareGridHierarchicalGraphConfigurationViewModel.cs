@@ -15,11 +15,14 @@ public partial class SquareGridHierarchicalGraphConfigurationViewModel : Observa
     private int _distance = 50;
 
     [ObservableProperty]
-    private int _noise = 25;
+    private int _noise = 0;
 
     [ObservableProperty]
     private int _baseGridSize = 50;
 
     [ObservableProperty]
-    private int _hierarchicalLevels = 2;
+    private int _hierarchicalLevels = 3;
+
+    [ObservableProperty]
+    private bool _singleLineGraph = true;
 }
