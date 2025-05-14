@@ -98,7 +98,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
                 edgeEvent.SourceId,
                 edgeEvent.TargetId,
                 edgeEvent.Tick,
-                edgeEvent.ReceiveAt
+                edgeEvent.ReceiveAt,
+                edgeEvent.Level
             );
         }
     }
@@ -154,7 +155,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         int source,
         int target,
         long sentAt,
-        long receiveAt
+        long receiveAt,
+        int level
     )
     {
         var isExcitatory = eventType == EdgeEventType.Excitatory;
@@ -172,7 +174,7 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
 
         line.LinePattern = isExcitatory ? LinePattern.Solid : LinePattern.Dashed;
 
-        line.LineWidth = 1;
+        line.LineWidth = (level + 1) * 2;
         line.LineColor = lineColor.WithAlpha(0.5f);
 
         var verticalStartLine = Plot.Add.Line(x1, y1 - BarSize / 2.0f, x1, y1 + BarSize / 2.0f);

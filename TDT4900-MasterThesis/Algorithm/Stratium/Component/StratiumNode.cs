@@ -16,6 +16,8 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
 
     public int SearchLevel { get; set; } = 1;
 
+    public int MaxSearchLevel { get; set; } = 4;
+
     /// <summary>
     /// A node that initiates a wave will excite its neighbors when a new wave is initiated.
     /// </summary>
@@ -105,9 +107,10 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// <summary>
     /// Excite the node, and return a list of messages to send to other nodes as a result of the excitation
     /// </summary>
-    /// <param name="currentTick"></param>
+    /// <param name="currentTick">Tick of the excitation</param>
+    /// <param name="charge">The charge-level of the exitation</param>
     /// <returns></returns>
-    public StratiumProcessingMessage[] Excite(long currentTick, int level)
+    public StratiumProcessingMessage[] Excite(long currentTick, int charge)
     {
         StratiumProcessingMessage[] messages;
 
@@ -117,12 +120,21 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
                 _taggedExcitationWindow = DeltaExcitatory * 2 + TauZero * 2;
                 _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
 
+                SearchLevel = Math.Min(charge / 6, MaxSearchLevel);
+
                 if (IsTagged)
-                    messages = NeighbourExcitatoryMessageBurst(currentTick, SearchLevel)
-                        .Concat(NeighbourInhibitoryMessageBurst(currentTick, SearchLevel))
+                    messages = NeighbourExcitatoryMessageBurst(currentTick, charge + 1, SearchLevel)
+                        .Concat(GlobalInhibitoryMessageBurst(currentTick, charge))
+                        .Concat(
+                            NeighbourExcitatoryMessageBurst(currentTick, charge, SearchLevel - 1)
+                        )
                         .ToArray();
                 else
-                    messages = NeighbourExcitatoryMessageBurst(currentTick, SearchLevel).ToArray();
+                {
+                    messages = NeighbourExcitatoryMessageBurst(currentTick, charge + 1, SearchLevel)
+                        .ToArray();
+                }
+
                 break;
             case NodeState.Refractory:
                 messages = NoAction();
@@ -205,7 +217,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
                 State = NodeState.Processing;
                 PostEvent(NodeEventType.Processing, currentTick);
 
-                return NeighbourExcitatoryMessageBurst(currentTick, SearchLevel).ToArray();
+                return NeighbourExcitatoryMessageBurst(currentTick, 0, 0).ToArray();
             case NodeState.Refractory:
                 return NoAction();
             case NodeState.Processing:
@@ -228,40 +240,14 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     }
 
     /// <summary>
-    /// Generates exitatory messages to be sent to all neighbors
-    /// </summary>
-    /// <returns>List of process messages containing exicitatory messages</returns>
-    private IEnumerable<StratiumProcessingMessage> NeighbourExcitatoryMessageBurst(long currentTick)
-    {
-        var processingTime = Tau;
-        var executionTime = DeltaExcitatory;
-
-        var processAt = currentTick + processingTime;
-        var executeAt = processAt + executionTime;
-
-        return NeighbouringEdges.Select(e => new StratiumProcessingMessage()
-        {
-            ReceiveAt = processAt,
-            SentAt = currentTick,
-            SendMessage = new StratiumNodeMessage
-            {
-                Type = StratiumNodeMessage.MessageType.Excitatory,
-                SourceEdge = e,
-                Receiver = e.GetOtherNode(this),
-                SentAt = processAt,
-                ReceiveAt = executeAt,
-            },
-        });
-    }
-
-    /// <summary>
     /// Sends excitatory messages to all neighbours for a given level
     /// </summary>
     /// <param name="currentTick"></param>
     /// <param name="maxLevel">Maximum edge level to send the message(s) on</param>
     public IEnumerable<StratiumProcessingMessage> NeighbourExcitatoryMessageBurst(
         long currentTick,
-        int maxLevel
+        int charge,
+        int level
     )
     {
         var processingTime = Tau;
@@ -271,7 +257,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
         var executeAt = processAt + executionTime;
 
         var edges = NeighbouringEdges
-            .Where(e => e.Level <= maxLevel)
+            .Where(e => e.Level == level)
             .Select(e => new StratiumProcessingMessage()
             {
                 ReceiveAt = processAt,
@@ -283,6 +269,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
                     Receiver = e.GetOtherNode(this),
                     SentAt = processAt,
                     ReceiveAt = executeAt,
+                    Charge = charge,
                 },
             });
 
@@ -293,9 +280,12 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    public IEnumerable<StratiumProcessingMessage> GlobalInhibitoryMessageBurst(long currentTick)
+    public IEnumerable<StratiumProcessingMessage> GlobalInhibitoryMessageBurst(
+        long currentTick,
+        int charge = 0
+    )
     {
-        /*var processingTime = Tau;
+        var processingTime = Tau;
         var executionTime = DeltaInhibitory;
 
         var processAt = currentTick + processingTime;
@@ -308,20 +298,23 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
             SendMessage = new StratiumNodeMessage
             {
                 Type = StratiumNodeMessage.MessageType.Inhibitory,
-                Sender = this,
+                SourceEdge = null,
                 Receiver = n,
                 SentAt = processAt,
                 ReceiveAt = executeAt,
+                Charge = charge,
             },
-        });*/
-        throw new NotImplementedException();
+        });
     }
 
     /// <summary>
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    private IEnumerable<StratiumProcessingMessage> NeighbourInhibitoryMessageBurst(long currentTick)
+    private IEnumerable<StratiumProcessingMessage> NeighbourInhibitoryMessageBurst(
+        long currentTick,
+        int charge = 0
+    )
     {
         var processingTime = Tau;
         var executionTime = DeltaInhibitory;
@@ -340,6 +333,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
                 Receiver = e.GetOtherNode(this),
                 SentAt = processAt,
                 ReceiveAt = executeAt,
+                Charge = charge,
             },
         });
     }
@@ -350,7 +344,8 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// <returns>List of process messages containing exicitatory messages</returns>
     private IEnumerable<StratiumProcessingMessage> NeighbourInhibitoryMessageBurst(
         long currentTick,
-        int level
+        int level,
+        int charge
     )
     {
         var processingTime = Tau;
@@ -372,6 +367,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
                     Receiver = e.GetOtherNode(this),
                     SentAt = processAt,
                     ReceiveAt = executeAt,
+                    Charge = charge,
                 },
             });
     }

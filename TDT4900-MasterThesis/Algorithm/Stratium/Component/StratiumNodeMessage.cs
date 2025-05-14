@@ -3,6 +3,7 @@ namespace TDT4900_MasterThesis.Algorithm.Stratium.Component;
 public class StratiumNodeMessage
 {
     public required MessageType Type { get; init; }
+    public required int Charge { get; init; }
     public StratiumEdge? SourceEdge { get; init; }
     public StratiumNode? Source => SourceEdge?.GetOtherNode(Receiver);
     public required StratiumNode Receiver { get; init; }

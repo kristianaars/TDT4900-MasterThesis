@@ -56,6 +56,15 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private ComboBoxItemModel<GraphType> _selectedGraphOption;
 
+    [ObservableProperty]
+    private bool _randomStartAndTargetNodes;
+
+    [ObservableProperty]
+    private int _startNodeId;
+
+    [ObservableProperty]
+    private int _targetNodeId;
+
     public MainWindowViewModel(
         AppSettings appSettings,
         SimulationBatchService simulationBatchService,
@@ -124,6 +133,9 @@ public partial class MainWindowViewModel : ObservableObject
                 await _simulationBatchService.RunSimulationBatchAsync(
                     SimulationBatchSize,
                     PersistSimulationBatch,
+                    RandomStartAndTargetNodes,
+                    StartNodeId,
+                    TargetNodeId,
                     BuildGraphSpec(),
                     BuildAlgorithmSpec(),
                     cancellationToken

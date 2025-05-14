@@ -15,13 +15,14 @@ public class GraphPlotView : AvaPlot, IDrawable
 {
     private Graph _graph;
     private NodeState[] _nodeStates;
-    private EdgeEventType[,,] _edgeStates;
+    private EdgeEvent?[,,] _edgeStates;
     private bool[] _nodeTags;
 
     private Node? _startNode;
     private Node? _targetNode;
 
     public bool IsReadyToDraw { get; set; } = true;
+    public int MaxVisibleLayer { get; set; }
 
     public GraphPlotView()
     {
@@ -47,9 +48,9 @@ public class GraphPlotView : AvaPlot, IDrawable
             ArrayHelper.FillArray(_nodeTags, false);
 
             var levels = graph.Edges.Max(e => e.Level) + 1;
-            _edgeStates = new EdgeEventType[graph.Nodes.Count, graph.Nodes.Count, levels];
+            _edgeStates = new EdgeEvent?[graph.Nodes.Count, graph.Nodes.Count, levels];
 
-            ArrayHelper.FillArray(_edgeStates, EdgeEventType.Neutral);
+            ArrayHelper.FillArray(_edgeStates, null);
 
             Plot.Axes.AutoScale();
             MaintainAspectRatio();
@@ -106,8 +107,10 @@ public class GraphPlotView : AvaPlot, IDrawable
                 var i = edgeEvent.SourceId;
                 var j = edgeEvent.TargetId;
 
-                _edgeStates[i, j, edgeEvent.Level] = edgeEvent.EventType;
-                _edgeStates[j, i, edgeEvent.Level] = edgeEvent.EventType;
+                EdgeEvent? ev = edgeEvent.EventType != EdgeEventType.Neutral ? edgeEvent : null;
+
+                _edgeStates[i, j, edgeEvent.Level] = ev;
+                _edgeStates[j, i, edgeEvent.Level] = ev;
                 break;
         }
     }
@@ -128,8 +131,12 @@ public class GraphPlotView : AvaPlot, IDrawable
             // Draw edges
             foreach (var e in edges)
             {
+                if (e.Level >= (MaxVisibleLayer - 1))
+                    continue;
+
                 var start = e.SourceNodeId;
                 var end = e.TargetNodeId;
+                var edgeEvent = _edgeStates[start, end, e.Level];
 
                 double x1 = nodes[start].X,
                     y1 = nodes[start].Y;
@@ -143,16 +150,26 @@ public class GraphPlotView : AvaPlot, IDrawable
                 );
 
                 var alpha = e.Level == 0 ? 0.5f : 0.5f / e.Level;
-                line.LineColor = (
-                    _edgeStates[start, end, e.Level] switch
-                    {
-                        EdgeEventType.Excitatory => PlotColors.GreenBorder,
-                        EdgeEventType.Inhibitory => PlotColors.DarkRed,
-                        _ => PlotColors.Blue,
-                    }
-                ).WithAlpha(alpha);
 
-                line.LineWidth = 2;
+                line.LineWidth = 6;
+
+                if (edgeEvent != null)
+                {
+                    line.LineColor = (
+                        edgeEvent.EventType switch
+                        {
+                            EdgeEventType.Excitatory => PlotColors.GreenBorder,
+                            EdgeEventType.Inhibitory => PlotColors.DarkRed,
+                        }
+                    ).WithAlpha(alpha);
+
+                    line.LineWidth = edgeEvent.Charge + 1;
+                }
+                else
+                {
+                    line.LineColor = PlotColors.Blue.WithAlpha(alpha);
+                    line.LineWidth = 3;
+                }
             }
 
             // Draw start node and target-node
@@ -162,7 +179,7 @@ public class GraphPlotView : AvaPlot, IDrawable
                     _startNode.X,
                     _startNode.Y,
                     shape: MarkerShape.FilledCircle,
-                    color: PlotColors.Pink,
+                    color: PlotColors.GreenBorder,
                     size: 24f
                 );
             }
@@ -173,7 +190,7 @@ public class GraphPlotView : AvaPlot, IDrawable
                     _targetNode.X,
                     _targetNode.Y,
                     shape: MarkerShape.FilledCircle,
-                    color: PlotColors.Pink,
+                    color: PlotColors.LightPink,
                     size: 18f
                 );
             }

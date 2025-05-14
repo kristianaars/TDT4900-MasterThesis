@@ -21,4 +21,11 @@ public class SimulationBatch : BaseModel
     /// </summary>
     [Required]
     public GraphSpec GraphSpec { get; set; }
+
+    [Required]
+    public bool RandomizeStartAndTarget { get; set; } = true;
+
+    public int StartNodeId { get; set; } = -1;
+
+    public int TargetNodeId { get; set; } = -1;
 }

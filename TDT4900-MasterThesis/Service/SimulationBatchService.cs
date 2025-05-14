@@ -8,6 +8,9 @@ public class SimulationBatchService(SimulationBatchEngine simulationBatchEngine)
     public async Task RunSimulationBatchAsync(
         int batchSize,
         bool persist,
+        bool randomizeStartAndTarget,
+        int startNodeId,
+        int targetNodeId,
         GraphSpec graphSpec,
         AlgorithmSpec algorithmSpec,
         CancellationToken cancellationToken
@@ -19,6 +22,9 @@ public class SimulationBatchService(SimulationBatchEngine simulationBatchEngine)
             AlgorithmSpec = algorithmSpec,
             GraphSpec = graphSpec,
             Simulations = Enumerable.Range(0, batchSize).Select(_ => new Simulation()).ToList(),
+            RandomizeStartAndTarget = randomizeStartAndTarget,
+            StartNodeId = startNodeId,
+            TargetNodeId = targetNodeId,
         };
 
         await simulationBatchEngine.RunSimulationBatchAsync(simulationBatch, cancellationToken);

@@ -26,7 +26,7 @@ public class StratiumGraph : AlgorithmGraph<StratiumNode, StratiumEdge>
             n.TauZero = algorithmSpec.TauZero;
             n.TauPlus = algorithmSpec.TauPlus;
             n.Tau = n.TauZero;
-            n.SearchLevel = n.NeighbouringEdges.Max(e => e.Level as int?) ?? 0; // Begin search at the highest possible level for forward sweeeps
+            n.MaxSearchLevel = GetOutEdges(n).Max(e => e.Level);
         });
     }
 }

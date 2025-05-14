@@ -57,11 +57,12 @@
             <Grid
                 Grid.Column="0"
                 Margin="0,0,0,0"
-                RowDefinitions="Auto *">
+                RowDefinitions="Auto *, Auto">
+                <Design.DataContext>
+                    <vm:GraphPlotViewModel />
+                </Design.DataContext>
+
                 <Grid Grid.Row="0" ColumnDefinitions="* Auto">
-                    <Design.DataContext>
-                        <vm:GraphPlotViewModel />
-                    </Design.DataContext>
 
                     <TextBlock
                         Grid.Column="0"
@@ -78,6 +79,13 @@
                         OnContent="Enabled" />
                 </Grid>
                 <Border Name="GraphPlotContainer" Grid.Row="1" />
+
+                <Slider
+                    Grid.Row="2"
+                    Maximum="{Binding LayerCount}"
+                    Minimum="1"
+                    SmallChange="1"
+                    Value="{Binding MaxVisibleLayer}" />
             </Grid>
 
             <GridSplitter
@@ -297,6 +305,26 @@
                 <!--  Node Configuration  -->
                 <StackPanel Spacing="8">
                     <TextBlock Classes="Header2">Simulation Batch Settings</TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:LabeledTextBox
+                            Description="ID for start node"
+                            IsEnabled="{Binding !RandomStartAndTargetNodes}"
+                            Label="Start Node"
+                            Text="{Binding StartNodeId}" />
+
+                        <controls:LabeledTextBox
+                            Description="ID for start node"
+                            IsEnabled="{Binding !RandomStartAndTargetNodes}"
+                            Label="Target Node"
+                            Text="{Binding TargetNodeId}" />
+
+                    </StackPanel>
+
+                    <ToggleSwitch
+                        IsChecked="{Binding RandomStartAndTargetNodes}"
+                        OffContent="Specify target and start node"
+                        OnContent="Random start end target node" />
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:LabeledTextBox

@@ -91,13 +91,23 @@ public class SimulationBatchEngine(
             // Generate the graph and set random source and target node
             simulation.Graph = graphFactory.CreateGraph(graphGenerationSpec);
 
+            if (
+                !simulationBatch.RandomizeStartAndTarget
+                && simulationBatch.StartNodeId == simulationBatch.TargetNodeId
+            )
+                throw new Exception("Start and target node cannot be the same");
+
             simulation.StartNode = simulation.TargetNode = simulation.Graph.Nodes[
-                new Random().Next(simulation.Graph.Nodes.Count)
+                simulationBatch.RandomizeStartAndTarget
+                    ? new Random().Next(simulation.Graph.Nodes.Count)
+                    : simulationBatch.StartNodeId
             ];
             while (simulation.TargetNode == simulation.StartNode)
             {
                 simulation.TargetNode = simulation.Graph.Nodes[
-                    new Random().Next(simulation.Graph.Nodes.Count)
+                    simulationBatch.RandomizeStartAndTarget
+                        ? new Random().Next(simulation.Graph.Nodes.Count)
+                        : simulationBatch.TargetNodeId
                 ];
             }
 

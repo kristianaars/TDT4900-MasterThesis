@@ -14,7 +14,7 @@ public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsu
     public Graph Graph
     {
         get => _graph;
-        set => GraphPlotView.InitializeGraph(value!);
+        set => OnGraphChanged(value);
     }
 
     private Node _startNode;
@@ -36,6 +36,12 @@ public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsu
     [ObservableProperty]
     private bool _enableDataUpdate;
 
+    [ObservableProperty]
+    private int _layerCount;
+
+    [ObservableProperty]
+    private int _maxVisibleLayer;
+
     public GraphPlotViewModel(GraphPlotView graphPlotView)
     {
         GraphPlotView = graphPlotView;
@@ -45,6 +51,21 @@ public partial class GraphPlotViewModel : ObservableObject, IAlgorithmEventConsu
     partial void OnEnableDataUpdateChanged(bool value)
     {
         //GraphPlotView.EnableDataUpdate = value;
+    }
+
+    partial void OnMaxVisibleLayerChanged(int value)
+    {
+        GraphPlotView.MaxVisibleLayer = value;
+        GraphPlotView.Draw();
+    }
+
+    private void OnGraphChanged(Graph graph)
+    {
+        _graph = graph;
+        GraphPlotView.InitializeGraph(graph);
+        LayerCount = graph.Edges.Max(e => e.Level) + 1;
+
+        MaxVisibleLayer = Math.Min(MaxVisibleLayer, LayerCount);
     }
 
     public void ConsumeEvent(AlgorithmEvent algorithmEvent)
