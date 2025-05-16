@@ -130,6 +130,8 @@ public class SimulationEngine(
 
         Render(force: true);
 
+        simulationJob.Simulation.AlgorithmExecutionTime = _currentTick;
+
         Log.Information("Simulation engine has stopped after {ticks} ticks.", _currentTick);
     }
 

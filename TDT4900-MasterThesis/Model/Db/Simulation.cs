@@ -17,9 +17,9 @@ public class Simulation : BaseModel
 
     public Node? TargetNode { get; set; }
 
-    public List<Node>? AlgorithmTaggedNodes { get; set; }
+    public List<int>? AlgorithmTaggedNodes { get; set; }
 
-    public List<Node>? ShortestPathTaggedNodes { get; set; }
+    public List<int>? ShortestPathTaggedNodes { get; set; }
 
     /// <summary>
     /// Length of the shortest path found by the simulation-algorithm. -1 if not yet calculated.
@@ -30,6 +30,8 @@ public class Simulation : BaseModel
     /// Length of the shortest path found by Dijkstra's algorithm. -1 if not yet calculated.
     /// </summary>
     public int ShortestPathLength { get; set; } = -1;
+
+    public long AlgorithmExecutionTime { get; set; } = -1;
 
     public List<NodeEvent>? EventHistory { get; set; }
 

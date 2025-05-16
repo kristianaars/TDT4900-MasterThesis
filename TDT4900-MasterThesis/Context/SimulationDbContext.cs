@@ -5,7 +5,6 @@ namespace TDT4900_MasterThesis.Context;
 
 public class SimulationDbContext : DbContext
 {
-    public DbSet<Node> Nodes { get; set; }
     public DbSet<Graph> Graphs { get; set; }
     public DbSet<Simulation> Simulations { get; set; }
     public DbSet<SimulationBatch> SimulationBatches { get; set; }

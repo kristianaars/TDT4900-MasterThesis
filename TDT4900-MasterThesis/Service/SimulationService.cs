@@ -49,11 +49,11 @@ public class SimulationService(
 
         // Persist the tagged nodes in the Simulation object
         simulation.ShortestPathTaggedNodes = dijkstraResult
-            .GraphTagged.Nodes.Select(n => simulation.Graph!.Nodes[n.NodeId])
+            .GraphTagged.Nodes.Select(n => simulation.Graph!.Nodes[n.NodeId].NodeId)
             .ToList();
 
         simulation.AlgorithmTaggedNodes = algorithmResult
-            .GraphTagged.Nodes.Select(n => simulation.Graph!.Nodes[n.NodeId])
+            .GraphTagged.Nodes.Select(n => simulation.Graph!.Nodes[n.NodeId].NodeId)
             .ToList();
 
         simulation.Success = algorithmResult.Success;
@@ -66,6 +66,7 @@ public class SimulationService(
             new
             {
                 Success = dijkstraResult.Success,
+                ExecitopmTime = simulation.AlgorithmExecutionTime,
                 ActualShortest = dijkstraResult.Distance,
                 AlgorithmShorest = algorithmResult.Distance,
                 Difference = dijkstraResult.Distance - algorithmResult.Distance,
