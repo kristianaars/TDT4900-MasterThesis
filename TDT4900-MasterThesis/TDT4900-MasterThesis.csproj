@@ -72,6 +72,7 @@
 
     <ItemGroup>
       <Folder Include="Migrations\" />
+      <Folder Include="output\" />
     </ItemGroup>
 
 </Project>

@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using AutoMapper.Configuration.Annotations;
+
 namespace TDT4900_MasterThesis.Model.Db;
 
 /// <summary>
@@ -33,6 +36,8 @@ public class Simulation : BaseModel
 
     public long AlgorithmExecutionTime { get; set; } = -1;
 
+    [Ignore]
+    [NotMapped]
     public List<NodeEvent>? EventHistory { get; set; }
 
     public bool Success { get; set; }

@@ -5,7 +5,8 @@ namespace TDT4900_MasterThesis.Service;
 
 public class SimulationPersistenceService(
     SimulationBatchRepository simulationBatchRepository,
-    SimulationRepository simulationRepository
+    SimulationRepository simulationRepository,
+    EventHistoryRepository eventHistoryRepository
 )
 {
     public async Task SaveSimulationBatchAsync(
@@ -36,5 +37,14 @@ public class SimulationPersistenceService(
     )
     {
         await simulationRepository.InsertRangeAsync(simulations, cancellationToken);
+
+        foreach (var simulation in simulations)
+        {
+            await eventHistoryRepository.PersistNodeEventListAsync(
+                simulation.Id,
+                simulation.EventHistory,
+                cancellationToken
+            );
+        }
     }
 }

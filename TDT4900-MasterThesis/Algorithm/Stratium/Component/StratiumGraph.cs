@@ -14,19 +14,33 @@ public class StratiumGraph : AlgorithmGraph<StratiumNode, StratiumEdge>
     {
         base.Initialize();
 
-        // Initialize all nodes
-        Nodes.ForEach(n =>
+        var mInit = 50;
+        var tasks = new List<Task>();
+
+        for (int i = 0; i * mInit < Nodes.Count; i++)
         {
-            n.Neighbours = GetOutNeighbours(n).ToList();
-            n.NeighbouringEdges = GetOutEdges(n).ToList();
-            n.AllNodes = Nodes;
-            n.RefractoryPeriod = algorithmSpec.RefractoryPeriod;
-            n.DeltaExcitatory = algorithmSpec.DeltaTExcitatory;
-            n.DeltaInhibitory = algorithmSpec.DeltaTInhibitory;
-            n.TauZero = algorithmSpec.TauZero;
-            n.TauPlus = algorithmSpec.TauPlus;
-            n.Tau = n.TauZero;
-            n.MaxSearchLevel = GetOutEdges(n).Max(e => e.Level);
-        });
+            var rest = Nodes.Count - i * mInit;
+            var initNodes = Nodes.Slice(i * mInit, Math.Min(mInit, rest));
+            tasks.Add(
+                Task.Run(() =>
+                {
+                    initNodes.ForEach(n =>
+                    {
+                        n.Neighbours = GetOutNeighbours(n).ToList();
+                        n.NeighbouringEdges = GetOutEdges(n).ToList();
+                        n.AllNodes = Nodes;
+                        n.RefractoryPeriod = algorithmSpec.RefractoryPeriod;
+                        n.DeltaExcitatory = algorithmSpec.DeltaTExcitatory;
+                        n.DeltaInhibitory = algorithmSpec.DeltaTInhibitory;
+                        n.TauZero = algorithmSpec.TauZero;
+                        n.TauPlus = algorithmSpec.TauPlus;
+                        n.Tau = n.TauZero;
+                        n.MaxSearchLevel = GetOutEdges(n).Max(e => e.Level);
+                    });
+                })
+            );
+        }
+
+        Task.WaitAll(tasks.ToArray());
     }
 }

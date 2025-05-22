@@ -25,63 +25,100 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
     /// </summary>
     private readonly PriorityQueue<StratiumProcessingMessage, long> _processingQueue = new();
 
+    public int WavesBeforeFinish = 1;
+
     public void Update(long currentTick)
     {
-        if (_messageQueue.Count + _processingQueue.Count == 0)
+        lock (_processingQueue)
         {
-            Graph.Nodes.ForEach(node => node.DisinhibitNode(currentTick));
+            if (_messageQueue.Count + _processingQueue.Count == 0)
+            {
+                Graph.Nodes.ForEach(node => node.DisinhibitNode(currentTick));
 
-            IsFinished = StartNode is { IsTagged: true };
+                if (StartNode is { IsTagged: true })
+                    IsFinished = WavesBeforeFinish-- < 0;
 
-            if (!IsFinished)
-                BeginNewWave(currentTick, currentTick + 5);
+                if (!IsFinished)
+                    BeginNewWave(currentTick, currentTick + 5);
+            }
         }
 
-        while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
+        lock (_processingQueue)
         {
-            var message = _processingQueue.Dequeue().SendMessage;
+            while (_processingQueue.Count > 0 && _processingQueue.Peek().ReceiveAt <= currentTick)
+            {
+                var message = _processingQueue.Dequeue().SendMessage;
 
-            _messageQueue.Enqueue(message, message.ReceiveAt);
+                _messageQueue.Enqueue(message, message.ReceiveAt);
 
-            if (message.SourceEdge != null)
-                PostEvent(
-                    new EdgeEvent
-                    {
-                        SourceId = message.SourceEdge.GetOtherNode(message.Receiver).NodeId,
-                        TargetId = message.Receiver.NodeId,
-                        Level = message.SourceEdge.Level,
-                        EventType =
-                            message.Type == StratiumNodeMessage.MessageType.Excitatory
-                                ? EdgeEventType.Excitatory
-                                : EdgeEventType.Inhibitory,
-                        Tick = message.SentAt,
-                        ReceiveAt = message.ReceiveAt,
-                        Charge = message.Charge,
-                    }
-                );
+                if (message.SourceEdge != null)
+                    PostEvent(
+                        new EdgeEvent
+                        {
+                            SourceId = message.SourceEdge.GetOtherNode(message.Receiver).NodeId,
+                            TargetId = message.Receiver.NodeId,
+                            Level = message.SourceEdge.Level,
+                            EventType =
+                                message.Type == StratiumNodeMessage.MessageType.Excitatory
+                                    ? EdgeEventType.Excitatory
+                                    : EdgeEventType.Inhibitory,
+                            Tick = message.SentAt,
+                            ReceiveAt = message.ReceiveAt,
+                            Charge = message.Charge,
+                        }
+                    );
 
-            // Begin refraction if sender exists (It does not exist if the message is a "start" message)
-            message.Source?.BeginRefraction(currentTick);
+                // Begin refraction if sender exists (It does not exist if the message is a "start" message)
+                message.Source?.BeginRefraction(currentTick);
+            }
         }
+
+        var tasks = new List<Task>();
+
+        int jobsPerThread = 1000;
 
         while (_messageQueue.Count > 0 && _messageQueue.Peek().ReceiveAt <= currentTick)
         {
-            var message = _messageQueue.Dequeue();
-            if (message.SourceEdge != null)
-                PostEvent(
-                    new EdgeEvent
+            var messages = new List<StratiumNodeMessage>();
+            for (
+                int i = 0;
+                i < jobsPerThread
+                    && _messageQueue.Count > 0
+                    && _messageQueue.Peek().ReceiveAt <= currentTick;
+                i++
+            )
+            {
+                messages.Add(_messageQueue.Dequeue());
+            }
+
+            tasks.Add(
+                Task.Run(() =>
+                {
+                    messages.ForEach(message =>
                     {
-                        SourceId = message.SourceEdge.GetOtherNodeId(message.Receiver.NodeId),
-                        TargetId = message.Receiver.NodeId,
-                        Level = message.SourceEdge.Level,
-                        EventType = EdgeEventType.Neutral,
-                        Tick = message.ReceiveAt,
-                        ReceiveAt = message.ReceiveAt,
-                        Charge = 1,
-                    }
-                );
-            ExecuteNodeMessage(message);
+                        if (message.SourceEdge != null)
+                            PostEvent(
+                                new EdgeEvent
+                                {
+                                    SourceId = message.SourceEdge.GetOtherNodeId(
+                                        message.Receiver.NodeId
+                                    ),
+                                    TargetId = message.Receiver.NodeId,
+                                    Level = message.SourceEdge.Level,
+                                    EventType = EdgeEventType.Neutral,
+                                    Tick = message.ReceiveAt,
+                                    ReceiveAt = message.ReceiveAt,
+                                    Charge = 1,
+                                }
+                            );
+
+                        ExecuteNodeMessage(message);
+                    });
+                })
+            );
         }
+
+        Task.WaitAll(tasks);
     }
 
     /// <summary>
@@ -110,15 +147,23 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
 
     public void QueueMessages(IEnumerable<StratiumProcessingMessage> messages)
     {
-        foreach (var message in messages)
+        lock (_procesingQueueLock)
         {
-            QueueMessage(message);
+            foreach (var message in messages)
+            {
+                QueueMessage(message);
+            }
         }
     }
 
+    private Lock _procesingQueueLock = new();
+
     public void QueueMessage(StratiumProcessingMessage message)
     {
-        _processingQueue.Enqueue(message, message.ReceiveAt);
+        lock (_processingQueue)
+        {
+            _processingQueue.Enqueue(message, message.ReceiveAt);
+        }
     }
 
     public void BeginNewWave(long currentTick, long atTick)

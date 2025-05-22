@@ -70,6 +70,7 @@ public class ApplicationHostBuilder
 
         _services.AddSingleton<SimulationBatchRepository>();
         _services.AddSingleton<SimulationRepository>();
+        _services.AddSingleton<EventHistoryRepository>();
         _services.AddSingleton<GraphRepository>();
 
         _services.AddSingleton<SimulationDbContext>();

@@ -59,7 +59,11 @@ public class SimulationService(
         simulation.Success = algorithmResult.Success;
 
         // Add EventHistory to the Simulation object
-        simulation.EventHistory = simulationJob.Algorithm.EventHistory;
+        simulation.EventHistory = simulationJob
+            .Algorithm.EventHistory?.Where(e => e is NodeEvent)
+            .Select(e => (NodeEvent)e)
+            .Where(e => e.EventType != NodeEventType.Inhibited)
+            .ToList();
 
         Log.Information(
             "Result from simulation: {@result}",

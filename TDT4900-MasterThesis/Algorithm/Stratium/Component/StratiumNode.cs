@@ -14,6 +14,8 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     public List<StratiumNode> AllNodes { get; set; } = new();
     public List<StratiumEdge> NeighbouringEdges { get; set; } = new();
 
+    private Lock nodeLock = new();
+
     public int SearchLevel { get; set; } = 1;
 
     public int MaxSearchLevel { get; set; } = 4;
@@ -53,6 +55,8 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// Refractory period of the node after it has been excited
     /// </summary>
     public int RefractoryPeriod { get; set; }
+
+    public int Epsilon { get; set; } = 3;
 
     private int _refractoryCounter;
     private int _taggedExcitationWindow;
@@ -96,11 +100,14 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// </summary>
     public void BeginRefraction(long currentTick)
     {
-        if (this is { State: NodeState.Processing or NodeState.Refractory })
+        lock (nodeLock)
         {
-            _refractoryCounter = RefractoryPeriod;
-            State = NodeState.Refractory;
-            PostEvent(NodeEventType.Refractory, currentTick);
+            if (this is { State: NodeState.Processing or NodeState.Refractory })
+            {
+                _refractoryCounter = RefractoryPeriod;
+                State = NodeState.Refractory;
+                PostEvent(NodeEventType.Refractory, currentTick);
+            }
         }
     }
 
@@ -114,56 +121,70 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     {
         StratiumProcessingMessage[] messages;
 
-        switch (State)
+        lock (nodeLock)
         {
-            case NodeState.Neutral:
-                _taggedExcitationWindow = DeltaExcitatory * 2 + TauZero * 2;
-                _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
+            switch (State)
+            {
+                case NodeState.Neutral:
+                    _taggedExcitationWindow = DeltaExcitatory * 2 + TauZero * 2;
+                    _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
 
-                SearchLevel = Math.Min(charge / 6, MaxSearchLevel);
+                    SearchLevel = Math.Min(charge / Epsilon, MaxSearchLevel);
 
-                if (IsTagged)
-                    messages = NeighbourExcitatoryMessageBurst(currentTick, charge + 1, SearchLevel)
-                        .Concat(GlobalInhibitoryMessageBurst(currentTick, charge))
-                        .Concat(
-                            NeighbourExcitatoryMessageBurst(currentTick, charge, SearchLevel - 1)
-                        )
-                        .ToArray();
-                else
-                {
-                    messages = NeighbourExcitatoryMessageBurst(currentTick, charge + 1, SearchLevel)
-                        .ToArray();
-                }
+                    if (IsTagged)
+                        messages = NeighbourExcitatoryMessageBurst(
+                                currentTick,
+                                charge + 1,
+                                SearchLevel
+                            )
+                            .Concat(GlobalInhibitoryMessageBurst(currentTick, charge))
+                            .Concat(
+                                NeighbourExcitatoryMessageBurst(
+                                    currentTick,
+                                    charge,
+                                    SearchLevel - 1
+                                )
+                            )
+                            .ToArray();
+                    else
+                    {
+                        messages = NeighbourExcitatoryMessageBurst(
+                                currentTick,
+                                charge + 1,
+                                SearchLevel
+                            )
+                            .ToArray();
+                    }
 
-                break;
-            case NodeState.Refractory:
-                messages = NoAction();
-                break;
-            case NodeState.Processing:
-                messages = NoAction();
-                break;
-            case NodeState.Inhibited:
-                // Tag node if it was excited before expected
-                if (_taggedExcitationWindow < TauZero && _taggedExcitationWindow > 0)
-                {
-                    //if (SearchLevel == 0)
-                    TagNode(currentTick);
-                    //SearchLevel = 0;
-                    //SearchLevel = Math.Max(0, SearchLevel - 1);
-                }
+                    break;
+                case NodeState.Refractory:
+                    messages = NoAction();
+                    break;
+                case NodeState.Processing:
+                    messages = NoAction();
+                    break;
+                case NodeState.Inhibited:
+                    // Tag node if it was excited before expected
+                    if (_taggedExcitationWindow < TauZero && _taggedExcitationWindow > 0)
+                    {
+                        //if (SearchLevel == 0)
+                        TagNode(currentTick);
+                        //SearchLevel = 0;
+                        //SearchLevel = Math.Max(0, SearchLevel - 1);
+                    }
 
-                messages = NoAction();
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+                    messages = NoAction();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            if (messages.Length > 0)
+            {
+                State = NodeState.Processing;
+                PostEvent(NodeEventType.Processing, currentTick);
+            }
         }
-
-        if (messages.Length > 0)
-        {
-            State = NodeState.Processing;
-            PostEvent(NodeEventType.Processing, currentTick);
-        }
-
         return messages;
     }
 
@@ -175,57 +196,63 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public StratiumProcessingMessage[] Inhibit(long currentTick)
     {
-        if (IsTagged)
-            return NoAction();
-
-        if (_taggedInhibitionWindow == 0)
+        lock (nodeLock)
         {
-            _taggedExcitationWindow = 0;
-        }
+            if (IsTagged)
+                return NoAction();
 
-        switch (State)
-        {
-            case NodeState.Neutral:
-                State = NodeState.Inhibited;
-                PostEvent(NodeEventType.Inhibited, currentTick);
-                return NoAction();
-            case NodeState.Refractory:
-                // Disable the refractory period
-                _refractoryCounter = 0;
-                State = NodeState.Inhibited;
-                PostEvent(NodeEventType.Inhibited, currentTick);
-                return NoAction();
-            case NodeState.Processing:
-                State = NodeState.Inhibited;
-                PostEvent(NodeEventType.Inhibited, currentTick);
-                return NoAction();
-            case NodeState.Inhibited:
-                return NoAction();
-            default:
-                return NoAction();
+            if (_taggedInhibitionWindow == 0)
+            {
+                _taggedExcitationWindow = 0;
+            }
+
+            switch (State)
+            {
+                case NodeState.Neutral:
+                    State = NodeState.Inhibited;
+                    PostEvent(NodeEventType.Inhibited, currentTick);
+                    return NoAction();
+                case NodeState.Refractory:
+                    // Disable the refractory period
+                    _refractoryCounter = 0;
+                    State = NodeState.Inhibited;
+                    PostEvent(NodeEventType.Inhibited, currentTick);
+                    return NoAction();
+                case NodeState.Processing:
+                    State = NodeState.Inhibited;
+                    PostEvent(NodeEventType.Inhibited, currentTick);
+                    return NoAction();
+                case NodeState.Inhibited:
+                    return NoAction();
+                default:
+                    return NoAction();
+            }
         }
     }
 
     public StratiumProcessingMessage[] InitiateWave(long currentTick)
     {
-        switch (State)
+        lock (nodeLock)
         {
-            case NodeState.Neutral:
-                _taggedExcitationWindow = DeltaExcitatory * 2 + TauZero * 2;
-                _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
+            switch (State)
+            {
+                case NodeState.Neutral:
+                    _taggedExcitationWindow = DeltaExcitatory * 2 + TauZero * 2;
+                    _taggedInhibitionWindow = DeltaExcitatory + DeltaInhibitory + TauZero * 2;
 
-                State = NodeState.Processing;
-                PostEvent(NodeEventType.Processing, currentTick);
+                    State = NodeState.Processing;
+                    PostEvent(NodeEventType.Processing, currentTick);
 
-                return NeighbourExcitatoryMessageBurst(currentTick, 0, 0).ToArray();
-            case NodeState.Refractory:
-                return NoAction();
-            case NodeState.Processing:
-                return NoAction();
-            case NodeState.Inhibited:
-                return NoAction();
-            default:
-                throw new ArgumentOutOfRangeException();
+                    return NeighbourExcitatoryMessageBurst(currentTick, 0, 0).ToArray();
+                case NodeState.Refractory:
+                    return NoAction();
+                case NodeState.Processing:
+                    return NoAction();
+                case NodeState.Inhibited:
+                    return NoAction();
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 
@@ -234,9 +261,12 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// </summary>
     public void TagNode(long currentTick)
     {
-        IsTagged = true;
-        Tau = TauPlus;
-        PostEvent(NodeEventType.Tagged, currentTick);
+        lock (nodeLock)
+        {
+            IsTagged = true;
+            Tau = TauPlus;
+            PostEvent(NodeEventType.Tagged, currentTick);
+        }
     }
 
     /// <summary>
@@ -244,7 +274,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// </summary>
     /// <param name="currentTick"></param>
     /// <param name="maxLevel">Maximum edge level to send the message(s) on</param>
-    public IEnumerable<StratiumProcessingMessage> NeighbourExcitatoryMessageBurst(
+    private IEnumerable<StratiumProcessingMessage> NeighbourExcitatoryMessageBurst(
         long currentTick,
         int charge,
         int level
@@ -257,7 +287,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
         var executeAt = processAt + executionTime;
 
         var edges = NeighbouringEdges
-            .Where(e => e.Level == level)
+            .Where(e => e.Level <= level)
             .Select(e => new StratiumProcessingMessage()
             {
                 ReceiveAt = processAt,
@@ -280,7 +310,7 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// Generates inhibitory messages to be sent to all neighbors
     /// </summary>
     /// <returns>List of process messages containing exicitatory messages</returns>
-    public IEnumerable<StratiumProcessingMessage> GlobalInhibitoryMessageBurst(
+    private IEnumerable<StratiumProcessingMessage> GlobalInhibitoryMessageBurst(
         long currentTick,
         int charge = 0
     )
@@ -383,10 +413,14 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     /// </summary>
     public void DisinhibitNode(long currentTick)
     {
-        if (State == NodeState.Inhibited)
+        lock (nodeLock)
         {
-            State = NodeState.Neutral;
-            PostEvent(NodeEventType.Neutral, currentTick);
+            if (State is NodeState.Inhibited or NodeState.Refractory)
+            {
+                State = NodeState.Neutral;
+                PostEvent(NodeEventType.Neutral, currentTick);
+                _refractoryCounter = 0;
+            }
         }
     }
 

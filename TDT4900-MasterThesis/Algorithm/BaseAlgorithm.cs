@@ -18,7 +18,7 @@ public abstract class BaseAlgorithm<TNode, TEdge, TGraph>
     public abstract required TNode StartNode { init; get; }
     public abstract required TNode TargetNode { init; get; }
 
-    public List<NodeEvent> EventHistory { get; } = new();
+    public List<AlgorithmEvent> EventHistory { get; } = new();
     public bool IsFinished { get; protected set; }
 
     public abstract void Initialize();
@@ -69,6 +69,6 @@ public abstract class BaseAlgorithm<TNode, TEdge, TGraph>
 
     public void ConsumeEvent(AlgorithmEvent algorithmEvent)
     {
-        //EventHistory.Add(nodeEvent);
+        EventHistory.Add(algorithmEvent);
     }
 }

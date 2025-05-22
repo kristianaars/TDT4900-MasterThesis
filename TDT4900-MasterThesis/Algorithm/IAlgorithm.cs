@@ -6,7 +6,7 @@ namespace TDT4900_MasterThesis.Algorithm;
 
 public interface IAlgorithm : IUpdatable, IAlgorithmEventProducer, IAlgorithmEventConsumer
 {
-    public List<NodeEvent>? EventHistory { get; }
+    public List<AlgorithmEvent>? EventHistory { get; }
 
     public bool IsFinished { get; }
     public void Initialize();

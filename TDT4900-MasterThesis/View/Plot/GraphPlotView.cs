@@ -131,7 +131,7 @@ public class GraphPlotView : AvaPlot, IDrawable
             // Draw edges
             foreach (var e in edges)
             {
-                if (e.Level >= (MaxVisibleLayer - 1))
+                if (e.Level >= (MaxVisibleLayer))
                     continue;
 
                 var start = e.SourceNodeId;

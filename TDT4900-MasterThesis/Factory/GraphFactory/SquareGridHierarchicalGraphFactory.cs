@@ -68,6 +68,16 @@ public class SquareGridHierarchicalGraphFactory
                     if (i + 1 < hGrids)
                         neighbours.AddRange(gridBlocks[i + 1, j]);
 
+                    /*
+                    // Add from right neighbouring grid block
+                    if (i + 1 < hGrids && j + 1 < vGrids)
+                        neighbours.AddRange(gridBlocks[i + 1, j + 1]);
+
+                    // Add from right neighbouring grid block
+                    if (i - 1 > 0 && j + 1 < vGrids)
+                        neighbours.AddRange(gridBlocks[i - 1, j + 1]);
+                    */
+
                     // Create edges between nodes in current block and neighbouring blocks
                     edges.AddRange(
                         currentBlock.SelectMany(n =>
@@ -86,6 +96,11 @@ public class SquareGridHierarchicalGraphFactory
             level++;
         }
 
-        return new Graph { Edges = edges, Nodes = nodes };
+        return new Graph
+        {
+            Edges = edges,
+            Nodes = nodes,
+            Levels = HierarchicalLevels,
+        };
     }
 }
