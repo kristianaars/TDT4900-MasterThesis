@@ -38,6 +38,7 @@ public class SimulationPersistenceService(
     {
         await simulationRepository.InsertRangeAsync(simulations, cancellationToken);
 
+        /*
         foreach (var simulation in simulations)
         {
             await eventHistoryRepository.PersistNodeEventListAsync(
@@ -46,5 +47,6 @@ public class SimulationPersistenceService(
                 cancellationToken
             );
         }
+        */
     }
 }

@@ -61,7 +61,7 @@ public class SimulationEngine(
         // Initialize algorithm
         algorithm.EventHandler = new AlgorithmEventHandler()
         {
-            Consumers = [graphPlotViewModel, sequencePlotViewModel, algorithm],
+            Consumers = [graphPlotViewModel, sequencePlotViewModel],
         };
         algorithm.Initialize();
 

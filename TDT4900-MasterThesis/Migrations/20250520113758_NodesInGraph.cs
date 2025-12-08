@@ -5,27 +5,27 @@
 namespace TDT4900_MasterThesis.Migrations
 {
     /// <inheritdoc />
-    public partial class EventLog : Migration
+    public partial class NodesInGraph : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
-                name: "SimulationId",
-                table: "NodeEvents",
+                name: "GraphId",
+                table: "Node",
                 type: "integer",
                 nullable: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_NodeEvents_SimulationId",
-                table: "NodeEvents",
-                column: "SimulationId");
+                name: "IX_Node_GraphId",
+                table: "Node",
+                column: "GraphId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_NodeEvents_Simulations_SimulationId",
-                table: "NodeEvents",
-                column: "SimulationId",
-                principalTable: "Simulations",
+                name: "FK_Node_Graphs_GraphId",
+                table: "Node",
+                column: "GraphId",
+                principalTable: "Graphs",
                 principalColumn: "Id");
         }
 
@@ -33,16 +33,16 @@ namespace TDT4900_MasterThesis.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_NodeEvents_Simulations_SimulationId",
-                table: "NodeEvents");
+                name: "FK_Node_Graphs_GraphId",
+                table: "Node");
 
             migrationBuilder.DropIndex(
-                name: "IX_NodeEvents_SimulationId",
-                table: "NodeEvents");
+                name: "IX_Node_GraphId",
+                table: "Node");
 
             migrationBuilder.DropColumn(
-                name: "SimulationId",
-                table: "NodeEvents");
+                name: "GraphId",
+                table: "Node");
         }
     }
 }

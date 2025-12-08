@@ -198,8 +198,8 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
     {
         lock (nodeLock)
         {
-            if (IsTagged)
-                return NoAction();
+            //if (IsTagged)
+            //    return NoAction();
 
             if (_taggedInhibitionWindow == 0)
             {
@@ -328,7 +328,11 @@ public class StratiumNode : AlgorithmNode, IAlgorithmEventProducer
             SendMessage = new StratiumNodeMessage
             {
                 Type = StratiumNodeMessage.MessageType.Inhibitory,
-                SourceEdge = null,
+                SourceEdge = new StratiumEdge() // Dummy edge, as this is a global message
+                {
+                    Source = this,
+                    Target = n,
+                },
                 Receiver = n,
                 SentAt = processAt,
                 ReceiveAt = executeAt,

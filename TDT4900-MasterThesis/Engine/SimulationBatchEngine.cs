@@ -118,12 +118,14 @@ public class SimulationBatchEngine(
                 simulation.Id
             );
 
-            // Build the simulation job
             await simulationService.RunSimulationWithVerificationAsync(
                 simulation,
                 algorithmSpec,
                 cancellationToken
             );
+
+            // Clear the graph reference to invoke garbage collection
+            simulation.Graph = null;
 
             // Wait for persistence tasks to complete before continuing if above 10 concurrent tasks
             var activePersistenceTaskCount = persistenceTasks.Count(t => !t.IsCompleted);

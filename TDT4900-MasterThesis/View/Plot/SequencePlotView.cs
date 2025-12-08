@@ -117,7 +117,8 @@ public class SequencePlotView : AvaPlot, IDrawable, IUpdatable
         }
 
         // Update neutral state for node
-        _isNeutral[nodeId] = eventType == NodeEventType.Neutral;
+        if (eventType != NodeEventType.Tagged)
+            _isNeutral[nodeId] = eventType == NodeEventType.Neutral;
 
         // If the node is not neutral anymore, initialize a new bar
         if (!_isNeutral[nodeId] && eventType != NodeEventType.Tagged)

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -36,7 +37,8 @@ namespace TDT4900_MasterThesis.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    IsDirected = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDirected = table.Column<bool>(type: "boolean", nullable: false),
+                    Levels = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,9 +52,9 @@ namespace TDT4900_MasterThesis.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     NodeCount = table.Column<int>(type: "integer", nullable: false),
-                    Discriminator = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
+                    Discriminator = table.Column<string>(type: "character varying(34)", maxLength: 34, nullable: false),
                     Radius = table.Column<double>(type: "double precision", nullable: true),
-                    Distance = table.Column<double>(type: "double precision", nullable: true),
+                    Distance = table.Column<int>(type: "integer", nullable: true),
                     Noise = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -61,39 +63,18 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "NodeEvents",
+                name: "Node",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     NodeId = table.Column<int>(type: "integer", nullable: false),
-                    Tick = table.Column<long>(type: "bigint", nullable: false),
-                    EventType = table.Column<int>(type: "integer", nullable: false)
+                    X = table.Column<int>(type: "integer", nullable: false),
+                    Y = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_NodeEvents", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Edge",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SourceNodeId = table.Column<int>(type: "integer", nullable: false),
-                    TargetNodeId = table.Column<int>(type: "integer", nullable: false),
-                    IsDirected = table.Column<bool>(type: "boolean", nullable: false),
-                    GraphId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Edge", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Edge_Graphs_GraphId",
-                        column: x => x.GraphId,
-                        principalTable: "Graphs",
-                        principalColumn: "Id");
+                    table.PrimaryKey("PK_Node", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -103,7 +84,10 @@ namespace TDT4900_MasterThesis.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AlgorithmSpecId = table.Column<int>(type: "integer", nullable: false),
-                    GraphSpecId = table.Column<int>(type: "integer", nullable: false)
+                    GraphSpecId = table.Column<int>(type: "integer", nullable: false),
+                    RandomizeStartAndTarget = table.Column<bool>(type: "boolean", nullable: false),
+                    StartNodeId = table.Column<int>(type: "integer", nullable: false),
+                    TargetNodeId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -123,29 +107,6 @@ namespace TDT4900_MasterThesis.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Nodes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    NodeId = table.Column<int>(type: "integer", nullable: false),
-                    X = table.Column<int>(type: "integer", nullable: false),
-                    Y = table.Column<int>(type: "integer", nullable: false),
-                    GraphId = table.Column<int>(type: "integer", nullable: true),
-                    SimulationId = table.Column<int>(type: "integer", nullable: true),
-                    SimulationId1 = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Nodes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Nodes_Graphs_GraphId",
-                        column: x => x.GraphId,
-                        principalTable: "Graphs",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Simulations",
                 columns: table => new
                 {
@@ -155,8 +116,12 @@ namespace TDT4900_MasterThesis.Migrations
                     GraphId = table.Column<int>(type: "integer", nullable: true),
                     StartNodeId = table.Column<int>(type: "integer", nullable: true),
                     TargetNodeId = table.Column<int>(type: "integer", nullable: true),
+                    AlgorithmTaggedNodes = table.Column<List<int>>(type: "integer[]", nullable: true),
+                    ShortestPathTaggedNodes = table.Column<List<int>>(type: "integer[]", nullable: true),
                     AlgorithmShortestPathLength = table.Column<int>(type: "integer", nullable: false),
-                    ShortestPathLength = table.Column<int>(type: "integer", nullable: false)
+                    ShortestPathLength = table.Column<int>(type: "integer", nullable: false),
+                    AlgorithmExecutionTime = table.Column<long>(type: "bigint", nullable: false),
+                    Success = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -167,14 +132,14 @@ namespace TDT4900_MasterThesis.Migrations
                         principalTable: "Graphs",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Simulations_Nodes_StartNodeId",
+                        name: "FK_Simulations_Node_StartNodeId",
                         column: x => x.StartNodeId,
-                        principalTable: "Nodes",
+                        principalTable: "Node",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Simulations_Nodes_TargetNodeId",
+                        name: "FK_Simulations_Node_TargetNodeId",
                         column: x => x.TargetNodeId,
-                        principalTable: "Nodes",
+                        principalTable: "Node",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Simulations_SimulationBatches_SimulationBatchId",
@@ -184,25 +149,31 @@ namespace TDT4900_MasterThesis.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Edge_GraphId",
-                table: "Edge",
-                column: "GraphId");
+            migrationBuilder.CreateTable(
+                name: "NodeEvents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NodeId = table.Column<int>(type: "integer", nullable: false),
+                    EventType = table.Column<int>(type: "integer", nullable: false),
+                    SimulationId = table.Column<int>(type: "integer", nullable: true),
+                    Tick = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NodeEvents", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NodeEvents_Simulations_SimulationId",
+                        column: x => x.SimulationId,
+                        principalTable: "Simulations",
+                        principalColumn: "Id");
+                });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Nodes_GraphId",
-                table: "Nodes",
-                column: "GraphId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Nodes_SimulationId",
-                table: "Nodes",
+                name: "IX_NodeEvents_SimulationId",
+                table: "NodeEvents",
                 column: "SimulationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Nodes_SimulationId1",
-                table: "Nodes",
-                column: "SimulationId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SimulationBatches_AlgorithmSpecId",
@@ -233,55 +204,22 @@ namespace TDT4900_MasterThesis.Migrations
                 name: "IX_Simulations_TargetNodeId",
                 table: "Simulations",
                 column: "TargetNodeId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Nodes_Simulations_SimulationId",
-                table: "Nodes",
-                column: "SimulationId",
-                principalTable: "Simulations",
-                principalColumn: "Id");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Nodes_Simulations_SimulationId1",
-                table: "Nodes",
-                column: "SimulationId1",
-                principalTable: "Simulations",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Nodes_Graphs_GraphId",
-                table: "Nodes");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Simulations_Graphs_GraphId",
-                table: "Simulations");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Nodes_Simulations_SimulationId",
-                table: "Nodes");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Nodes_Simulations_SimulationId1",
-                table: "Nodes");
-
-            migrationBuilder.DropTable(
-                name: "Edge");
-
             migrationBuilder.DropTable(
                 name: "NodeEvents");
-
-            migrationBuilder.DropTable(
-                name: "Graphs");
 
             migrationBuilder.DropTable(
                 name: "Simulations");
 
             migrationBuilder.DropTable(
-                name: "Nodes");
+                name: "Graphs");
+
+            migrationBuilder.DropTable(
+                name: "Node");
 
             migrationBuilder.DropTable(
                 name: "SimulationBatches");

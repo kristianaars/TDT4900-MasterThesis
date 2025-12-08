@@ -4,6 +4,7 @@ namespace TDT4900_MasterThesis.Model.Db;
 
 public class Graph : BaseModel
 {
+    [NotMapped]
     public List<Node> Nodes { get; set; }
 
     [NotMapped]

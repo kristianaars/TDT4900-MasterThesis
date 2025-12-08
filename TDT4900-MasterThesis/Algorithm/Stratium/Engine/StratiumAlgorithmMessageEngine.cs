@@ -25,7 +25,7 @@ public class StratiumAlgorithmMessageEngine : IUpdatable, IAlgorithmEventProduce
     /// </summary>
     private readonly PriorityQueue<StratiumProcessingMessage, long> _processingQueue = new();
 
-    public int WavesBeforeFinish = 1;
+    public int WavesBeforeFinish = 0;
 
     public void Update(long currentTick)
     {
